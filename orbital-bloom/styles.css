@@ -1,0 +1,59 @@
+:root { color-scheme: dark; }
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 49% 44%, #101b24 0%, #060a10 35%, #020306 72%),
+    #020306;
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.haze {
+  position: fixed;
+  z-index: 1;
+  width: 55vmax;
+  height: 55vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.09;
+  pointer-events: none;
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+.haze--cyan {
+  top: 8%;
+  left: 18%;
+  background: #1f8b91;
+}
+
+.haze--violet {
+  right: 8%;
+  bottom: 0;
+  background: #43317c;
+  animation-delay: -9s;
+}
+
+@keyframes drift {
+  to { transform: translate3d(6%, -5%, 0) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .haze { animation: none; }
+}
