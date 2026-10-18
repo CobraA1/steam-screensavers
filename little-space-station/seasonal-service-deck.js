@@ -1,5 +1,5 @@
 import * as THREE from "./vendor/three.module.js";
-import { DeckPartPose } from "./service-deck-lifecycle.js";
+import { DeckPartPose, DECK_STAGES } from "./service-deck-lifecycle.js";
 
 // All coordinates are station-local. The floor stays at the original height;
 // the extra space extends aft and toward +Z, clear of the solar array roots.
@@ -228,6 +228,7 @@ export class SeasonalServiceDeckVisual {
     // Autonomous riggers escort rigid assemblies; no physics or traffic AI.
     this.riggers = new THREE.Group();
     this.riggers.name = "service-deck-riggers";
+    this.riggerUnits = [];
     this.root.add(this.riggers);
     this.workLight = new THREE.MeshStandardMaterial({ color: 0xffc267,
       emissive: 0xff981f, emissiveIntensity: 1, roughness: 0.4 });
@@ -240,6 +241,12 @@ export class SeasonalServiceDeckVisual {
         Box(drone, [0.09, 0.12, 0.39], [x, -0.02, 0], darkTeal);
         Box(drone, [0.04, 0.045, 0.12], [x, -0.02, 0.22], m.window);
       }
+      // A small tool and work light are visible only during fastening shifts.
+      const tool = Box(drone, [0.052, 0.22, 0.052], [0, -0.19, 0.15], m.metal);
+      const toolTip = new THREE.Mesh(new THREE.SphereGeometry(0.075, 6, 4), this.workLight);
+      toolTip.position.set(0, -0.32, 0.15);
+      drone.add(toolTip);
+      this.riggerUnits.push({ drone, tool, toolTip });
       this.riggers.add(drone);
     }
   }
@@ -257,20 +264,61 @@ export class SeasonalServiceDeckVisual {
       part.position.set(pose.x, pose.y, pose.z);
       part.rotation.y = pose.yaw;
     }
-    this.riggers.visible = Boolean(lifecycle && lifecycle.action && lifecycle.progress > 0 && lifecycle.progress < 1);
-    if (this.riggers.visible) {
-      const pose = DeckPartPose(assembly, Math.min(5, Math.floor(assembly * 6)));
-      // Travel offscreen during handoffs before escorting the next assembly.
-      const handoff = Math.max(0, (pose.progress - 0.85) / 0.15);
-      const retreat = handoff * handoff * (3 - 2 * handoff);
-      this.riggers.position.set(pose.x - 38 * retreat, pose.y + 2 * retreat, pose.z + 8 * retreat);
+    // Riggers appear in discrete work shifts. The station can sit quietly for
+    // hours between survey, lift, fastening, and inspection. In particular,
+    // no construction assembly floats half-aligned during those pauses.
+    const work = lifecycle && lifecycle.work;
+    const working = Boolean(lifecycle && lifecycle.action && work && work.kind !== "quiet");
+    this.riggers.visible = working;
+    this.riggers.position.set(0, 0, 0);
+    if (working) {
+      const index = lifecycle.action === "install" ? lifecycle.stageIndex :
+        DECK_STAGES.length - 1 - lifecycle.stageIndex;
+      const sites = [
+        [-3.3, 0.25, 0.24], [-4.8, -0.42, 0.9], [-4.95, 0.18, 1.15],
+        [-4.0, 0.9, 0.43], [-5.15, 0.14, 2.0], [-5.1, 0.4, 1.55],
+      ];
+      const site = sites[index];
+      const durationSeconds = lifecycle.durationMs / DECK_STAGES.length / 1000;
+      const windowSeconds = durationSeconds * (work.to - work.from);
+      // Enter and leave within roughly a minute, even if the entire work
+      // shift lasts half an hour. No endless shuttle loops across the station.
+      const ease = (t) => { const p = THREE.MathUtils.clamp(t, 0, 1); return p * p * (3 - 2 * p); };
+      const arrival = ease(work.progress * windowSeconds / 65);
+      const departure = ease((1 - work.progress) * windowSeconds / 65);
+      const onSite = arrival * departure;
       const seconds = (state.worldTimeMs || 0) / 1000;
-      for (let i = 0; i < this.riggers.children.length; i += 1) {
-        const drone = this.riggers.children[i];
-        drone.position.y = 0.65 + Math.sin(seconds * 0.45 + i * Math.PI) * 0.065;
-        drone.rotation.z = Math.sin(seconds * 0.3 + i) * 0.035;
+      const partPose = DeckPartPose(assembly, index);
+      for (let i = 0; i < this.riggerUnits.length; i += 1) {
+        const unit = this.riggerUnits[i];
+        const drone = unit.drone;
+        const lateral = i === 0 ? -0.48 : 0.48;
+        const side = i === 0 ? -0.3 : 0.36;
+        let targetX = site[0] + lateral;
+        let targetY = site[1] + 0.65 + (i === 0 ? 0 : 0.15);
+        let targetZ = site[2] + side;
+        if (work.kind === "lift") {
+          // During the brief delivery the drones escort this particular
+          // part, then return to their separate tools/inspection positions.
+          targetX += partPose.x;
+          targetY += partPose.y + 0.45;
+          targetZ += partPose.z;
+        } else {
+          const entryX = -9.2 - i * 0.65;
+          const entryY = site[1] + 1.8;
+          const entryZ = 3.4 + i * 0.6;
+          targetX = THREE.MathUtils.lerp(entryX, targetX, onSite);
+          targetY = THREE.MathUtils.lerp(entryY, targetY, onSite);
+          targetZ = THREE.MathUtils.lerp(entryZ, targetZ, onSite);
+        }
+        drone.position.set(targetX, targetY + Math.sin(seconds * 0.55 + i * 2.1) * 0.04, targetZ);
+        drone.rotation.set(0, work.kind === "survey" ? (i === 0 ? -0.18 : 0.18) : 0,
+          (work.kind === "fasten" || work.kind === "unfasten") ? Math.sin(seconds * 1.5 + i) * 0.035 : 0);
+        const fasten = work.kind === "fasten" || work.kind === "unfasten";
+        unit.tool.visible = fasten;
+        unit.toolTip.visible = fasten && Math.sin(seconds * 1.15 + i * 2.2) > 0.75;
       }
-      this.workLight.emissiveIntensity = 0.65 + 0.5 * Math.pow(Math.sin(seconds * 1.4), 2);
+      this.workLight.emissiveIntensity = (work.kind === "fasten" || work.kind === "unfasten") ? 1.1 : 0.5;
     }
     const boost = this.scene.environmentArtificialBoost || 0;
     const power = THREE.MathUtils.smoothstep(assembly, 0.975, 1);

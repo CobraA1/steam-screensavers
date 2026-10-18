@@ -9,7 +9,7 @@ export default Object.freeze({
 
   // Slow calendar-based installation from Sep 22 00:00 UTC, and dismantling
   // ending Jan 7 00:00 UTC. Each process takes this many hours (1–48).
-  serviceDeck: Object.freeze({ transitionHours: 6 }),
+  serviceDeck: Object.freeze({ transitionHours: 24 }),
 
   // "low", "medium", or "high". Controls geometry detail and star density.
   visualQuality: "medium",

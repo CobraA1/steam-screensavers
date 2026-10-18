@@ -7,7 +7,7 @@ import { CreateExpansionPreview, EXPANSION_LAYOUTS } from "./expansion-preview.j
 import { AdvanceStubbornAntennaIncident, CreateStubbornAntennaIncident, CreateStubbornAntennaPreview, CreateStubbornAntennaResume, STUBBORN_ANTENNA_BEATS, STUBBORN_ANTENNA_VARIANTS } from "./stubborn-antenna.js";
 import { AUTUMN_PREVIEW_MODES, GetUpcomingSeasonalShipments } from "./autumn-2026.js";
 import CONFIG from "./config.js";
-import { DeckDurationMs } from "./service-deck-lifecycle.js";
+import { DeckDurationMs, DECK_STAGES } from "./service-deck-lifecycle.js";
 import { AdvancePhantomVisitorIncident, CreatePhantomVisitorIncident, CreatePhantomVisitorPreview, CreatePhantomVisitorResume, PHANTOM_VISITOR_BEATS, PHANTOM_VISITOR_TYPE, PHANTOM_VISITOR_VARIANTS } from "./phantom-visitor.js";
 import { AdvanceRemembranceIncident, CreateRemembranceIncident, CreateRemembrancePreview, CreateRemembranceResume, REMEMBRANCE_BEATS, REMEMBRANCE_TYPE, REMEMBRANCE_VARIANTS } from "./lights-of-remembrance.js";
 
@@ -171,9 +171,10 @@ export function CreatePreviewTools({ director, runtime, scene }) {
   seasonalSection.append(deckActions);
   const deckRate = MakeElement("select", "preview-tools__select");
   AddOption(deckRate, "1", "Real pace · configured hours");
-  AddOption(deckRate, "60", "60× · six minutes at defaults");
-  AddOption(deckRate, "360", "360× · one minute at defaults");
-  deckRate.value = "60";
+  AddOption(deckRate, "60", "60× · 24 minutes at defaults");
+  AddOption(deckRate, "240", "240× · six minutes at defaults");
+  AddOption(deckRate, "1440", "1440× · one minute at defaults");
+  deckRate.value = "240";
   AddField(seasonalSection, "Assembly preview speed", deckRate);
   const deckProgress = MakeElement("input", "preview-tools__select");
   deckProgress.type = "range";
@@ -187,6 +188,17 @@ export function CreatePreviewTools({ director, runtime, scene }) {
   deckPlay.type = "button";
   deckPlay.disabled = true;
   seasonalSection.append(deckPlay);
+  const deckStageSelect = MakeElement("select", "preview-tools__select");
+  for (let i = 0; i < DECK_STAGES.length; i += 1) AddOption(deckStageSelect, String(i), `${i + 1} · ${DECK_STAGES[i]}`);
+  AddField(seasonalSection, "Module work stage", deckStageSelect);
+  const deckWorkSelect = MakeElement("select", "preview-tools__select");
+  for (const [id, label] of [["0.25", "Quiet · before delivery"], ["0.12", "Site survey"],
+    ["0.4", "Part delivery / removal"], ["0.6", "Fastening / quiet in removal"], ["0.32", "Unfastening in removal"],
+    ["0.85", "Final inspection"], ["0.74", "Quiet · completed part"]]) AddOption(deckWorkSelect, id, label);
+  const deckJumpWork = MakeElement("button", "preview-tools__button", "Jump to work stage");
+  deckJumpWork.type = "button";
+  AddField(seasonalSection, "Work moment", deckWorkSelect);
+  seasonalSection.append(deckJumpWork);
   const seasonalReadout = MakeElement("dl", "preview-tools__readout preview-tools__environment-readout");
   const seasonalValues = {};
   for (const [key, label] of [["phase", "PHASE"], ["holiday", "HOLIDAY"], ["deck", "SERVICE DECK"], ["shipment", "SHIPMENT"], ["packages", "PACKAGES"], ["decor", "INSTALLED"], ["halloween", "HALLOWEEN"], ["oddity", "ODDITY"], ["cleanup", "CLEANUP"], ["activity", "SEASONAL TASK"], ["pending", "PENDING STORY"], ["completed", "COMPLETED"], ["dream", "DREAM ELIGIBLE"]]) {
@@ -519,6 +531,12 @@ export function CreatePreviewTools({ director, runtime, scene }) {
       runtime.deckPreview.playing = false;
     }
   });
+  deckJumpWork.addEventListener("click", () => {
+    if (!runtime.deckPreview) startDeck("install");
+    runtime.deckPreview.progress = (Number(deckStageSelect.value) + Number(deckWorkSelect.value)) / DECK_STAGES.length;
+    runtime.deckPreview.playing = false;
+    deckProgress.value = String(runtime.deckPreview.progress);
+  });
   pipTaskSelect.addEventListener("change", () => {
     const stages = SetPipStages(pipTaskSelect.value);
     if (stages.length > 0) pipStageSelect.value = stages[0];
@@ -795,7 +813,8 @@ export function CreatePreviewTools({ director, runtime, scene }) {
         ? "active · " + seasonal.serviceDeckStatus
         : "absent · " + seasonal.serviceDeckStatus;
       if (seasonal.serviceDeck && seasonal.serviceDeck.action) {
-        seasonalValues.deck.textContent += " · " + seasonal.serviceDeck.stage + " · " + Math.round(seasonal.serviceDeck.progress * 100) + "%";
+        seasonalValues.deck.textContent += " · " + seasonal.serviceDeck.stage + " · " + Math.round(seasonal.serviceDeck.progress * 100) + "%" +
+          " · " + (seasonal.serviceDeck.work ? seasonal.serviceDeck.work.kind : "quiet");
       }
       deckProgress.disabled = !runtime.deckPreview;
       deckPlay.disabled = !runtime.deckPreview;
