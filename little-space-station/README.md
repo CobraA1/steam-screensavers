@@ -1,5 +1,9 @@
 # The Little Space Station
 
+Animation and narrative reviews follow the shared [animation](../docs/animation-expectations.md), [story](../docs/story-expectations.md), and [dream](../docs/dream-expectations.md) expectations.
+
+The Phantom Visitor uses `phantom-choreography.js` for continuous cover/drone paths and shared target orientation. Pip reaches the cloth with the existing two-joint arm rig; both live and miniature covers have connected, downward-flared skirts. The 68-second live story now finishes its exit after committing the final payoff. Its dream retains the original memory identity/year/outcome, brings miniature Pip into contact with the cover, fades the departing drone independently, and preserves the empty-cover joke. Preview it under **Story · Phantom Visitor** (beat/point or **Force / play**) and **Pip recharge & memory → Show Phantom dream** (whole-dream scrubber).
+
 A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a small retro-futuristic station above a procedural planet. Production launches contain no controls or input listeners.
 
 ## Structure

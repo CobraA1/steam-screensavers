@@ -24,7 +24,11 @@ test("Phantom dream clearly retells the cover, drone, release and final joke", (
   assert.equal(visual.drone.visible, true);
   show("untangle", 0.5, 0.62);
   assert.ok(visual.pipArm.rotation.z > 0.5);
-  assert.ok(visual.cover.position.x > visual.drone.position.x);
+  assert.ok(visual.cover.position.y > visual.drone.position.y + 0.25, "cover is lifted off the drone");
+  visual.root.updateMatrixWorld(true);
+  const hand = visual.hand.getWorldPosition(new THREE.Vector3());
+  const hem = visual.cover.parent.localToWorld(new THREE.Vector3(visual.cover.position.x, visual.cover.position.y - 0.18, 0.34));
+  assert.ok(hand.distanceTo(hem) < 0.02, "miniature Pip actually touches the hem");
   show("drone-departure", 0.8, 0.76);
   assert.ok(visual.drone.position.x > 0.8);
   show("trailing-cover", 0.5, 0.88);

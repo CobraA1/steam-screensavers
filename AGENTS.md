@@ -2,6 +2,16 @@
 
 This directory contains HTML screensavers for Steam Deck. Treat `bouncinglogo/` as the platform reference and do not modify it.
 
+## Animation and narrative expectations
+
+Before changing the corresponding systems, read the applicable expectations:
+
+- [Animation expectations](docs/animation-expectations.md): staging, target-facing poses, physical contact, continuous beat boundaries, safe travel, deterministic seeking, and visual verification.
+- [Story expectations](docs/story-expectations.md): narrative intent, Phantom Visitor acceptance beats, scheduling, checkpoints, interruption recovery, and complete visual exits.
+- [Dream and memory expectations](docs/dream-expectations.md): faithful completed memories, readable miniature actors, bubble framing, identity retention, and isolation from live world state.
+
+These supplement the original story briefs. Changes spanning live stories and their dream adaptations must be checked in both presentations.
+
 ## Required structure
 
 - Put each screensaver in its own folder with `index.html` as the entry point.

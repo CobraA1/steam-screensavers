@@ -1,4 +1,6 @@
 import { PreviousPipPose, ResolvePipPose } from "./pip-behavior.js";
+import * as THREE from "./vendor/three.module.js";
+import { PHANTOM_WORK_YAW, PhantomActors } from "./phantom-choreography.js";
 
 function Clamp01(value) { return Math.max(0, Math.min(1, Number(value) || 0)); }
 function Smooth(value) { const t = Clamp01(value); return t * t * (3 - 2 * t); }
@@ -150,28 +152,28 @@ function SetRobotPosition(scene, taskId, stage, progress) {
     let motion = false;
     if (stage === "phantom-glimpse") {
       scene.robot.position.copy(scene.robotHome);
-      scene.robot.rotation.y = Mix(-0.16, 2.35, Smooth(progress));
+      scene.robot.rotation.y = Mix(-0.16, PHANTOM_WORK_YAW, Smooth(progress));
     } else if (stage === "phantom-investigate") {
       scene.robot.position.lerpVectors(scene.robotHome, work, Smooth(progress));
-      scene.robot.rotation.y = Mix(-0.16, 2.45, Smooth(progress));
+      scene.robot.rotation.y = PHANTOM_WORK_YAW;
       motion = true;
     } else if (stage === "phantom-search") {
       const sweep = progress < 0.5 ? Smooth(progress * 2) : Smooth((1 - progress) * 2);
       scene.robot.position.lerpVectors(work, search, sweep);
-      scene.robot.rotation.y = 2.45 + Math.sin(progress * Math.PI * 2) * 0.55;
+      scene.robot.rotation.y = PHANTOM_WORK_YAW + Math.sin(progress * Math.PI * 2) * 0.55;
       motion = true;
     } else if (stage === "phantom-trail") {
       scene.robot.position.lerpVectors(work, scene.robotHome, Smooth(progress));
-      scene.robot.rotation.y = Mix(2.45, -0.16, Smooth(progress));
+      scene.robot.rotation.y = Mix(PHANTOM_WORK_YAW, -0.16, Smooth(progress));
       motion = true;
     } else if (stage === "phantom-surprise") {
       scene.robot.position.copy(scene.robotHome);
-      const turn = Smooth(Math.min(1, progress * 2.5));
-      scene.robot.rotation.y = Mix(-0.16, -1.35, turn);
+      const turn = Smooth(progress / 0.3) * (1 - Smooth((progress - 0.65) / 0.35));
+      scene.robot.rotation.y = Mix(-0.16, -0.95, turn);
       scene.robot.position.x -= Math.sin(progress * Math.PI) * 0.08;
     } else {
       scene.robot.position.copy(work);
-      scene.robot.rotation.y = 2.45;
+      scene.robot.rotation.y = PHANTOM_WORK_YAW;
     }
     if (motion) {
       const stride = Math.sin(progress * Math.PI * 4);
@@ -349,6 +351,38 @@ function ApplyArmPose(arm, prefix, from, to, amount, workingMotion) {
   arm.elbow.rotation.set(elbowX - workingMotion * 0.7, 0, elbowZ + workingMotion * (arm.side < 0 ? -0.5 : 0.5));
 }
 
+// A bounded two-joint reach for this story's cloth contact. The existing arm
+// lengths are preserved; this changes poses only, not simulation or physics.
+function ReachPhantomCover(scene, stage, progress) {
+  const beat = stage === "phantom-reveal" ? "reveal" : stage === "phantom-untangle" ? "untangle" : "drone-departure";
+  const weight = beat === "reveal" ? Smooth((progress - 0.6) / 0.4)
+    : beat === "untangle" ? 1 - Smooth((progress - 0.65) / 0.35) : 0;
+  if (!weight) return;
+  const arm = scene.robotArms[1];
+  const s = scene.phantomReachScratch ||= { target: new THREE.Vector3(), direction: new THREE.Vector3(),
+    bend: new THREE.Vector3(), upper: new THREE.Vector3(), lower: new THREE.Vector3(),
+    base: new THREE.Vector3(), shoulder: new THREE.Quaternion(), elbow: new THREE.Quaternion(), inverse: new THREE.Quaternion() };
+  const actors = PhantomActors(beat, progress, scene.robotHome.toArray());
+  s.target.fromArray(actors.cover);
+  s.target.x += 0.15;
+  s.target.y -= 0.05;
+  scene.station.localToWorld(s.target);
+  scene.robot.worldToLocal(s.target);
+  s.target.sub(arm.shoulder.position);
+  const a = arm.elbow.position.length(), b = arm.hand.position.length();
+  const distance = Math.min(a + b - 0.001, Math.max(0.01, s.target.length()));
+  s.direction.copy(s.target).normalize();
+  s.target.copy(s.direction).multiplyScalar(distance);
+  const along = (a * a - b * b + distance * distance) / (2 * distance);
+  s.bend.set(0, -1, 0).addScaledVector(s.direction, s.direction.y).normalize();
+  s.upper.copy(s.direction).multiplyScalar(along).addScaledVector(s.bend, Math.sqrt(Math.max(0, a * a - along * along)));
+  s.shoulder.setFromUnitVectors(s.base.copy(arm.elbow.position).normalize(), s.lower.copy(s.upper).normalize());
+  s.lower.copy(s.target).sub(s.upper).applyQuaternion(s.inverse.copy(s.shoulder).invert()).normalize();
+  s.elbow.setFromUnitVectors(s.base.copy(arm.hand.position).normalize(), s.lower);
+  arm.shoulder.quaternion.slerp(s.shoulder, weight);
+  arm.elbow.quaternion.slerp(s.elbow, weight);
+}
+
 export function UpdatePip(scene, state) {
   const taskId = state.pipTaskId || "standby";
   const stage = state.pipTaskStage || "standby";
@@ -356,9 +390,14 @@ export function UpdatePip(scene, state) {
   const variant = Math.abs(Math.floor(state.pipGestureVariant || 0)) % 3;
   const poseName = ResolvePipPose(taskId, stage);
   const previousPoseName = taskId === "dream-antenna" || taskId === "dream-phantom" ? "charging" : PreviousPipPose(taskId, stage);
-  const from = POSES[previousPoseName] || POSES.standby;
-  const to = POSES[poseName] || POSES.standby;
-  const blend = stage === "return" ? Smooth(progress) : Smooth(Math.min(1, progress * 2.4));
+  let from = POSES[previousPoseName] || POSES.standby;
+  let to = POSES[poseName] || POSES.standby;
+  let blend = stage === "return" ? Smooth(progress) : Smooth(Math.min(1, progress * 2.4));
+  if (stage === "phantom-surprise" && progress >= 0.65) {
+    from = POSES["phantom-surprise"];
+    to = POSES.standby;
+    blend = Smooth((progress - 0.65) / 0.35);
+  }
   const motion = SetRobotPosition(scene, taskId, stage, progress);
 
   let headYaw = Mix(from.headYaw, to.headYaw, blend);
@@ -371,6 +410,11 @@ export function UpdatePip(scene, state) {
   let eyeHeight = Mix(from.eyeHeight, to.eyeHeight, blend);
   const stageEnvelope = Math.sin(progress * Math.PI);
   let workingMotion = 0;
+  if (taskId === "phantom-visitor") {
+    const gesture = Math.sin(progress * Math.PI);
+    headRoll += gesture * (variant - 1) * 0.06;
+    if (stage === "phantom-surprise") eyeHeight += gesture * variant * 0.08;
+  }
 
   if (stage === "standby") {
     const idleCycle = (scene.elapsed + variant * 5.7) % 18;
@@ -423,8 +467,30 @@ export function UpdatePip(scene, state) {
   scene.robot.rotation.x = bodyPitch;
   scene.robot.rotation.z += bodyLean;
   scene.robotHead.rotation.set(headPitch, headYaw, headRoll);
+  if (taskId === "phantom-visitor" && ["phantom-reveal", "phantom-untangle", "phantom-wave"].includes(stage)) {
+    const beat = stage === "phantom-reveal" ? "reveal" : stage === "phantom-untangle" ? "untangle" : "drone-departure";
+    const actors = PhantomActors(beat, progress, scene.robotHome.toArray());
+    const look = scene.phantomLookScratch ||= new THREE.Vector3();
+    look.fromArray(actors.cover);
+    if (beat === "drone-departure") {
+      const follow = Smooth(progress / 0.25);
+      look.x = Mix(look.x, actors.drone[0], follow);
+      look.y = Mix(look.y, actors.drone[1], follow);
+      look.z = Mix(look.z, actors.drone[2], follow);
+    }
+    scene.station.localToWorld(look);
+    scene.robot.worldToLocal(look);
+    look.sub(scene.robotHead.position);
+    const weight = beat === "reveal" ? Smooth(progress / 0.4)
+      : beat === "drone-departure" ? 1 - Smooth((progress - 0.7) / 0.3) : 1;
+    scene.robotHead.rotation.y = Mix(headYaw, THREE.MathUtils.clamp(Math.atan2(look.x, look.z), -0.8, 0.8), weight);
+    scene.robotHead.rotation.x = Mix(headPitch, THREE.MathUtils.clamp(-Math.atan2(look.y, Math.hypot(look.x, look.z)), -0.7, 0.7), weight);
+  }
   ApplyArmPose(scene.robotArms[0], "left", from, to, blend, workingMotion);
   ApplyArmPose(scene.robotArms[1], "right", from, to, blend, -workingMotion);
+  if (taskId === "phantom-visitor" && ["phantom-reveal", "phantom-untangle", "phantom-wave"].includes(stage)) {
+    ReachPhantomCover(scene, stage, progress);
+  }
 
   scene.robotEye.scale.set(Math.max(0.35, eyeWidth), Math.max(0.12, eyeHeight), 1);
   const shadowBoost = scene.environmentArtificialBoost || 0;

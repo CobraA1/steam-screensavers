@@ -243,7 +243,8 @@ function RunFrame(currentTime) {
           Log("committed Phantom Visitor " + nextIncident.checkpoint);
         } else runtime.phantomRecord = nextIncident;
       }
-      if (runtime.phantomRecord.milestone >= PHANTOM_VISITOR_MILESTONES["story-complete"]) runtime.phantomPlayback = null;
+      // Committing the payoff must not cut off the remaining visual exit.
+      if (currentPhantom.elapsed >= PHANTOM_VISITOR_TOTAL_SECONDS) runtime.phantomPlayback = null;
     }
   }
   const remembrancePlayback = IS_PREVIEW ? runtime.remembrancePreview : runtime.remembrancePlayback;

@@ -50,7 +50,7 @@ export function ResolvePhantomVisitorTimeline(elapsedSeconds) {
 export function PhantomVisitorMilestone(beatId, progress = 0) {
   if (beatId === "final-surprise" && Clamp01(progress) >= 0.72) return PHANTOM_VISITOR_MILESTONES["story-complete"];
   if (["drone-departure", "trailing-cover", "final-surprise"].includes(beatId)) return PHANTOM_VISITOR_MILESTONES["drone-freed"];
-  if (beatId === "untangle" && Clamp01(progress) >= 0.76) return PHANTOM_VISITOR_MILESTONES["drone-freed"];
+  if (beatId === "untangle" && Clamp01(progress) >= 0.9) return PHANTOM_VISITOR_MILESTONES["drone-freed"];
   if (beatId === "reveal" && Clamp01(progress) >= 0.58 || beatId === "untangle") return PHANTOM_VISITOR_MILESTONES["drone-revealed"];
   return PHANTOM_VISITOR_MILESTONES.none;
 }

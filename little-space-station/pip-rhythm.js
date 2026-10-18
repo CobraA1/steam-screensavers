@@ -118,6 +118,6 @@ export function ApplyPipRechargeState(state, recharge, dream = null) {
   state.ambientJob = state.pipTaskId;
   state.ambientJobLabel = state.pipTaskLabel;
   state.lastSignificantActivity = dreaming ? (phantomDream ? "Pip remembers freeing a tiny inspection drone" : "Pip remembers a stubborn antenna") : "Pip is recharging";
-  state.dream = dreaming ? { type: dream.type, instanceId: dream.instanceId, progress: DreamProgress(dream), variant: dream.variant, beatId: timeline.beat.id, beatProgress: timeline.progress } : null;
+  state.dream = dreaming ? { type: dream.type, instanceId: dream.instanceId, storyYear: dream.storyYear, outcome: dream.outcome, progress: DreamProgress(dream), variant: dream.variant, beatId: timeline.beat.id, beatProgress: timeline.progress } : null;
   return state;
 }

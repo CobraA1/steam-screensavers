@@ -22,6 +22,7 @@ export class PhantomDreamVisual {
     const dark = material(0x1e3540);
     const bright = material(0xc8fff2);
     const ghost = material(0xf0eee2, 0.82);
+    this.ghostMaterial = ghost;
     const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
     const sphereGeometry = new THREE.SphereGeometry(1, 8, 6);
     const mesh = (parent, geometry, mat, x, y, z, sx, sy = sx, sz = sx) => {
@@ -50,7 +51,14 @@ export class PhantomDreamVisual {
     box(this.pip, cream, 0, 0.43, 0.12, 0.34, 0.24, 0.22);
     box(this.pip, dark, 0, 0.43, 0.25, 0.25, 0.09, 0.03);
     this.eye = box(this.pip, bright, 0, 0.43, 0.28, 0.16, 0.035, 0.02);
-    this.pipArm = box(this.pip, orange, 0.22, 0.08, 0.15, 0.06, 0.3, 0.06);
+    this.pipArm = new THREE.Group();
+    this.pipArm.position.set(0.18, 0.23, 0.16);
+    this.pip.add(this.pipArm);
+    box(this.pipArm, orange, 0, -0.16, 0, 0.06, 0.32, 0.06);
+    this.hand = mesh(this.pipArm, sphereGeometry, cream, 0, -0.33, 0, 0.055);
+    box(this.pip, cream, 0.06, 0.62, 0.1, 0.025, 0.16, 0.025);
+    mesh(this.pip, sphereGeometry, orange, 0.06, 0.71, 0.1, 0.035);
+    for (const x of [-0.09, 0.09]) box(this.pip, dark, x, -0.1, 0.12, 0.07, 0.17, 0.1);
 
     this.drone = new THREE.Group();
     this.bubble.add(this.drone);
@@ -60,12 +68,19 @@ export class PhantomDreamVisual {
       box(this.drone, orange, side * 0.22, 0, 0, 0.22, 0.04, 0.1);
       mesh(this.drone, sphereGeometry, dark, side * 0.35, 0.03, 0, 0.07, 0.035, 0.07);
     }
+    // Dedicated material instances let the departing memory drone fade without
+    // dimming Pip, the platform, or the bubble, which share the base palette.
+    this.droneMaterials = [];
+    this.drone.traverse(object => {
+      if (!object.material) return;
+      object.material = object.material.clone();
+      this.droneMaterials.push(object.material);
+    });
 
     this.cover = new THREE.Group();
     this.bubble.add(this.cover);
     mesh(this.cover, sphereGeometry, ghost, 0, 0.08, 0, 0.2, 0.17, 0.18);
-    const skirt = mesh(this.cover, new THREE.ConeGeometry(0.26, 0.42, 7, 1, true), ghost, 0, -0.19, 0, 1);
-    skirt.rotation.x = Math.PI;
+    mesh(this.cover, new THREE.CylinderGeometry(0.15, 0.26, 0.3, 8, 1, true), ghost, 0, -0.08, 0, 1);
     this.anchor = new THREE.Vector3();
     this.cameraAnchor = new THREE.Vector3();
   }
@@ -91,45 +106,83 @@ export class PhantomDreamVisual {
     const beat = dream.beatId;
     this.pip.position.set(-0.72, -0.34, 0.18);
     this.pip.rotation.z = 0;
-    this.drone.position.set(0.45, 0, 0.18);
+    this.drone.position.set(0.35, 0, 0.18);
     this.drone.rotation.z = 0;
-    this.cover.position.set(0.45, 0.12, 0.2);
+    this.cover.position.set(0.35, 0.12, 0.2);
     this.cover.rotation.z = 0;
-    this.drone.visible = !["glimpse", "vanish", "search"].includes(beat);
-    this.cover.visible = beat !== "search";
+    let droneAlpha = 0;
+    let coverAlpha = 1;
+    this.cover.scale.setScalar(1);
+    this.drone.scale.setScalar(1);
     let reach = 0;
     let surprise = 0;
-    if (beat === "glimpse") this.cover.position.x = 1.05 - Smooth(p) * 0.8;
-    if (beat === "vanish") this.cover.scale.setScalar(1 - Smooth(p) * 0.7);
-    else this.cover.scale.setScalar(1);
-    if (beat === "reveal") this.drone.scale.setScalar(0.6 + Smooth(p) * 0.4);
-    else this.drone.scale.setScalar(1);
+    if (beat === "glimpse") {
+      this.cover.position.x = 1 - Smooth(p) * 0.65;
+      coverAlpha = Smooth(p / 0.15);
+    }
+    if (beat === "vanish") {
+      this.pip.position.x += Smooth(p) * 0.35;
+      this.cover.position.x += Smooth(p) * 0.45;
+      coverAlpha = 1 - Smooth(p);
+    }
+    if (beat === "search") {
+      this.pip.position.x = -0.37 - Math.sin(p * Math.PI) * 0.18;
+      this.pip.rotation.z = Math.sin(p * Math.PI * 2) * 0.1;
+      this.cover.position.x = 0.8;
+      coverAlpha = 0;
+    }
+    if (beat === "reveal") {
+      this.pip.position.x = -0.37 + Smooth(p) * 0.32;
+      this.cover.position.x = 0.8 - Smooth(p / 0.5) * 0.45;
+      this.cover.position.y += Smooth((p - 0.5) / 0.5) * 0.08;
+      coverAlpha = Smooth(p / 0.25);
+      droneAlpha = Smooth((p - 0.25) / 0.35);
+      reach = Smooth((p - 0.6) / 0.4);
+    }
     if (beat === "untangle") {
-      reach = Math.sin(p * Math.PI);
-      this.cover.position.x = 0.45 + Smooth(p) * 0.52;
-      this.cover.position.y = 0.12 + Smooth(p) * 0.28;
-      this.cover.rotation.z = Smooth(p) * 0.55;
+      this.pip.position.x = -0.05;
+      droneAlpha = 1;
+      reach = 1;
+      this.cover.position.x = 0.35 - Smooth(p) * 0.13;
+      this.cover.position.y = 0.2 + Smooth(p) * 0.22;
+      this.cover.rotation.z = -Smooth(p) * 0.5;
     }
     if (beat === "drone-departure") {
-      this.drone.position.x = 0.45 + Smooth(p) * 0.62;
-      this.drone.position.y = Smooth(p) * 0.48;
+      this.pip.position.x = -0.05;
+      reach = 1 - Smooth(p / 0.3);
+      this.drone.position.x = 0.35 + Smooth(p) * 0.7;
+      this.drone.position.y = Smooth(p) * 0.35;
+      droneAlpha = 1 - Smooth((p - 0.55) / 0.4);
       this.drone.rotation.z = Math.sin(p * Math.PI * 5) * 0.15;
-      this.cover.position.set(0.28, -0.18, 0.18);
+      this.cover.position.set(0.22 + Smooth(p) * 0.16, 0.42 - Smooth(p) * 0.3, 0.2);
+      this.cover.rotation.z = -0.5;
     }
     if (beat === "trailing-cover") {
-      this.pip.position.x = -0.2 - Smooth(p) * 0.55;
-      this.cover.position.set(this.pip.position.x + 0.5, 0, 0.2);
-      this.cover.rotation.z = Math.sin(p * Math.PI * 3) * 0.12;
-      this.drone.visible = false;
+      this.pip.position.x = -0.05 - Smooth(p) * 0.67;
+      this.cover.position.set(0.38 - Smooth(p) * 0.6, 0.12, 0.2);
+      this.cover.rotation.z = -0.5 + Smooth(p) * 0.3;
     }
     if (beat === "final-surprise") {
       surprise = Math.sin(Math.min(1, p * 1.7) * Math.PI);
-      this.cover.position.x = -0.1 + Smooth(p) * 1.3;
-      this.cover.position.y = Math.sin(p * Math.PI) * 0.28;
-      this.drone.visible = false;
+      const exit = Smooth((p - 0.35) / 0.65);
+      this.cover.position.x = -0.22 + exit * 1.2;
+      this.cover.position.y = 0.12 + exit * 0.13;
+      this.cover.rotation.z = -0.2 + Smooth(p) * 0.6;
+      coverAlpha = 1 - Smooth((p - 0.65) / 0.3);
     }
-    this.pip.rotation.z = -surprise * 0.18;
+    this.drone.visible = droneAlpha > 0;
+    this.cover.visible = coverAlpha > 0;
+    for (const material of this.droneMaterials) material.opacity = droneAlpha * fade;
+    this.ghostMaterial.opacity = 0.82 * coverAlpha * fade;
+    this.pip.rotation.z += -surprise * (0.13 + (dream.variant || 0) * 0.035);
     this.eye.scale.y = surprise ? 0.06 : 0.035;
-    this.pipArm.rotation.z = -0.1 + reach * 1.05 + (beat === "drone-departure" ? 0.7 + Math.sin(p * Math.PI * 4) * 0.18 : 0);
+    // Pivot at the shoulder and end the hand on the moving hem. A modest
+    // telescoping toy arm keeps the miniature action readable without IK.
+    const dx = this.cover.position.x - this.pip.position.x - this.pipArm.position.x;
+    const dy = this.cover.position.y - 0.18 - this.pip.position.y - this.pipArm.position.y;
+    const angle = Math.atan2(dx, -dy);
+    const wave = beat === "drone-departure" ? Math.sin(p * Math.PI) * (0.7 + Math.sin(p * Math.PI * 4) * 0.18) : 0;
+    this.pipArm.rotation.z = angle * reach + wave * (1 - reach);
+    this.pipArm.scale.y = 1 + (Math.hypot(dx, dy) / 0.33 - 1) * reach;
   }
 }
