@@ -51,6 +51,55 @@ test("dream stays in the camera bounds in a close or narrow view", () => {
   }
 });
 
+test("miniature Pip recovers continuously from the runaway spin before repairing", () => {
+  const { visual, camera, head } = Fixture();
+  const show = (beatId, beatProgress) => visual.update({
+    type: "stubborn-antenna", beatId, beatProgress, progress: 0.65, variant: 2,
+  }, camera, head);
+  const pose = () => ({
+    x: visual.pip.position.x,
+    body: visual.pip.rotation.z,
+    head: visual.head.rotation.z,
+    eye: visual.eye.scale.y,
+    leftArm: visual.arms[0].rotation.z,
+    rightArm: visual.arms[1].rotation.z,
+    dish: visual.dish.rotation.z,
+    tool: visual.tool.visible,
+  });
+  const samePose = (before, after) => {
+    for (const key of ["x", "body", "head", "eye", "leftArm", "rightArm", "dish"]) {
+      assert.ok(Math.abs(before[key] - after[key]) < 1e-12, key + " is continuous at the beat boundary");
+    }
+    assert.equal(before.tool, after.tool);
+  };
+
+  show("runaway-spin", 1);
+  const runawayEnd = pose();
+  show("real-repair", 0);
+  samePose(runawayEnd, pose());
+
+  show("real-repair", 0.15);
+  const halfwayRecovered = pose();
+  assert.ok(halfwayRecovered.body > 0 && halfwayRecovered.body < runawayEnd.body);
+  assert.ok(halfwayRecovered.eye > 0.035 && halfwayRecovered.eye < runawayEnd.eye);
+  assert.equal(halfwayRecovered.tool, false, "Pip regains composure before reaching for the repair");
+
+  show("real-repair", 0.3);
+  const composed = pose();
+  assert.ok(Math.abs(composed.body) < 1e-12);
+  assert.ok(Math.abs(composed.head) < 1e-12);
+  assert.equal(composed.eye, 0.035);
+  assert.equal(composed.tool, false);
+
+  show("real-repair", 0.6);
+  assert.equal(visual.tool.visible, true, "the pre-existing repair action still follows recovery");
+  const repaired = pose();
+  show("real-repair", 0.15);
+  assert.deepEqual(pose(), halfwayRecovered, "backward seeking restores the recovery pose");
+  show("real-repair", 0.6);
+  assert.deepEqual(pose(), repaired, "forward seeking restores the repair pose");
+});
+
 test("a dream finishes without rewriting its memory or live station facts", () => {
   const memory = Object.freeze({ type: "stubborn-antenna", instanceId: "saved", storyYear: 2026, variant: 2, eligibleForDream: true });
   const dream = CreateAntennaDream(memory);

@@ -98,9 +98,15 @@ export class AntennaDreamVisual {
       x = workX + (-0.8 - workX) * startled;
       tilt = -0.6 + p * Math.PI * 6;
     } else if (beat === "real-repair") {
+      // Keep the terminal runaway pose at this beat boundary, then let Pip
+      // settle before the existing repair reach begins at 30%. This is derived
+      // solely from beat progress so seeking reconstructs the same recovery.
+      startled = 1 - Smooth(p / 0.3);
       x = -0.8 + (workX + 0.8) * Smooth(p / 0.4);
       reach = Smooth((p - 0.3) / 0.15) * Smooth((1 - p) / 0.12);
-      tilt = -0.6 + Smooth((p - 0.35) / 0.65) * 0.35;
+      // The runaway dish completes three turns. Retain that terminal rotation
+      // value here so its transform is continuous as well as visually equal.
+      tilt = -0.6 + Math.PI * 6 + Smooth((p - 0.35) / 0.65) * 0.35;
     } else if (beat === "exit") {
       x = workX + (-0.74 - workX) * Smooth(p);
       tilt = -0.25;
@@ -112,7 +118,7 @@ export class AntennaDreamVisual {
     this.pip.position.set(x, -0.39, 0.18);
     this.pip.rotation.z = startled * 0.24;
     this.head.rotation.z = startled * 0.12 - reach * 0.15;
-    this.eye.scale.y = startled ? 0.055 : 0.035;
+    this.eye.scale.y = 0.035 + startled * 0.02;
     this.arms[0].rotation.z = -0.12 - startled * 1.7;
     this.arms[1].rotation.z = 0.12 + reach * (0.9 + Math.sin(p * 24 + gesture) * 0.07) + startled * 1.6;
     this.tool.visible = reach > 0.1;
