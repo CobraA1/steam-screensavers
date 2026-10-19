@@ -13,14 +13,14 @@ export const CAMERA_VIEW_MODES = Object.freeze([
   Object.freeze({ id: "overview", label: "Station overview" }),
   Object.freeze({ id: "activity", label: "Activity focus" }),
   Object.freeze({ id: "top", label: "Top orthographic · station axes" }),
-  Object.freeze({ id: "front", label: "Front orthographic (+Z) · station axes" }),
-  Object.freeze({ id: "side", label: "Side orthographic (+X) · station axes" }),
+  Object.freeze({ id: "front", label: "Front orthographic (+X) · station axes" }),
+  Object.freeze({ id: "side", label: "Side orthographic (+Z) · station axes" }),
 ]);
 
 const ORTHOGRAPHIC_MODES = Object.freeze({
   top: Object.freeze({ axis: [0, 1, 0], up: [0, 0, -1] }),
-  front: Object.freeze({ axis: [0, 0, 1], up: [0, 1, 0] }),
-  side: Object.freeze({ axis: [1, 0, 0], up: [0, 1, 0] }),
+  front: Object.freeze({ axis: [1, 0, 0], up: [0, 1, 0] }),
+  side: Object.freeze({ axis: [0, 0, 1], up: [0, 1, 0] }),
 });
 
 export function ResolveCameraFramingPreset(id) {

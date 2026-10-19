@@ -79,7 +79,7 @@ test("preview orthographic views use station-local orthogonal axes", () => {
   const q = new THREE.Quaternion();
   station.getWorldQuaternion(q);
   const expectedAxes = {
-    top: [0, 1, 0], front: [0, 0, 1], side: [1, 0, 0],
+    top: [0, 1, 0], front: [1, 0, 0], side: [0, 0, 1],
   };
   for (const [mode, axes] of Object.entries(expectedAxes)) {
     assert.equal(controller.setMode(mode), true);

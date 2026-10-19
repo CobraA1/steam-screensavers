@@ -15,7 +15,7 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `world.js` is the compatibility entry point; `station-identity.js` owns seeded visual identity.
 - `environment.js` derives illumination, rotation, and seasons; `environment-renderer.js` maps that state onto existing lights and materials.
 - `scene.js` builds the Three.js diorama and visualizes simulation state.
-- `camera-framing.js` owns the 140% production view and the preview framing comparison controls, including preview-only station-axis top (+Y), front (+Z) and side (+X) orthographic inspection.
+- `camera-framing.js` owns the 140% production view and the preview framing comparison controls, including preview-only station-axis top (+Y), front (+X) and side (+Z) orthographic inspection.
 - `expansion-preview.js` builds lightweight wireframe layout studies; it is reachable only through the dynamically loaded preview tools.
 - `pip-behavior.js`, `pip-animation.js`, and `station-details.js` map deterministic task stages to Pip's poses, equipment work, and physically attached cargo handling.
 - `autumn-2026.js` derives the 2026 calendar, seasonal cargo manifests, decorations, installations, oddities, and cleanup without persisting routine state.

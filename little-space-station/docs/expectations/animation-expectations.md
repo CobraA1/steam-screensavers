@@ -15,8 +15,8 @@ For changes to **3D object placement, dimensions, orientation, geometry, attachm
 
 1. **Production perspective** (default camera and approved framing): primary acceptance view for composition, storytelling, readability, and cause/effect.
 2. **Top orthographic** (station-local +Y): horizontal clearances, fore/aft and port/starboard alignment, approach paths, and hidden intersections.
-3. **Front orthographic** (station-local +Z): heights, floor/deck contact, hand-to-prop reach, vertical separation, and horizontal alignment.
-4. **Side orthographic** (station-local +X): hidden depth offsets, docking clearance, relative elevation, attachments, and movement through or behind structures.
+3. **Front orthographic** (station-local +X, facing the docking end): radial clearances around the dock, depth/width offsets, hand-to-prop reach, and hidden intersections.
+4. **Side orthographic** (station-local +Z, looking across the station's long axis): heights, deck contact, front/rear separation, docking approaches, attachments, and movement through structures.
 
 Switch among them with **Preview mode → Camera experiment → View**. An orbiting perspective view is not a substitute for a true orthographic projection. The three inspection cameras are preview-only: production perspective remains the visual/storytelling authority.
 
