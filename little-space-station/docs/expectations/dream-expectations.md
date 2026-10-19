@@ -45,7 +45,7 @@ Reuse the existing dream clock and renderer architecture. Do not run a second si
 ## Acceptance checks
 
 1. Play a complete dream at its configured pace, then inspect every beat and its boundaries with the preview scrubber.
-2. Check manipulation contact, separation of cover/drone, departure, final joke, and fade-out. Verify that seeking backward restores opacity and transforms. For miniature 3D positioning and gestures, inspect matching dream timestamps in perspective, top, front and side orthographic views per the [animation expectations](animation-expectations.md).
+2. Check manipulation contact, separation of cover/drone, departure, final joke, and fade-out. Verify that seeking backward restores opacity and transforms. **Dream presentations are exempt from orthographic review**: inspect the camera-facing production perspective at matching key timestamps, including fade boundaries and narrow/wide viewports. Live-story actors and station geometry retain the four-view requirement in the [animation expectations](animation-expectations.md).
 3. Confirm that saved identity, variant, year, and outcome reach the memory descriptor and that source memory records remain unchanged.
 4. Snapshot live equipment, cargo, traffic, and world-time facts before applying a dream; verify that they are unchanged afterward.
 5. Preview the memory after Halloween cleanup and after January renewal. Inspect bubble containment at Deck, desktop, and narrow viewport sizes.

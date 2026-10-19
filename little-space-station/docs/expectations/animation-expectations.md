@@ -22,7 +22,9 @@ Switch among them with **Preview mode → Camera experiment → View**. An orbit
 
 For animations, examine **setup, contact, transfer/release, reaction, and exit**, intermediate travel, and both sides of relevant beat boundaries at matching timestamps in all four views. For static objects, check the assembled placement and neighboring surfaces. Where practical, pair screenshot evidence with world-space anchor/distance assertions; one camera angle can conceal a geometry error.
 
-Report which views, states, and screenshots were actually inspected. If an orthographic inspection could not be done, disclose the gap and residual risk rather than claiming complete verification. Purely 2D overlay, text-only, or documentation changes may omit the extra views with a brief justification.
+**Dream presentation exception:** The miniature memory scenes shown in Pip's thought bubbles, including their actor choreography and whole-bubble fades, are **exempt** from the top/front/side orthographic checks. These are intentionally camera-facing, composed presentations. Instead, review both dreams in their normal production perspective at their key beats, fade boundaries, and supported viewport sizes, with playback and deterministic forward/backward scrubbing. The **live-world** antenna and Phantom Visitor incidents, physical station objects, docking, and other 3D motion still require all four views.
+
+Report which views, states, and screenshots were actually inspected. If a required orthographic inspection could not be done, disclose the gap and residual risk rather than claiming complete verification. Purely 2D overlay, text-only, or documentation changes may omit the extra views with a brief justification.
 
 ## Shared miniature character quality
 
@@ -42,7 +44,7 @@ Report which views, states, and screenshots were actually inspected. If an ortho
 
 ## Verification
 
-1. Exercise the actual preview controls and watch playback, not just isolated poses. For 3D changes, check production perspective **and** top/front/side orthographic projections.
+1. Exercise the actual preview controls and watch playback, not just isolated poses. For live-world 3D changes, check production perspective **and** top/front/side orthographic projections; dream-bubble presentation changes use the documented exception.
 2. Inspect setup, contact, release, reaction, and exit, plus immediately before/after beat boundaries. Scrub forward, backward, and from the last beat to the first.
 3. Compare 1280×800, 1920×1080, and 2560×1600 when framing changes; inspect sunlight and shadow. Check a narrow viewport for viewport-bound overlays.
 4. Test meaningful geometry relationships: joint reach, front-facing target direction, boundary continuity, offscreen exits, and reset behavior. Source-string assertions do not prove these properties.
