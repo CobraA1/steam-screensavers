@@ -1,6 +1,6 @@
 # Animation expectations
 
-These requirements apply to custom screensavers, especially The Little Space Station. Read them before changing character movement, prop handling, arrivals, departures, or camera-dependent staging. The root [AGENTS.md](../AGENTS.md) remains the platform contract.
+These requirements apply specifically to The Little Space Station. Read them before changing character movement, prop handling, arrivals, departures, or camera-dependent staging. The root [AGENTS.md](../../../AGENTS.md) remains the platform contract.
 
 ## Readable action
 
@@ -8,6 +8,12 @@ These requirements apply to custom screensavers, especially The Little Space Sta
 - A character notices a target, turns toward it, approaches, performs the action, inspects the result, and returns naturally. Match gaze and body orientation to the actual target, rather than assuming a yaw is correct.
 - Preserve the cozy, low-poly, retro-futuristic style. Pauses, anticipation, and small reactions are useful; constant motion and flashing are not substitutes for intent.
 - Establish visible cause and effect. A hand must reach a carried or manipulated object. A hatch rotates at its hinge; a cloth hem connects to its skirt; an engine exhaust points away from the force it represents.
+
+## Shared miniature character quality
+
+- Dream scenes must use the shared `dream-pip-visual.js` model. Keep Pip's cream head, teal body, visor, chest light, paired articulated arms, elbow joints and wrist tool available across memories.
+- Story-specific gestures may hide the tool, change Pip's pose or adjust a reach, but must not replace the shared model with a simplified robot.
+- When changing miniature geometry, inspect both the antenna and Phantom dreams and confirm hand-to-prop contact is still clear.
 
 ## Motion and ownership
 

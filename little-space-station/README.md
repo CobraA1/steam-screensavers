@@ -20,12 +20,16 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `pip-behavior.js`, `pip-animation.js`, and `station-details.js` map deterministic task stages to Pip's poses, equipment work, and physically attached cargo handling.
 - `autumn-2026.js` derives the 2026 calendar, seasonal cargo manifests, decorations, installations, oddities, and cleanup without persisting routine state.
 - `seasonal-service-deck.js` builds the temporary aft commons/service platform, utility cabin, deck lights, attachment passage, and shared seasonal/Pip anchors. `seasonal-renderer.js` places fall and Halloween decorations on that deck. `phantom-visitor.js` / `phantom-renderer.js` and `lights-of-remembrance.js` / `remembrance-renderer.js` own the two interruption-safe seasonal stories.
-- `dream-renderer.js` and `phantom-dream-renderer.js` render read-only miniature memories while Pip charges.
+- `dream-pip-visual.js` provides the consistent miniature robot for `dream-renderer.js` and `phantom-dream-renderer.js`, which render read-only memories while Pip charges.
 - `app.js` owns startup, frame timing, visibility handling, resolution changes, and persistence commits.
 - `preview-tools.js` is dynamically imported only when the URL contains `?preview=1`.
 - `vendor/` contains the local Three.js r186 runtime used by this repository.
 
 No network connection, package installation, or build step is required.
+
+## Project expectations
+
+Project-specific rules now live in [docs/expectations/](docs/expectations/README.md), including [animation](docs/expectations/animation-expectations.md), [dreams](docs/expectations/dream-expectations.md), and [story design](docs/expectations/story-expectations.md). The root `AGENTS.md` remains the shared Steam Deck platform guide.
 
 ## Traffic and station behavior
 

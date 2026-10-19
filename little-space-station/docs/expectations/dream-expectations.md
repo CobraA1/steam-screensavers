@@ -1,6 +1,6 @@
 # Dream and memory expectations
 
-Read this before changing dream selection, memory records, miniature actors, or the thought-bubble presentation. Dreams follow the [story-year direction](../little-space-station/little-space-station-story-year-and-seasonal-ideas.md) and the corresponding original incident brief.
+Read this before changing dream selection, memory records, miniature actors, or the thought-bubble presentation. Dreams follow the [story-year direction](../../little-space-station-story-year-and-seasonal-ideas.md) and the corresponding original incident brief.
 
 ## Meaning and eligibility
 
@@ -20,6 +20,13 @@ Read this before changing dream selection, memory records, miniature actors, or 
 - Preserve visible prop continuity and reset all transforms/material state on seeks, just as for live animation. Fade the drone on departure without fading unrelated actors that share materials.
 - Keep actors inside the bubble or fade them before they cross its rim. Fit the bubble at the production camera, wide and narrow viewports, and all supported display sizes.
 - Use restrained, legible colors independent of orbital shadow. Fade the whole memory in and out smoothly, while leaving the real station's materials untouched.
+
+## Consistent Pip model across dreams
+
+- Dream renderers must reuse `dream-pip-visual.js` rather than reconstructing a weaker miniature Pip. Maintain the same silhouette, cream head, readable visor, teal body, chest indicator, paired articulated arms, elbow details and wrist-mounted tool.
+- Story renderers own their poses and beat timing. Phantom Pip must visibly reach and lift the covering with the shared arm rig; the repair tool may stay hidden when unnecessary.
+- Bubble background and rim colors may vary by story mood; bubble shape, thought dots and the quality of miniature Pip should remain consistent.
+- Reset Pip's head, eyes, arm pivots, scale and tool visibility during deterministic seeks. After changing the shared model, visually check both dreams during full playback and at key contact frames.
 
 ## Isolation
 

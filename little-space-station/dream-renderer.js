@@ -1,4 +1,5 @@
 import * as THREE from "./vendor/three.module.js";
+import { CreateDreamPipVisual } from "./dream-pip-visual.js";
 
 const Smooth = (value) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
 
@@ -44,41 +45,14 @@ export class AntennaDreamVisual {
     // Three small thought dots visually attach the memory to the sleeping Pip.
     for (const [x, y, radius] of [[-0.13, 0.26, 0.045], [-0.28, 0.48, 0.075], [-0.48, 0.72, 0.11]]) {
       mesh(this.root, new THREE.CircleGeometry(1, 16), backdrop, x, y, 0, radius);
+      mesh(this.root, new THREE.CircleGeometry(1, 16), backdrop, x, y, 0, radius);
       mesh(this.root, new THREE.TorusGeometry(1, 0.06, 4, 16), rim, x, y, 0.01, radius);
     }
     box(this.bubble, teal, 0, -0.52, 0.04, 2.15, 0.08, 0.22);
     for (const x of [-0.8, -0.4, 0, 0.4, 0.8]) box(this.bubble, dark, x, -0.52, 0.16, 0.025, 0.08, 0.015);
 
-    this.pip = new THREE.Group();
-    this.bubble.add(this.pip);
-    box(this.pip, teal, 0, 0.26, 0.12, 0.32, 0.37, 0.2);
-    box(this.pip, orange, 0, 0.26, 0.23, 0.18, 0.16, 0.03);
-    mesh(this.pip, sphereGeometry, bright, 0, 0.28, 0.25, 0.028);
-    this.head = new THREE.Group();
-    this.head.position.set(0, 0.58, 0.12);
-    this.pip.add(this.head);
-    box(this.head, cream, 0, 0, 0, 0.34, 0.26, 0.23);
-    box(this.head, dark, 0, 0, 0.13, 0.27, 0.1, 0.035);
-    this.eye = box(this.head, bright, 0, 0, 0.16, 0.18, 0.035, 0.025);
-    box(this.head, orange, 0.09, 0.2, 0, 0.02, 0.17, 0.02);
-    mesh(this.head, sphereGeometry, bright, 0.09, 0.29, 0, 0.035);
-    this.arms = [];
-    for (const side of [-1, 1]) {
-      box(this.pip, dark, side * 0.09, 0.01, 0.12, 0.05, 0.17, 0.06);
-      box(this.pip, cream, side * 0.1, -0.07, 0.16, 0.12, 0.06, 0.15);
-      const arm = new THREE.Group();
-      arm.position.set(side * 0.21, 0.39, 0.12);
-      this.pip.add(arm);
-      mesh(arm, sphereGeometry, orange, 0, 0, 0, 0.055);
-      box(arm, teal, 0, -0.13, 0, 0.055, 0.23, 0.055);
-      mesh(arm, sphereGeometry, cream, 0, -0.26, 0.025, 0.065);
-      this.arms.push(arm);
-    }
-    this.tool = new THREE.Group();
-    this.arms[1].add(this.tool);
-    box(this.tool, orange, 0, -0.32, 0.04, 0.035, 0.16, 0.035);
-    box(this.tool, bright, 0, -0.41, 0.04, 0.13, 0.045, 0.05);
-
+    ({ pip: this.pip, head: this.head, eye: this.eye, arms: this.arms, tool: this.tool } =
+      CreateDreamPipVisual(this.bubble, { cream, teal, orange, dark, bright }));
     box(this.bubble, teal, 0.56, -0.24, 0.04, 0.08, 0.52, 0.1);
     box(this.bubble, teal, 0.56, -0.46, 0.04, 0.32, 0.08, 0.22);
     this.plate = box(this.bubble, orange, 0.56, -0.24, 0.105, 0.21, 0.14, 0.025);

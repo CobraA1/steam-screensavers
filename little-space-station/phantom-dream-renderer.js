@@ -1,4 +1,5 @@
 import * as THREE from "./vendor/three.module.js";
+import { CreateDreamPipVisual } from "./dream-pip-visual.js";
 
 const Smooth = (value) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
 
@@ -45,20 +46,14 @@ export class PhantomDreamVisual {
     }
     box(this.bubble, teal, 0, -0.52, 0.04, 2.15, 0.08, 0.22);
 
-    this.pip = new THREE.Group();
-    this.bubble.add(this.pip);
-    box(this.pip, teal, 0, 0.1, 0.12, 0.28, 0.34, 0.18);
-    box(this.pip, cream, 0, 0.43, 0.12, 0.34, 0.24, 0.22);
-    box(this.pip, dark, 0, 0.43, 0.25, 0.25, 0.09, 0.03);
-    this.eye = box(this.pip, bright, 0, 0.43, 0.28, 0.16, 0.035, 0.02);
-    this.pipArm = new THREE.Group();
-    this.pipArm.position.set(0.18, 0.23, 0.16);
-    this.pip.add(this.pipArm);
-    box(this.pipArm, orange, 0, -0.16, 0, 0.06, 0.32, 0.06);
-    this.hand = mesh(this.pipArm, sphereGeometry, cream, 0, -0.33, 0, 0.055);
-    box(this.pip, cream, 0.06, 0.62, 0.1, 0.025, 0.16, 0.025);
-    mesh(this.pip, sphereGeometry, orange, 0.06, 0.71, 0.1, 0.035);
-    for (const x of [-0.09, 0.09]) box(this.pip, dark, x, -0.1, 0.12, 0.07, 0.17, 0.1);
+    ({ pip: this.pip, head: this.head, eye: this.eye, arms: this.arms,
+      hands: this.hands, tool: this.tool } = CreateDreamPipVisual(this.bubble, {
+      cream: material(0xd9eee5), teal: material(0x4f9c9c),
+      orange: material(0xe3b47d), dark: material(0x193b49), bright: material(0xc9fff3),
+    }));
+    this.pipArm = this.arms[1];
+    this.hand = this.hands[1];
+    this.tool.visible = false;
 
     this.drone = new THREE.Group();
     this.bubble.add(this.drone);
@@ -104,7 +99,10 @@ export class PhantomDreamVisual {
     const fade = Smooth(progress / 0.06) * Smooth((1 - progress) / 0.08);
     for (const entry of this.materials) entry.material.opacity = entry.opacity * fade;
     const beat = dream.beatId;
-    this.pip.position.set(-0.72, -0.34, 0.18);
+    this.pip.position.set(-0.72, -0.39, 0.18);
+    this.head.rotation.set(0, 0, 0);
+    for (const arm of this.arms) { arm.rotation.set(0, 0, 0); arm.scale.set(1, 1, 1); }
+    this.tool.visible = false;
     this.pip.rotation.z = 0;
     this.drone.position.set(0.35, 0, 0.18);
     this.drone.rotation.z = 0;
@@ -175,6 +173,8 @@ export class PhantomDreamVisual {
     for (const material of this.droneMaterials) material.opacity = droneAlpha * fade;
     this.ghostMaterial.opacity = 0.82 * coverAlpha * fade;
     this.pip.rotation.z += -surprise * (0.13 + (dream.variant || 0) * 0.035);
+    this.head.rotation.z = -surprise * 0.16 - reach * 0.08;
+    this.arms[0].rotation.z = -0.12 - surprise * 1.1;
     this.eye.scale.y = surprise ? 0.06 : 0.035;
     // Pivot at the shoulder and end the hand on the moving hem. A modest
     // telescoping toy arm keeps the miniature action readable without IK.
@@ -182,7 +182,7 @@ export class PhantomDreamVisual {
     const dy = this.cover.position.y - 0.18 - this.pip.position.y - this.pipArm.position.y;
     const angle = Math.atan2(dx, -dy);
     const wave = beat === "drone-departure" ? Math.sin(p * Math.PI) * (0.7 + Math.sin(p * Math.PI * 4) * 0.18) : 0;
-    this.pipArm.rotation.z = angle * reach + wave * (1 - reach);
-    this.pipArm.scale.y = 1 + (Math.hypot(dx, dy) / 0.33 - 1) * reach;
+    this.pipArm.rotation.z = 0.12 + (angle - 0.12) * reach + wave * (1 - reach);
+    this.pipArm.scale.y = 1 + (Math.max(0.65, Math.min(2.2, Math.hypot(dx, dy) / 0.26)) - 1) * reach;
   }
 }
