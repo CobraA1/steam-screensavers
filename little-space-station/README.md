@@ -19,7 +19,7 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `expansion-preview.js` builds lightweight wireframe layout studies; it is reachable only through the dynamically loaded preview tools.
 - `pip-behavior.js`, `pip-animation.js`, and `station-details.js` map deterministic task stages to Pip's poses, equipment work, and physically attached cargo handling.
 - `autumn-2026.js` derives the 2026 calendar, seasonal cargo manifests, decorations, installations, oddities, and cleanup without persisting routine state.
-- `seasonal-service-deck.js` builds the temporary aft commons/service platform, utility cabin, deck lights, attachment passage, and shared seasonal/Pip anchors. `seasonal-renderer.js` places fall and Halloween decorations on that deck. `phantom-visitor.js` / `phantom-renderer.js` and `lights-of-remembrance.js` / `remembrance-renderer.js` own the two interruption-safe seasonal stories.
+- `seasonal-service-deck.js` builds the temporary aft commons/service platform, utility cabin, deck lights, attachment passage, and shared seasonal/Pip anchors. `seasonal-renderer.js` places fall and Halloween decorations on that deck. `phantom-visitor.js` / `phantom-renderer.js` (with a shared open-bottom cloth shell in `phantom-cover-geometry.js`) and `lights-of-remembrance.js` / `remembrance-renderer.js` own the two interruption-safe seasonal stories.
 - `dream-pip-visual.js` provides the consistent miniature robot for `dream-renderer.js` and `phantom-dream-renderer.js`, which render read-only memories while Pip charges.
 - `app.js` owns startup, frame timing, visibility handling, resolution changes, and persistence commits.
 - `preview-tools.js` is dynamically imported only when the URL contains `?preview=1`.

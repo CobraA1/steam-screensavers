@@ -1,4 +1,5 @@
 import * as THREE from "./vendor/three.module.js";
+import { CreatePhantomCoverMesh } from "./phantom-cover-geometry.js";
 import { CreateDreamPipVisual } from "./dream-pip-visual.js";
 
 const Smooth = (value) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
@@ -24,6 +25,7 @@ export class PhantomDreamVisual {
     const bright = material(0xc8fff2);
     const ghost = material(0xf0eee2, 0.82);
     this.ghostMaterial = ghost;
+    ghost.side = THREE.FrontSide;
     const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
     const sphereGeometry = new THREE.SphereGeometry(1, 8, 6);
     const mesh = (parent, geometry, mat, x, y, z, sx, sy = sx, sz = sx) => {
@@ -74,8 +76,8 @@ export class PhantomDreamVisual {
 
     this.cover = new THREE.Group();
     this.bubble.add(this.cover);
-    mesh(this.cover, sphereGeometry, ghost, 0, 0.08, 0, 0.2, 0.17, 0.18);
-    mesh(this.cover, new THREE.CylinderGeometry(0.15, 0.26, 0.3, 8, 1, true), ghost, 0, -0.08, 0, 1);
+    // Keep the dream cover's original miniature height and open hem.
+    this.cover.add(CreatePhantomCoverMesh(ghost, { scale: 0.86, offsetY: 0.08 }));
     this.anchor = new THREE.Vector3();
     this.cameraAnchor = new THREE.Vector3();
   }
