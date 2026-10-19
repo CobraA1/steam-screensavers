@@ -2,13 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "../vendor/three.module.js";
 import {
-  MODES, SHAPE_OPTIONS, Clamp, FormatBytes, EstimateTargetBytes,
-  EstimateGeometryBytes, WindowFps, MakeLayout,
+  MODES, SHAPE_OPTIONS, PASS_OPTIONS, Clamp, FormatBytes, EstimateTargetBytes,
+  EstimateGeometryBytes, WindowFps, MakeLayout, Percentile, BenchmarkSummary,
 } from "../experiments/transparency-lab/metrics.js";
 
 test("the comparison supports all three modes and bounded counts", () => {
   assert.deepEqual(MODES, ["blend", "hash", "offscreen"]);
-  assert.deepEqual(SHAPE_OPTIONS, [6, 12, 24, 48, 96]);
+  assert.deepEqual(SHAPE_OPTIONS, [6, 12, 24, 48, 96, 256, 512, 1024]);
+  assert.deepEqual(PASS_OPTIONS, [1, 2, 4, 8]);
   assert.equal(Clamp(-3, 0, 1), 0);
   assert.equal(Clamp(1.2, 0, 1), 1);
   assert.equal(Clamp(Number.NaN, 0, 1), 0);
@@ -44,4 +45,18 @@ test("FPS rolling window reports measured wall-time frames", () => {
   assert.equal(WindowFps([]), null);
   assert.equal(WindowFps([0, 100, 200]), 10);
   assert.equal(WindowFps([1, 1]), null);
+});
+
+test("benchmark summaries use robust median/p95 and ignore invalid samples", () => {
+  assert.equal(Percentile([1, 2, 3, 4, 5], 0.5), 3);
+  assert.equal(Percentile([1, 3, 5], 0.95), 4.8);
+  assert.equal(Percentile([NaN, Infinity, 5, 9], 0.5), 7);
+  const summary = BenchmarkSummary({ frames: [0, 10, 20], cpu: [1, 2, 8], gpu: [0.3, 0.5, 0.7] });
+  assert.equal(summary.fps, 100);
+  assert.equal(summary.cpuMedian, 2);
+  assert.equal(summary.gpuMedian, 0.5);
+  assert.equal(summary.gpuSamples, 3);
+  const empty = BenchmarkSummary();
+  assert.equal(empty.gpuMedian, null);
+  assert.equal(empty.cpuMedian, null);
 });

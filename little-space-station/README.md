@@ -33,7 +33,7 @@ Project-specific rules now live in [docs/expectations/](docs/expectations/README
 
 ## Transparency Lab (development only)
 
-The [Transparency Lab](experiments/transparency-lab/README.md) is a separate browser experiment comparing **normal alpha blending**, **alpha hashing**, and **opaque-group offscreen compositing** with identical overlapping animated shapes. It includes FPS, frame/render submission time, draw calls, Chromium JS heap (when exposed), and a carefully labeled GPU allocation estimate. It is not loaded by the production screensaver. Start the repository preview server and open `/little-space-station/experiments/transparency-lab/index.html` directly.
+The [Transparency Lab](experiments/transparency-lab/README.md) is a separate browser experiment comparing **normal alpha blending**, **alpha hashing**, and **opaque-group offscreen compositing** with identical overlapping animated shapes. It includes FPS, frame/render submission time, optional asynchronous GPU timer queries, a sequential three-mode benchmark, configurable stress passes, draw calls, Chromium JS heap (when exposed), and a carefully labeled GPU allocation estimate. It is not loaded by the production screensaver. Start the repository preview server and open `/little-space-station/experiments/transparency-lab/index.html` directly.
 
 ## Traffic and station behavior
 

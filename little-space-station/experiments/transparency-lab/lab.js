@@ -1,8 +1,9 @@
 import * as THREE from "../../vendor/three.module.js";
 import {
-  MODES, SHAPE_OPTIONS, Clamp, FormatBytes, EstimateTargetBytes,
-  EstimateGeometryBytes, WindowFps, MakeLayout,
+  MODES, SHAPE_OPTIONS, PASS_OPTIONS, Clamp, FormatBytes, EstimateTargetBytes,
+  EstimateGeometryBytes, WindowFps, MakeLayout, Percentile, BenchmarkSummary,
 } from "./metrics.js";
+import { GpuTimer } from "./gpu-timer.js";
 
 // This opt-in diagnostic has its own DOM and animation loop. No production
 // screensaver file imports it; the station remains completely passive.
@@ -13,6 +14,10 @@ const labels = $("labels");
 const message = $("message");
 const display = $("display");
 const shapesSelect = $("shapes");
+const passesSelect = $("passes");
+const benchmarkButton = $("benchmark");
+const benchmarkProgress = $("benchmark-progress");
+const benchmarkResults = $("benchmark-results");
 const alphaSlider = $("opacity");
 const resolution = $("resolution");
 const animateInput = $("animate");
@@ -28,6 +33,10 @@ renderer.autoClear = false;
 renderer.info.autoReset = false;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.setPixelRatio(1);
+const gpuTimer = new GpuTimer(renderer.getContext());
+$("gpu-status").textContent = gpuTimer.supported
+  ? "Asynchronous WebGL2 query · whole display"
+  : "EXT_disjoint_timer_query_webgl2 unavailable";
 
 const colors = [0x7dd9ca, 0xefb87b, 0x9cb6e9, 0xffdb94, 0xeaa9be, 0x96c2ad];
 const geometries = [
@@ -56,35 +65,34 @@ function makeActors(mode) {
   sun.position.set(-3, 4, 6);
   scene.add(sun);
   const objects = [];
-  for (let index = 0; index < 96; index += 1) {
-    // Deterministic layout: matching indices use identical geometry/transforms
-    // and colors in all three modes, including at every animation timestamp.
-    const seed = (index * 214013 + 2531011) >>> 0;
-    const random = (shift) => ((Math.imul(seed ^ (seed >>> shift), 1664525) + 1013904223) >>> 0) / 4294967296;
-    const geometry = geometries[index % geometries.length];
-    const mat = new THREE.MeshStandardMaterial({
-      color: colors[index % colors.length], flatShading: true,
-      roughness: 0.68, metalness: 0.02,
-      // Hash uses alpha test via stochastic discard and writes depth; it should
-      // not also enable conventional transparent sorting/blending.
-      transparent: mode === "blend", alphaHash: mode === "hash",
-      depthWrite: mode !== "blend", opacity: mode === "offscreen" ? 1 : 0.55,
-      side: THREE.FrontSide,
-    });
-    const mesh = new THREE.Mesh(geometry, mat);
-    const base = {
-      x: (random(5) - 0.5) * 2.3,
-      y: (random(9) - 0.5) * 1.9,
-      z: (random(13) - 0.5) * 1.2,
-      phase: random(2) * Math.PI * 2,
-      speed: 0.3 + random(17) * 0.55,
-      scale: 0.73 + random(19) * 0.52,
-    };
-    mesh.scale.setScalar(base.scale);
-    scene.add(mesh);
-    objects.push({ mesh, base });
+  // Six shared materials per technique, not one material per object.
+  const materials = colors.map(color => new THREE.MeshStandardMaterial({
+    color, flatShading: true, roughness: 0.68, metalness: 0.02,
+    transparent: mode === "blend", alphaHash: mode === "hash",
+    depthWrite: mode !== "blend", opacity: mode === "offscreen" ? 1 : 0.55,
+    side: THREE.FrontSide,
+  }));
+  function ensureCount(limit) {
+    for (let index = objects.length; index < limit; index += 1) {
+      const seed = (index * 214013 + 2531011) >>> 0;
+      const random = shift =>
+        ((Math.imul(seed ^ (seed >>> shift), 1664525) + 1013904223) >>> 0) / 4294967296;
+      const mesh = new THREE.Mesh(geometries[index % geometries.length], materials[index % colors.length]);
+      const base = {
+        x: (random(5) - 0.5) * 2.3,
+        y: (random(9) - 0.5) * 1.9,
+        z: (random(13) - 0.5) * 1.2,
+        phase: random(2) * Math.PI * 2,
+        speed: 0.3 + random(17) * 0.55,
+        scale: 0.73 + random(19) * 0.52,
+      };
+      mesh.scale.setScalar(base.scale);
+      scene.add(mesh);
+      objects.push({ mesh, base });
+    }
   }
-  return { scene, objects };
+  ensureCount(12);
+  return { scene, objects, materials, ensureCount };
 }
 const sets = Object.fromEntries(MODES.map(mode => [mode, makeActors(mode)]));
 const camera = new THREE.PerspectiveCamera(37, 1, 0.1, 60);
@@ -102,7 +110,14 @@ let offscreen = null;
 let currentSize = { width: 0, height: 0, ratio: 0 };
 let layout;
 let count = 12;
+let passes = 1;
 let alpha = 0.55;
+let gpuWindow = [];
+let gpuScope = "";
+let benchmark = null;
+let benchmarkRunId = 0;
+const WARMUP_MS = 2000;
+const SAMPLE_MS = 6000;
 let motion = 0;
 let lastFrame = performance.now();
 let renderTimeMs = 0;
@@ -161,10 +176,12 @@ function resize() {
 }
 
 function drawActors(time) {
-  for (const mode of MODES) {
+  for (const mode of visibleModes()) {
+    sets[mode].ensureCount(count);
     for (let i = 0; i < sets[mode].objects.length; i += 1) {
       const {mesh, base} = sets[mode].objects[i];
       mesh.visible = i < count;
+      if (!mesh.visible) continue;
       mesh.position.set(
         base.x + Math.sin(time * base.speed + base.phase) * 0.19,
         base.y + Math.cos(time * base.speed * 0.67 + base.phase) * 0.16,
@@ -178,45 +195,159 @@ function drawActors(time) {
 function renderPane(mode, pane) {
   camera.aspect = pane.w / pane.h;
   camera.updateProjectionMatrix();
-  // An offscreen render target has its own viewport, clear alpha, and depth.
-  // Do this FIRST so the final compositing pass does not mix viewport states.
-  if (mode === "offscreen") {
-    ensureTarget(pane.physicalWidth, pane.physicalHeight);
-    renderer.setScissorTest(false);
-    renderer.setRenderTarget(offscreen);
-    renderer.setViewport(0, 0, offscreen.width, offscreen.height);
-    renderer.setClearColor(0x000000, 0);
-    renderer.clear(true, true, true);
-    renderer.render(sets.offscreen.scene, camera);
-  }
-  renderer.setRenderTarget(null);
-  renderer.setScissorTest(true);
-  // Three.js converts these CSS-pixel viewports to backing-pixel coordinates.
   const bottom = currentSize.height - (pane.y + pane.h);
-  renderer.setViewport(pane.x, bottom, pane.w, pane.h);
-  renderer.setScissor(pane.x, bottom, pane.w, pane.h);
-  renderer.setClearColor(0x0c2131, 1);
-  renderer.clear(true, true, true);
-  renderer.render(back, camera);
-  if (mode === "offscreen") {
-    fullscreenQuadMaterial.opacity = alpha;
-    renderer.render(fullscreen, fullscreenCamera);
-  } else {
-    renderer.render(sets[mode].scene, camera);
+  // Stress passes repeat the *whole pipeline*, clearing between passes.
+  // The last pass is visually identical to a 1-pass render.
+  for (let pass = 0; pass < passes; pass += 1) {
+    if (mode === "offscreen") {
+      ensureTarget(pane.physicalWidth, pane.physicalHeight);
+      renderer.setScissorTest(false);
+      renderer.setRenderTarget(offscreen);
+      renderer.setViewport(0, 0, offscreen.width, offscreen.height);
+      renderer.setClearColor(0x000000, 0);
+      renderer.clear(true, true, true);
+      renderer.render(sets.offscreen.scene, camera);
+    }
+    renderer.setRenderTarget(null);
+    renderer.setScissorTest(true);
+    renderer.setViewport(pane.x, bottom, pane.w, pane.h);
+    renderer.setScissor(pane.x, bottom, pane.w, pane.h);
+    renderer.setClearColor(0x0c2131, 1);
+    renderer.clear(true, true, true);
+    renderer.render(back, camera);
+    if (mode === "offscreen") {
+      fullscreenQuadMaterial.opacity = alpha;
+      renderer.render(fullscreen, fullscreenCamera);
+    } else {
+      renderer.render(sets[mode].scene, camera);
+    }
   }
 }
 
+function scopeKey() {
+  return [visibleModes().join(","), count, passes,
+    currentSize.width, currentSize.height, currentSize.ratio].join(":");
+}
+
+function collectGpuSamples() {
+  for (const sample of gpuTimer.poll()) {
+    if (sample.meta.scope === gpuScope) {
+      gpuWindow.push(sample.ms);
+      if (gpuWindow.length > 35) gpuWindow.shift();
+    }
+    if (benchmark && sample.meta.runId === benchmark.runId &&
+        sample.meta.measured && benchmark.data[sample.meta.mode]) {
+      benchmark.data[sample.meta.mode].gpu.push(sample.ms);
+    }
+  }
+}
+
+function formatMeasurement(value, suffix) {
+  return value === null || !Number.isFinite(value) ? "N/A" : `${value.toFixed(1)} ${suffix}`;
+}
+
+function showBenchmarkResults() {
+  benchmarkResults.replaceChildren();
+  for (const mode of MODES) {
+    const result = benchmark.data[mode];
+    const summary = BenchmarkSummary(result);
+    const row = document.createElement("tr");
+    const cells = [modeLabels[mode][0], formatMeasurement(summary.fps, "FPS"),
+      `${formatMeasurement(summary.cpuMedian, "ms")} / ${formatMeasurement(summary.cpuP95, "ms")}`,
+      formatMeasurement(summary.gpuMedian, "ms")];
+    row.append(...cells.map(text => {
+      const cell = document.createElement("td");
+      cell.textContent = text;
+      return cell;
+    }));
+    benchmarkResults.append(row);
+  }
+}
+
+function setBenchmarkMode(mode) {
+  display.value = mode;
+  applyConfig();
+}
+
+function stopBenchmark(complete = false) {
+  if (!benchmark) return;
+  showBenchmarkResults();
+  const original = benchmark.previousMode;
+  benchmark = null;
+  benchmarkButton.textContent = "Run three-mode benchmark (~24s)";
+  benchmarkProgress.textContent = complete ? "Complete" : "Stopped (partial)";
+  for (const control of [display, shapesSelect, passesSelect, alphaSlider, resolution, animateInput, $("reset")]) {
+    control.disabled = false;
+  }
+  display.value = original;
+  applyConfig();
+}
+
+function updateBenchmark(now) {
+  if (!benchmark) return;
+  if (benchmark.phase === "warmup") {
+    if (now - benchmark.phaseStart >= WARMUP_MS) {
+      benchmark.phase = "measure";
+      benchmark.phaseStart = now;
+      benchmarkProgress.textContent = `Measuring ${modeLabels[benchmark.mode][0]} (1/3)`;
+    }
+    return;
+  }
+  const samples = benchmark.data[benchmark.mode];
+  samples.frames.push(now);
+  samples.cpu.push(renderTimeMs);
+  if (now - benchmark.phaseStart < SAMPLE_MS) {
+    const seconds = Math.max(0, Math.ceil((SAMPLE_MS - (now - benchmark.phaseStart)) / 1000));
+    benchmarkProgress.textContent = `${modeLabels[benchmark.mode][0]} · ${seconds}s left · ${benchmark.index + 1}/3`;
+    return;
+  }
+  if (benchmark.index >= MODES.length - 1) {
+    // Late GPU queries cannot be forced to finish synchronously: use samples
+    // already returned, and let the UI accurately show N/A if unavailable.
+    stopBenchmark(true);
+    return;
+  }
+  benchmark.index += 1;
+  benchmark.mode = MODES[benchmark.index];
+  benchmark.phase = "warmup";
+  benchmark.phaseStart = now;
+  benchmarkProgress.textContent = `Warming up ${modeLabels[benchmark.mode][0]}`;
+  setBenchmarkMode(benchmark.mode);
+}
+
+function toggleBenchmark() {
+  if (benchmark) { stopBenchmark(false); return; }
+  benchmark = {
+    runId: ++benchmarkRunId,
+    previousMode: display.value,
+    mode: MODES[0],
+    index: 0,
+    phase: "warmup",
+    phaseStart: performance.now(),
+    data: Object.fromEntries(MODES.map(mode => [mode, { frames: [], cpu: [], gpu: [] }])),
+  };
+  for (const control of [display, shapesSelect, passesSelect, alphaSlider, resolution, animateInput, $("reset")]) {
+    control.disabled = true;
+  }
+  benchmarkButton.textContent = "Stop benchmark";
+  benchmarkProgress.textContent = "Warming up normal alpha";
+  setBenchmarkMode(benchmark.mode);
+}
+benchmarkButton.addEventListener("click", toggleBenchmark);
 function updateStats(now) {
   if (now - lastMetrics < 550) return;
   const fps = WindowFps(frameHistory);
   $("fps").textContent = fps === null ? "—" : `${fps.toFixed(1)} FPS`;
   $("frame-time").textContent = fps === null ? "—" : `${(1000 / fps).toFixed(1)} ms`;
   $("render-time").textContent = `${renderTimeMs.toFixed(1)} ms`;
+  $("gpu-time").textContent = formatMeasurement(Percentile(gpuWindow, 0.5), "ms");
   $("draws").textContent = `${renderer.info.render.calls} / ${renderer.info.render.triangles.toLocaleString()}`;
   const heap = performance.memory?.usedJSHeapSize;
   $("heap").textContent = Number.isFinite(heap) ? FormatBytes(heap) : "N/A";
   $("heap-note").textContent = Number.isFinite(heap) ? "Chromium JS heap only; not total RAM" : "Browser does not expose JS heap usage";
-  const targetBytes = offscreen ? EstimateTargetBytes(offscreen.width, offscreen.height) : 0;
+  // Logical size for the active workload, not retained driver VRAM.
+  const targetBytes = visibleModes().includes("offscreen") && offscreen
+    ? EstimateTargetBytes(offscreen.width, offscreen.height) : 0;
   const gpu = EstimateGeometryBytes([...geometries, grid.geometry, accent.geometry, fullscreenQuad.geometry]);
   $("gpu").textContent = FormatBytes(gpu + targetBytes);
   $("objects").textContent = `${renderer.info.memory.geometries} geo / ${renderer.info.memory.textures} tex`;
@@ -229,42 +360,65 @@ function frame(now) {
   lastFrame = now;
   if (!document.hidden && animateInput.checked) motion += dt;
   resize();
-  if (layout) {
+  if (layout && !document.hidden) {
     drawActors(motion);
+    const key = scopeKey();
+    if (gpuScope !== key) { gpuScope = key; gpuWindow = []; }
+    collectGpuSamples();
     renderer.info.reset();
     const start = performance.now();
-    visibleModes().forEach((mode, i) => renderPane(mode, layout.panes[i]));
-    renderer.setScissorTest(false);
-    renderTimeMs = performance.now() - start;
-    if (!document.hidden) {
-      frameHistory.push(now);
-      while (frameHistory.length && now - frameHistory[0] > 1200) frameHistory.shift();
-      updateStats(now);
+    const activeMode = visibleModes().join(",");
+    const timed = gpuTimer.begin({
+      scope: key, mode: activeMode, runId: benchmark?.runId,
+      measured: benchmark?.phase === "measure",
+    });
+    try {
+      visibleModes().forEach((mode, i) => renderPane(mode, layout.panes[i]));
+    } finally {
+      if (timed) gpuTimer.end();
+      renderer.setScissorTest(false);
+      renderer.setRenderTarget(null);
     }
+    renderTimeMs = performance.now() - start;
+    frameHistory.push(now);
+    while (frameHistory.length && now - frameHistory[0] > 1200) frameHistory.shift();
+    updateBenchmark(now);
+    updateStats(now);
+  } else {
+    frameHistory = [];
+    collectGpuSamples();
   }
   requestAnimationFrame(frame);
 }
 function applyConfig() {
   count = SHAPE_OPTIONS.includes(Number(shapesSelect.value)) ? Number(shapesSelect.value) : 12;
+  passes = PASS_OPTIONS.includes(Number(passesSelect.value)) ? Number(passesSelect.value) : 1;
   alpha = Clamp(Number(alphaSlider.value) / 100, 0, 1);
   $("opacity-value").textContent = `${Math.round(alpha * 100)}%`;
   for (const mode of ["blend", "hash"]) {
-    for (const {mesh} of sets[mode].objects) mesh.material.opacity = alpha;
+    for (const material of sets[mode].materials) material.opacity = alpha;
   }
-  // Set alpha only on the compositing quad for offscreen mode.
   fullscreenQuadMaterial.opacity = alpha;
-  currentSize.width = -1; // recompute layout when mode/quality changes
+  if (!visibleModes().includes("offscreen") && offscreen) {
+    offscreen.dispose();
+    offscreen = null;
+    fullscreenQuadMaterial.map = null;
+    fullscreenQuadMaterial.needsUpdate = true;
+  }
+  currentSize.width = -1;
   frameHistory = [];
+  gpuWindow = [];
 }
-for (const control of [display, shapesSelect, resolution, alphaSlider]) control.addEventListener("input", applyConfig);
+for (const control of [display, shapesSelect, passesSelect, resolution, alphaSlider]) control.addEventListener("input", applyConfig);
 $("reset").addEventListener("click", () => {
-  display.value = "compare"; shapesSelect.value = "12"; alphaSlider.value = "55";
+  display.value = "compare"; shapesSelect.value = "12"; passesSelect.value = "1"; alphaSlider.value = "55";
   resolution.value = "1"; animateInput.checked = true; motion = 0; applyConfig();
 });
 window.addEventListener("resize", () => { currentSize.width = -1; });
 window.addEventListener("pagehide", () => {
   running = false;
   offscreen?.dispose();
+  gpuTimer.dispose();
   renderer.dispose();
 });
 applyConfig();

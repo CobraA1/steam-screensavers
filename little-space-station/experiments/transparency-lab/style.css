@@ -9,7 +9,7 @@ h1 { margin:0 0 8px; font-size:clamp(1.5rem,2.2vw,2.2rem); }
 .back { color:#a9e7de; text-decoration:none; white-space:nowrap; font-size:14px; }
 .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:end; border:1px solid #284654; border-radius:12px; padding:12px; background:#0a1821; margin-bottom:12px; }
 .controls label { display:grid; gap:6px; font-size:12px; font-weight:600; color:#cddfe1; min-width:125px; }
-.controls label:nth-child(3) { min-width:170px; flex:1; }
+.controls label.opacity-control { min-width:170px; flex:1; }
 .controls output { float:right; color:#b4efd7; }
 .controls select,.controls button { border:1px solid #315766; color:#f0ffff; background:#112c35; padding:9px; border-radius:7px; min-height:36px; font:13px system-ui; }
 .controls button { cursor:pointer; }
@@ -32,3 +32,14 @@ h1 { margin:0 0 8px; font-size:clamp(1.5rem,2.2vw,2.2rem); }
 @media (max-width:1100px) { .readouts {grid-template-columns:repeat(4,minmax(0,1fr));} }
 @media (max-width:899px) { header {flex-direction:column;} .readouts {grid-template-columns:repeat(2,minmax(0,1fr));} .stage {height:1000px;} .labels {grid-template-columns:1fr;grid-template-rows:repeat(3,1fr);} .labels article {border-right:0;border-bottom:1px solid #58758255;} }
 @media (max-width:899px) { .stage.single {height:clamp(320px,56vh,700px);} }
+
+.benchmark { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px; margin:0 0 12px; border:1px solid #315266; background:#0b202c; border-radius:10px; font-size:12px; }
+.benchmark>div:first-child { flex:1 1 380px; }
+.benchmark p { color:#b1c6cf; margin:4px 0 0; line-height:1.4; }
+.benchmark button { cursor:pointer; color:#edfafa; background:#174a52; border:1px solid #467780; padding:10px; border-radius:7px; }
+.benchmark button[disabled] { opacity:.75; }
+#benchmark-progress { min-width:80px; color:#b7e9c8; font-variant-numeric:tabular-nums; }
+.benchmark-table { flex:1 1 100%; width:100%; overflow-x:auto; }
+.benchmark-table table { border-collapse:collapse; width:100%; }
+.benchmark-table th,.benchmark-table td { text-align:left; border-bottom:1px solid #335363; padding:7px 10px; white-space:nowrap; }
+.benchmark-table th { color:#9cd5d0; }

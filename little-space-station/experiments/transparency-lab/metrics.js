@@ -1,6 +1,7 @@
 // Pure helpers shared by the browser lab and Node tests.
 export const MODES = Object.freeze(["blend", "hash", "offscreen"]);
-export const SHAPE_OPTIONS = Object.freeze([6, 12, 24, 48, 96]);
+export const SHAPE_OPTIONS = Object.freeze([6, 12, 24, 48, 96, 256, 512, 1024]);
+export const PASS_OPTIONS = Object.freeze([1, 2, 4, 8]);
 
 export function Clamp(value, low, high) {
   const number = Number(value);
@@ -54,4 +55,23 @@ export function MakeLayout(width, height, panelCount, pixelRatio) {
     panes.push({ x, y, w, h, physicalWidth: Math.max(1, Math.round(w * pixelRatio)), physicalHeight: Math.max(1, Math.round(h * pixelRatio)) });
   }
   return { horizontal, panes };
+}
+
+export function Percentile(samples, percentile = 0.5) {
+  const sorted = samples.filter(Number.isFinite).slice().sort((a, b) => a - b);
+  if (!sorted.length) return null;
+  const position = (sorted.length - 1) * Clamp(percentile, 0, 1);
+  const low = Math.floor(position);
+  const blend = position - low;
+  return sorted[low] * (1 - blend) + sorted[Math.min(low + 1, sorted.length - 1)] * blend;
+}
+
+export function BenchmarkSummary({ frames = [], cpu = [], gpu = [] } = {}) {
+  return {
+    fps: WindowFps(frames),
+    cpuMedian: Percentile(cpu, 0.5),
+    cpuP95: Percentile(cpu, 0.95),
+    gpuMedian: Percentile(gpu, 0.5),
+    gpuSamples: gpu.length,
+  };
 }
