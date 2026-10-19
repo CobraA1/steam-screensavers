@@ -109,6 +109,7 @@ export class LittleSpaceStationScene {
     this.BuildStarfield();
     this.BuildPlanet();
     this.BuildStation();
+    this.cameraFraming.setReviewStation(this.station);
     Object.assign(this, BuildStationDetails(this.station, this.materials));
     this.BuildVisitor();
     this.BuildRobot();
@@ -842,6 +843,7 @@ export class LittleSpaceStationScene {
     this.camera.aspect = width / height;
     this.camera.fov = this.camera.aspect < 1.35 ? 45 : 39;
     this.camera.updateProjectionMatrix();
+    this.cameraFraming.setViewport(width, height);
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(width, height, false);
   }
@@ -948,8 +950,9 @@ export class LittleSpaceStationScene {
     this.remembranceVisual.update(eventState);
 
     this.cameraFraming.update(time, frameSeconds, this.robot);
-    this.dreamVisual.update(eventState.dream, this.camera, this.robotHead);
-    this.phantomDreamVisual.update(eventState.dream, this.camera, this.robotHead);
+    const activeCamera = this.cameraFraming.getActiveCamera();
+    this.dreamVisual.update(eventState.dream, activeCamera, this.robotHead);
+    this.phantomDreamVisual.update(eventState.dream, activeCamera, this.robotHead);
   }
 
   ConfigureVisitor(visitorType, visitId = "") {
@@ -1059,7 +1062,7 @@ export class LittleSpaceStationScene {
   }
 
   render() {
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.scene, this.cameraFraming.getActiveCamera());
   }
 
   getPipDiagnostics() {

@@ -6,7 +6,7 @@ This directory contains HTML screensavers for Steam Deck. Treat `bouncinglogo/` 
 
 Before changing the corresponding systems, read the applicable expectations:
 
-- [Animation expectations](little-space-station/docs/expectations/animation-expectations.md): staging, target-facing poses, physical contact, continuous beat boundaries, safe travel, deterministic seeking, and visual verification.
+- [Animation expectations](little-space-station/docs/expectations/animation-expectations.md): staging, target-facing poses, physical contact, continuous beat boundaries, safe travel, deterministic seeking, and **required perspective plus top/front/side orthographic inspection**.
 - [Story expectations](little-space-station/docs/expectations/story-expectations.md): narrative intent, Phantom Visitor acceptance beats, scheduling, checkpoints, interruption recovery, and complete visual exits.
 - [Dream and memory expectations](little-space-station/docs/expectations/dream-expectations.md): faithful completed memories, readable miniature actors, bubble framing, identity retention, and isolation from live world state.
 

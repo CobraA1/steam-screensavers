@@ -15,7 +15,7 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `world.js` is the compatibility entry point; `station-identity.js` owns seeded visual identity.
 - `environment.js` derives illumination, rotation, and seasons; `environment-renderer.js` maps that state onto existing lights and materials.
 - `scene.js` builds the Three.js diorama and visualizes simulation state.
-- `camera-framing.js` owns the 140% production view and the preview framing comparison controls.
+- `camera-framing.js` owns the 140% production view and the preview framing comparison controls, including preview-only station-axis top (+Y), front (+Z) and side (+X) orthographic inspection.
 - `expansion-preview.js` builds lightweight wireframe layout studies; it is reachable only through the dynamically loaded preview tools.
 - `pip-behavior.js`, `pip-animation.js`, and `station-details.js` map deterministic task stages to Pip's poses, equipment work, and physically attached cargo handling.
 - `autumn-2026.js` derives the 2026 calendar, seasonal cargo manifests, decorations, installations, oddities, and cleanup without persisting routine state.
@@ -26,6 +26,10 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `vendor/` contains the local Three.js r186 runtime used by this repository.
 
 No network connection, package installation, or build step is required.
+
+## Multi-view placement and animation review
+
+Before accepting a 3D placement, attachment, movement or manipulation change, use **Camera experiment → View** in preview to compare **Station overview** with **Top orthographic**, **Front orthographic** and **Side orthographic**. The station-local orthographic views expose hidden depth gaps, collisions, clearance problems and missed hand-to-prop contact. They are diagnostic only; production retains the original perspective. See the [mandatory multi-view review procedure](docs/expectations/animation-expectations.md#mandatory-multi-view-3d-inspection).
 
 ## Project expectations
 

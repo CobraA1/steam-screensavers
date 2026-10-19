@@ -9,6 +9,21 @@ These requirements apply specifically to The Little Space Station. Read them bef
 - Preserve the cozy, low-poly, retro-futuristic style. Pauses, anticipation, and small reactions are useful; constant motion and flashing are not substitutes for intent.
 - Establish visible cause and effect. A hand must reach a carried or manipulated object. A hatch rotates at its hinge; a cloth hem connects to its skirt; an engine exhaust points away from the force it represents.
 
+## Mandatory multi-view 3D inspection
+
+For changes to **3D object placement, dimensions, orientation, geometry, attachments, movement paths, or physical interactions**, review **all four views** before declaring the change visually verified:
+
+1. **Production perspective** (default camera and approved framing): primary acceptance view for composition, storytelling, readability, and cause/effect.
+2. **Top orthographic** (station-local +Y): horizontal clearances, fore/aft and port/starboard alignment, approach paths, and hidden intersections.
+3. **Front orthographic** (station-local +Z): heights, floor/deck contact, hand-to-prop reach, vertical separation, and horizontal alignment.
+4. **Side orthographic** (station-local +X): hidden depth offsets, docking clearance, relative elevation, attachments, and movement through or behind structures.
+
+Switch among them with **Preview mode → Camera experiment → View**. An orbiting perspective view is not a substitute for a true orthographic projection. The three inspection cameras are preview-only: production perspective remains the visual/storytelling authority.
+
+For animations, examine **setup, contact, transfer/release, reaction, and exit**, intermediate travel, and both sides of relevant beat boundaries at matching timestamps in all four views. For static objects, check the assembled placement and neighboring surfaces. Where practical, pair screenshot evidence with world-space anchor/distance assertions; one camera angle can conceal a geometry error.
+
+Report which views, states, and screenshots were actually inspected. If an orthographic inspection could not be done, disclose the gap and residual risk rather than claiming complete verification. Purely 2D overlay, text-only, or documentation changes may omit the extra views with a brief justification.
+
 ## Shared miniature character quality
 
 - Dream scenes must use the shared `dream-pip-visual.js` model. Keep Pip's cream head, teal body, visor, chest light, paired articulated arms, elbow joints and wrist tool available across memories.
@@ -27,7 +42,7 @@ These requirements apply specifically to The Little Space Station. Read them bef
 
 ## Verification
 
-1. Exercise the actual preview controls and watch playback, not just isolated poses.
+1. Exercise the actual preview controls and watch playback, not just isolated poses. For 3D changes, check production perspective **and** top/front/side orthographic projections.
 2. Inspect setup, contact, release, reaction, and exit, plus immediately before/after beat boundaries. Scrub forward, backward, and from the last beat to the first.
 3. Compare 1280×800, 1920×1080, and 2560×1600 when framing changes; inspect sunlight and shadow. Check a narrow viewport for viewport-bound overlays.
 4. Test meaningful geometry relationships: joint reach, front-facing target direction, boundary continuity, offscreen exits, and reset behavior. Source-string assertions do not prove these properties.

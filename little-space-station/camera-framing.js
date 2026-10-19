@@ -12,7 +12,16 @@ export const DEFAULT_CAMERA_PRESET_ID = "very-close";
 export const CAMERA_VIEW_MODES = Object.freeze([
   Object.freeze({ id: "overview", label: "Station overview" }),
   Object.freeze({ id: "activity", label: "Activity focus" }),
+  Object.freeze({ id: "top", label: "Top orthographic · station axes" }),
+  Object.freeze({ id: "front", label: "Front orthographic (+Z) · station axes" }),
+  Object.freeze({ id: "side", label: "Side orthographic (+X) · station axes" }),
 ]);
+
+const ORTHOGRAPHIC_MODES = Object.freeze({
+  top: Object.freeze({ axis: [0, 1, 0], up: [0, 0, -1] }),
+  front: Object.freeze({ axis: [0, 0, 1], up: [0, 1, 0] }),
+  side: Object.freeze({ axis: [1, 0, 0], up: [0, 1, 0] }),
+});
 
 export function ResolveCameraFramingPreset(id) {
   return CAMERA_FRAMING_PRESETS.find((preset) => preset.id === id) || CAMERA_FRAMING_PRESETS[0];
@@ -37,11 +46,47 @@ export class CameraFramingController {
     this.currentTarget = this.baseTarget.clone();
     this.activityTarget = new THREE.Vector3();
     this.viewDirection = new THREE.Vector3();
+    // Preview inspection only: production never creates this camera.
+    this.orthographicCamera = preview ? new THREE.OrthographicCamera(-10, 10, 6, -6, 0.1, 100) : null;
+    this.reviewStation = null;
+    this.reviewAspect = 16 / 10;
+    this.reviewTarget = new THREE.Vector3();
+    this.reviewAxis = new THREE.Vector3();
+    this.reviewUp = new THREE.Vector3();
+    this.reviewRotation = new THREE.Quaternion();
+    this.reviewLocalTarget = new THREE.Vector3(-1.45, 0.05, 0.6);
+  }
+
+  setReviewStation(station) {
+    if (this.preview) this.reviewStation = station;
+  }
+
+  setViewport(width, height) {
+    if (!this.preview) return;
+    this.reviewAspect = Math.max(1, width) / Math.max(1, height);
+    this.updateOrthographicFrustum();
+  }
+
+  updateOrthographicFrustum() {
+    if (!this.orthographicCamera) return;
+    // The inspection frustum fits both the aft deck and front ship port.
+    const halfHeight = 6.8 / this.preset.apparentScale;
+    const camera = this.orthographicCamera;
+    camera.left = -halfHeight * this.reviewAspect;
+    camera.right = halfHeight * this.reviewAspect;
+    camera.top = halfHeight;
+    camera.bottom = -halfHeight;
+    camera.updateProjectionMatrix();
+  }
+
+  getActiveCamera() {
+    return this.preview && ORTHOGRAPHIC_MODES[this.mode] ? this.orthographicCamera : this.camera;
   }
 
   setPreset(id) {
     if (!this.preview) return false;
     this.preset = ResolveCameraFramingPreset(id);
+    this.updateOrthographicFrustum();
     return true;
   }
 
@@ -55,6 +100,7 @@ export class CameraFramingController {
     if (!this.preview) return false;
     this.preset = CAMERA_FRAMING_PRESETS[0];
     this.mode = "overview";
+    this.updateOrthographicFrustum();
     return true;
   }
 
@@ -97,6 +143,25 @@ export class CameraFramingController {
     this.currentTarget.lerp(this.desiredTarget, smoothing);
     this.camera.position.copy(this.currentPosition);
     this.camera.lookAt(this.currentTarget);
+
+    const mode = ORTHOGRAPHIC_MODES[this.mode];
+    if (!mode) return;
+    const station = this.reviewStation;
+    if (station) {
+      station.updateWorldMatrix(true, false);
+      station.getWorldQuaternion(this.reviewRotation);
+      this.reviewTarget.copy(this.reviewLocalTarget).applyMatrix4(station.matrixWorld);
+    } else {
+      this.reviewRotation.identity();
+      this.reviewTarget.copy(this.baseTarget);
+    }
+    this.reviewAxis.fromArray(mode.axis).applyQuaternion(this.reviewRotation);
+    this.reviewUp.fromArray(mode.up).applyQuaternion(this.reviewRotation);
+    const camera = this.orthographicCamera;
+    camera.up.copy(this.reviewUp);
+    camera.position.copy(this.reviewTarget).addScaledVector(this.reviewAxis, 35);
+    camera.lookAt(this.reviewTarget);
+    camera.updateMatrixWorld(true);
   }
 
   getDiagnostics() {
