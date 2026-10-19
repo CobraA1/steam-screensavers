@@ -21,6 +21,14 @@ Read this before changing dream selection, memory records, miniature actors, or 
 - Keep actors inside the bubble or fade them before they cross its rim. Fit the bubble at the production camera, wide and narrow viewports, and all supported display sizes.
 - Use restrained, legible colors independent of orbital shadow. Fade the whole memory in and out smoothly, while leaving the real station's materials untouched.
 
+## Whole-dream transparency and fades
+
+- For a complete dream or thought-bubble group's **entry/exit fade**, prefer evaluating **offscreen group compositing** first, rather than fading every overlapping actor/prop material individually. This is a design preference based on [Steam Deck transparency experiments](../performance/transparency-findings-2026-10.md), **not an already-implemented feature or a universal rule for translucent objects**.
+- Retain independent fades **inside** a dream when needed for the narrative, such as the Phantom's departing drone. Do not replace actual see-through materials with a flat opaque-group result where their layered transparency is intentional.
+- The composited bubble must remain anchored to Pip and visually occlude/be occluded appropriately by real-world station objects; inspect any boundary and depth limitations before adopting this technique.
+- Keep render targets small, reusable, resizable, and disposed when unused. Fade transitions must be deterministic and fully reconstructible after seek, pause, resume and dream switches. No preview controls or additional production input handling.
+- Compare complete dreams at native Deck resolution, 1080p and 4K output before accepting a new approach. Watch for seams, halos, group opacity, crop/stretch, lost actor visibility, and FPS or resource regressions.
+
 ## Consistent Pip model across dreams
 
 - Dream renderers must reuse `dream-pip-visual.js` rather than reconstructing a weaker miniature Pip. Maintain the same silhouette, cream head, readable visor, teal body, chest indicator, paired articulated arms, elbow details and wrist-mounted tool.
