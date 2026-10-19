@@ -12,7 +12,7 @@ Variants may change gestures and temperament, but must preserve the story's caus
 
 ## Phantom Visitor acceptance sequence
 
-The [Autumn 2026 brief](../little-space-station/The%20Little%20Space%20Station%20-%20Autumn%202026%20Halloween%20and%20All%20Saints%20Day.md) specifies these beats:
+The [Autumn 2026 brief](../../The%20Little%20Space%20Station%20-%20Autumn%202026%20Halloween%20and%20All%20Saints%20Day.md) specifies these beats:
 
 | Beat | What the viewer should understand |
 | --- | --- |
@@ -42,4 +42,4 @@ The current live sequence is 68 seconds. Its dream is a shortened memory of the 
 
 Review both the full sequence and transitions around each checkpoint. Verify scheduling eligibility, quiet-window exclusion, interruption/resume, monotonic milestones, once-per-year completion, and dream eligibility. Inspect the actual character/prop interactions using [animation expectations](animation-expectations.md), not just timeline labels.
 
-The larger creative direction is in [Story Year, Dreams, and Seasonal Events](../little-space-station/little-space-station-story-year-and-seasonal-ideas.md).
+The larger creative direction is in [Story Year, Dreams, and Seasonal Events](../../little-space-station-story-year-and-seasonal-ideas.md).
