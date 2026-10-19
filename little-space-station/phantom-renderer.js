@@ -1,4 +1,5 @@
 import * as THREE from "./vendor/three.module.js";
+import { CreatePhantomCoverMesh } from "./phantom-cover-geometry.js";
 import { Ease, PhantomActors } from "./phantom-choreography.js";
 
 const Clamp01 = (value) => Math.max(0, Math.min(1, Number(value) || 0));
@@ -9,20 +10,9 @@ function BasicMaterial(color, opacity = 1) {
 
 function BuildCover() {
   const root = new THREE.Group();
-  const material = BasicMaterial(0xe8e5d7, 0.84);
-  const rim = BasicMaterial(0xb8c5c2, 0.68);
-  const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22, 1), material);
-  crown.scale.set(1, 0.84, 0.9);
-  root.add(crown);
-  material.side = THREE.DoubleSide;
-  const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.3, 0.36, 8, 1, true), material);
-  skirt.position.y = -0.2;
-  root.add(skirt);
-  const edge = new THREE.Mesh(new THREE.TorusGeometry(0.285, 0.018, 5, 9), rim);
-  edge.position.y = -0.38;
-  edge.rotation.x = Math.PI / 2;
-  root.add(edge);
-  root.userData.materials = [material, rim];
+  const material = BasicMaterial(0xe8e5d7, 0.9);
+  root.add(CreatePhantomCoverMesh(material));
+  root.userData.materials = [material];
   return root;
 }
 
@@ -87,7 +77,7 @@ export class PhantomVisitorVisual {
   }
 
   SetCoverOpacity(cover, opacity) {
-    for (const material of cover.userData.materials) material.opacity = opacity * (material === cover.userData.materials[0] ? 0.9 : 0.7);
+    for (const material of cover.userData.materials) material.opacity = opacity * 0.9;
   }
 
   update(story) {
