@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transparency Lab · The Little Space Station</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="lab.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <div><p class="eyebrow">THE LITTLE SPACE STATION / EXPERIMENTS</p><h1>Transparency Lab</h1>
+      <p class="intro">The same overlapping, animated objects under three rendering strategies. This page is an opt-in developer experiment; it does not run in the Steam screensaver.</p></div>
+      <a class="back" href="../../index.html?preview=1">Station preview ↗</a>
+    </header>
+    <section class="controls" aria-label="Rendering controls">
+      <label>Display
+        <select id="display"><option value="compare">Compare all three</option><option value="blend">Normal alpha only</option><option value="hash">Alpha hashing only</option><option value="offscreen">Offscreen only</option></select>
+      </label>
+      <label>Overlapping shapes
+        <select id="shapes"><option value="6">6</option><option value="12" selected>12</option><option value="24">24</option><option value="48">48</option><option value="96">96</option><option value="256">256</option><option value="512">512</option><option value="1024">1024</option></select>
+      </label>
+      <label>Workload multiplier
+        <select id="passes"><option value="1">1× passes</option><option value="2">2× passes</option><option value="4">4× passes</option><option value="8">8× passes</option></select>
+      </label>
+      <label class="opacity-control">Opacity <output id="opacity-value" for="opacity">55%</output>
+        <input type="range" id="opacity" min="0" max="100" value="55" step="1" />
+      </label>
+      <label>Render scale
+        <select id="resolution"><option value="1">100% (capped at 1.5 DPR)</option><option value="0.75">75%</option><option value="0.5">50%</option></select>
+      </label>
+      <label class="check"><input type="checkbox" id="animate" checked /> Animate shapes</label>
+      <button id="reset" type="button">Reset view</button>
+    </section>
+    <section class="readouts" aria-label="Live performance metrics">
+      <div><span>Frame rate</span><strong id="fps">—</strong><small>Entire selected display, not per panel</small></div>
+      <div><span>Frame interval</span><strong id="frame-time">—</strong><small>Includes browser scheduling</small></div>
+      <div><span>Render submission</span><strong id="render-time">—</strong><small>CPU-side time; not GPU time</small></div>
+      <div><span>GPU elapsed</span><strong id="gpu-time">N/A</strong><small id="gpu-status">Checking timer-query support</small></div>
+      <div><span>Draw calls / triangles</span><strong id="draws">—</strong><small>Across displayed modes</small></div>
+      <div><span>JS heap (RAM)</span><strong id="heap">N/A</strong><small id="heap-note">Only if exposed by browser</small></div>
+      <div><span>Active allocation estimate</span><strong id="gpu">—</strong><small>Known buffers only; not total GPU/VRAM</small></div>
+      <div><span>Renderer objects</span><strong id="objects">—</strong><small>Geometry / texture counts; not bytes</small></div>
+    </section>
+    <section class="benchmark" aria-label="Sequential rendering benchmark">
+      <div><strong>Sequential benchmark</strong><p>Runs normal, hash, and offscreen separately with the same workload. Each mode: 2s warmup + 6s measurement. GPU results require timer-query support.</p></div>
+      <button id="benchmark" type="button">Run three-mode benchmark (~24s)</button>
+      <span id="benchmark-progress" role="status" aria-live="polite">Idle</span>
+      <div class="benchmark-table"><table>
+        <thead><tr><th>Mode</th><th>FPS</th><th>CPU median / p95</th><th>GPU median</th></tr></thead>
+        <tbody id="benchmark-results"><tr><td colspan="4">No benchmark run yet</td></tr></tbody>
+      </table></div>
+    </section>
+    <section class="stage" id="stage" aria-label="Rendered technique comparison">
+      <canvas id="canvas" aria-label="Overlapping shapes rendered using transparency techniques"></canvas>
+      <div class="labels" id="labels" aria-hidden="true"></div>
+    </section>
+    <p class="message" id="message" role="status"></p>
+    <details class="explain"><summary>What is this measuring, and what is the offscreen tradeoff?</summary>
+      <p><b>Normal alpha:</b> ordinary semi-transparent shapes are drawn individually; intersections can accumulate opacity or sort incorrectly.</p>
+      <p><b>Alpha hash:</b> meshes discard a fraction of fragments according to opacity and write depth normally. It can reduce sorting/overlap artifacts but causes visible grain without temporal smoothing.</p>
+      <p><b>Offscreen composite:</b> shapes are drawn <em>opaque</em> into one transparent-background render target with depth testing, then the resulting texture is faded <em>once</em> over a background. Overlaps never double-blend, but inner/hidden shapes cannot show through the front shapes, and this 2D compositing technique does not solve 3D occlusion by unrelated live scene objects.</p>
+      <p>The optional <b>1–8× workload multiplier</b> repeats the complete drawing pipeline, clearing between passes so the final image stays comparable. Single-mode FPS can remain display-capped; the asynchronous GPU timing readout may distinguish modes before FPS falls. On unsupported browsers it displays N/A. Heavy settings may cause sustained stalls; use reset to return to a safe workload.</p>
+      <p>All views use the same models, positions, camera and opacity; the offscreen view intentionally shows the <em>visible surface of a group</em>, not physically translucent layers. The three-view comparison performs more work than a single mode: use the <b>Display</b> selector to compare each mode’s frame rate in isolation.</p>
+      <p>The GPU timing query uses <code>EXT_disjoint_timer_query_webgl2</code> if available. It times GL work submitted for the <em>entire selected display</em> asynchronously, discards disjoint measurements, and does not block for results. It does not measure JavaScript simulation work.</p>
+      <p>Most browsers cannot disclose actual process RAM use or VRAM usage. The JS heap is shown only when <code>performance.memory.usedJSHeapSize</code> is available (typically Chromium; it excludes other browser memory). GPU bytes are a <strong>lower-bound allocation estimate</strong> for attribute buffers plus explicitly created offscreen RGBA8 color and depth buffers; actual usage also includes browser framebuffers, driver alignment, compiled shaders, caches, and other resources.</p>
+    </details>
+  </main>
+</body>
+</html>

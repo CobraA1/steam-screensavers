@@ -1,6 +1,6 @@
 # The Little Space Station
 
-Animation and narrative reviews follow the shared [animation](../docs/animation-expectations.md), [story](../docs/story-expectations.md), and [dream](../docs/dream-expectations.md) expectations.
+Animation and narrative reviews follow the project-local [animation](docs/expectations/animation-expectations.md), [story](docs/expectations/story-expectations.md), and [dream](docs/expectations/dream-expectations.md) expectations.
 
 The Phantom Visitor uses `phantom-choreography.js` for continuous cover/drone paths and shared target orientation. Pip reaches the cloth with the existing two-joint arm rig; both live and miniature covers have connected, downward-flared skirts. The 68-second live story now finishes its exit after committing the final payoff. Its dream retains the original memory identity/year/outcome, brings miniature Pip into contact with the cover, fades the departing drone independently, and preserves the empty-cover joke. Preview it under **Story · Phantom Visitor** (beat/point or **Force / play**) and **Pip recharge & memory → Show Phantom dream** (whole-dream scrubber).
 
@@ -30,6 +30,14 @@ No network connection, package installation, or build step is required.
 ## Project expectations
 
 Project-specific rules now live in [docs/expectations/](docs/expectations/README.md), including [animation](docs/expectations/animation-expectations.md), [dreams](docs/expectations/dream-expectations.md), and [story design](docs/expectations/story-expectations.md). The root `AGENTS.md` remains the shared Steam Deck platform guide.
+
+## Transparency rendering direction
+
+Steam Deck tests of the transparency stress lab favor **evaluating offscreen group compositing first for whole-object/whole-scene fades**. The initial target is the **Stubborn Antenna and Phantom Visitor dream-bubble fade-in/out**, not all translucent materials. No dream renderer migration has been performed yet. The [October 2026 findings, performance/safety limits and acceptance criteria](docs/performance/transparency-findings-2026-10.md) document the measurements and next implementation work.
+
+## Transparency Lab (development only)
+
+The [Transparency Lab](experiments/transparency-lab/README.md) is a separate browser experiment comparing **normal alpha blending**, **alpha hashing**, and **opaque-group offscreen compositing** with identical overlapping animated shapes. It includes FPS, frame/render submission time, optional asynchronous GPU timer queries, a sequential three-mode benchmark, configurable stress passes, draw calls, Chromium JS heap (when exposed), and a carefully labeled GPU allocation estimate. It is not loaded by the production screensaver. Start the repository preview server and open `/little-space-station/experiments/transparency-lab/index.html` directly.
 
 ## Traffic and station behavior
 
