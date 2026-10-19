@@ -23,9 +23,9 @@ Read this before changing dream selection, memory records, miniature actors, or 
 
 ## Whole-dream transparency and fades
 
-- For a complete dream or thought-bubble group's **entry/exit fade**, prefer evaluating **offscreen group compositing** first, rather than fading every overlapping actor/prop material individually. This is a design preference based on [Steam Deck transparency experiments](../performance/transparency-findings-2026-10.md), **not an already-implemented feature or a universal rule for translucent objects**.
+- Both existing dreams use the shared [offscreen dream compositor](../performance/dream-compositing.md) for the complete presentation's **entry/exit fade**. Bubble, rim, thought dots, stage, actors, and props render together before that fade is applied once. Do not reintroduce whole-dream opacity multiplication in child materials. This implements the original [Steam Deck transparency experiment recommendation](../performance/transparency-findings-2026-10.md); it is not a universal rule for translucent objects.
 - Retain independent fades **inside** a dream when needed for the narrative, such as the Phantom's departing drone. Do not replace actual see-through materials with a flat opaque-group result where their layered transparency is intentional.
-- The composited bubble must remain anchored to Pip and visually occlude/be occluded appropriately by real-world station objects; inspect any boundary and depth limitations before adopting this technique.
+- The composited bubble must remain anchored to Pip. Its billboard tests against live-world depth at Pip's head plane, with no depth writes. This is an intentional approximation for a camera-facing thought bubble, not per-actor world occlusion; inspect overlaps from the production camera when changing placement.
 - Keep render targets small, reusable, resizable, and disposed when unused. Fade transitions must be deterministic and fully reconstructible after seek, pause, resume and dream switches. No preview controls or additional production input handling.
 - Compare complete dreams at native Deck resolution, 1080p and 4K output before accepting a new approach. Watch for seams, halos, group opacity, crop/stretch, lost actor visibility, and FPS or resource regressions.
 
@@ -45,7 +45,7 @@ Reuse the existing dream clock and renderer architecture. Do not run a second si
 ## Acceptance checks
 
 1. Play a complete dream at its configured pace, then inspect every beat and its boundaries with the preview scrubber.
-2. Check manipulation contact, separation of cover/drone, departure, final joke, and fade-out. Verify that seeking backward restores opacity and transforms.
+2. Check manipulation contact, separation of cover/drone, departure, final joke, and fade-out. Verify that seeking backward restores opacity and transforms. **Dream presentations are exempt from orthographic review**: inspect the camera-facing production perspective at matching key timestamps, including fade boundaries and narrow/wide viewports. Live-story actors and station geometry retain the four-view requirement in the [animation expectations](animation-expectations.md).
 3. Confirm that saved identity, variant, year, and outcome reach the memory descriptor and that source memory records remain unchanged.
 4. Snapshot live equipment, cargo, traffic, and world-time facts before applying a dream; verify that they are unchanged afterward.
 5. Preview the memory after Halloween cleanup and after January renewal. Inspect bubble containment at Deck, desktop, and narrow viewport sizes.

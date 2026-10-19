@@ -31,7 +31,8 @@ test("dream actors show retreat, repair and outcome while the stage stays still"
   assert.equal(visual.sweep.visible, false);
   assert.ok(visual.root.quaternion.equals(camera.quaternion));
   show("exit", 1, 1);
-  assert.ok(visual.materials.every(({ material }) => material.opacity === 0));
+  assert.equal(visual.opacity, 0);
+  assert.ok(visual.materials.every(({ material, opacity }) => material.opacity === opacity));
   visual.update(null, camera, head);
   assert.equal(visual.root.visible, false);
 });

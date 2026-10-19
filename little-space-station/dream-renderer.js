@@ -1,9 +1,10 @@
 import * as THREE from "./vendor/three.module.js";
 import { CreateDreamPipVisual } from "./dream-pip-visual.js";
+import { DreamOpacity, PlaceDream } from "./dream-compositor.js";
 
 const Smooth = (value) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
 
-// A small stage in the existing scene. Its poses come only from the saved
+// A small stage in the compositor's isolated scene. Its poses come only from the saved
 // memory's beat; it owns no clock, story facts, lights, or secondary renderer.
 export class AntennaDreamVisual {
   constructor(scene) {
@@ -13,8 +14,8 @@ export class AntennaDreamVisual {
     scene.add(this.root);
     this.materials = [];
     const material = (color, opacity = 1) => {
-      const result = new THREE.MeshBasicMaterial({ color, transparent: true, opacity,
-        depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide });
+      const result = new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity,
+        depthWrite: opacity === 1, fog: false, toneMapped: false, side: THREE.DoubleSide });
       this.materials.push({ material: result, opacity });
       return result;
     };
@@ -44,7 +45,6 @@ export class AntennaDreamVisual {
     mesh(this.bubble, new THREE.TorusGeometry(1, 0.012, 4, 64), rim, 0, 0, -0.12, 1.52, 0.92, 1);
     // Three small thought dots visually attach the memory to the sleeping Pip.
     for (const [x, y, radius] of [[-0.13, 0.26, 0.045], [-0.28, 0.48, 0.075], [-0.48, 0.72, 0.11]]) {
-      mesh(this.root, new THREE.CircleGeometry(1, 16), backdrop, x, y, 0, radius);
       mesh(this.root, new THREE.CircleGeometry(1, 16), backdrop, x, y, 0, radius);
       mesh(this.root, new THREE.TorusGeometry(1, 0.06, 4, 16), rim, x, y, 0.01, radius);
     }
@@ -78,23 +78,12 @@ export class AntennaDreamVisual {
 
   update(dream, camera, robotHead) {
     this.root.visible = Boolean(dream && dream.type === "stubborn-antenna");
-    if (!this.root.visible) return;
-    robotHead.getWorldPosition(this.anchor);
-    this.root.position.copy(this.anchor);
-    this.root.quaternion.copy(camera.quaternion);
-    camera.updateMatrixWorld();
-    this.cameraAnchor.copy(this.anchor).applyMatrix4(camera.matrixWorldInverse);
-    const halfHeight = -this.cameraAnchor.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const halfWidth = halfHeight * camera.aspect;
-    // Keep the ellipse in view in activity focus and narrow viewports too.
-    const above = (halfHeight * 0.94 - this.cameraAnchor.y) / 2.54;
-    const left = (halfWidth * 0.94 + this.cameraAnchor.x) / 2.76;
-    this.root.scale.setScalar(Math.max(0.05, Math.min(1, above, left)));
+    if (!this.root.visible) { this.opacity = 0; return; }
+    PlaceDream(this.root, camera, robotHead, this.anchor, this.cameraAnchor);
     // Hold the stage still and facing the viewer. Only the remembered actors move.
     const p = Math.max(0, Math.min(1, dream.beatProgress || 0));
     const progress = Math.max(0, Math.min(1, dream.progress || 0));
-    const fade = Smooth(progress / 0.06) * Smooth((1 - progress) / 0.08);
-    for (const entry of this.materials) entry.material.opacity = entry.opacity * fade;
+    this.opacity = DreamOpacity(progress);
     const beat = dream.beatId;
     const workX = 0.02;
     let x = -0.74;

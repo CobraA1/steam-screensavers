@@ -1,6 +1,7 @@
 import * as THREE from "./vendor/three.module.js";
 import { CreatePhantomCoverMesh } from "./phantom-cover-geometry.js";
 import { CreateDreamPipVisual } from "./dream-pip-visual.js";
+import { DreamOpacity, PlaceDream } from "./dream-compositor.js";
 
 const Smooth = (value) => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
 
@@ -12,7 +13,7 @@ export class PhantomDreamVisual {
     scene.add(this.root);
     this.materials = [];
     const material = (color, opacity = 1) => {
-      const result = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide });
+      const result = new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity, depthWrite: opacity === 1, fog: false, toneMapped: false, side: THREE.DoubleSide });
       this.materials.push({ material: result, opacity });
       return result;
     };
@@ -71,6 +72,8 @@ export class PhantomDreamVisual {
     this.drone.traverse(object => {
       if (!object.material) return;
       object.material = object.material.clone();
+      object.material.transparent = true;
+      object.material.depthWrite = false;
       this.droneMaterials.push(object.material);
     });
 
@@ -84,22 +87,12 @@ export class PhantomDreamVisual {
 
   update(dream, camera, robotHead) {
     this.root.visible = Boolean(dream && dream.type === "phantom-visitor-2026");
-    if (!this.root.visible) return;
-    robotHead.getWorldPosition(this.anchor);
-    this.root.position.copy(this.anchor);
-    this.root.quaternion.copy(camera.quaternion);
-    camera.updateMatrixWorld();
-    this.cameraAnchor.copy(this.anchor).applyMatrix4(camera.matrixWorldInverse);
-    const halfHeight = -this.cameraAnchor.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const halfWidth = halfHeight * camera.aspect;
-    const above = (halfHeight * 0.94 - this.cameraAnchor.y) / 2.54;
-    const left = (halfWidth * 0.94 + this.cameraAnchor.x) / 2.76;
-    this.root.scale.setScalar(Math.max(0.05, Math.min(1, above, left)));
+    if (!this.root.visible) { this.opacity = 0; return; }
+    PlaceDream(this.root, camera, robotHead, this.anchor, this.cameraAnchor);
 
     const p = Math.max(0, Math.min(1, dream.beatProgress || 0));
     const progress = Math.max(0, Math.min(1, dream.progress || 0));
-    const fade = Smooth(progress / 0.06) * Smooth((1 - progress) / 0.08);
-    for (const entry of this.materials) entry.material.opacity = entry.opacity * fade;
+    this.opacity = DreamOpacity(progress);
     const beat = dream.beatId;
     this.pip.position.set(-0.72, -0.39, 0.18);
     this.head.rotation.set(0, 0, 0);
@@ -172,8 +165,8 @@ export class PhantomDreamVisual {
     }
     this.drone.visible = droneAlpha > 0;
     this.cover.visible = coverAlpha > 0;
-    for (const material of this.droneMaterials) material.opacity = droneAlpha * fade;
-    this.ghostMaterial.opacity = 0.82 * coverAlpha * fade;
+    for (const material of this.droneMaterials) material.opacity = droneAlpha;
+    this.ghostMaterial.opacity = 0.82 * coverAlpha;
     this.pip.rotation.z += -surprise * (0.13 + (dream.variant || 0) * 0.035);
     this.head.rotation.z = -surprise * 0.16 - reach * 0.08;
     this.arms[0].rotation.z = -0.12 - surprise * 1.1;

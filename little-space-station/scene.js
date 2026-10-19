@@ -7,6 +7,7 @@ import { UpdateEnvironmentVisuals } from "./environment-renderer.js";
 import { CameraFramingController } from "./camera-framing.js";
 import { AntennaDreamVisual } from "./dream-renderer.js";
 import { PhantomDreamVisual } from "./phantom-dream-renderer.js";
+import { DreamCompositor } from "./dream-compositor.js";
 import { Autumn2026Visual } from "./seasonal-renderer.js";
 import { SERVICE_DECK_ANCHORS, SeasonalServiceDeckVisual } from "./seasonal-service-deck.js";
 import { PhantomVisitorVisual } from "./phantom-renderer.js";
@@ -109,6 +110,7 @@ export class LittleSpaceStationScene {
     this.BuildStarfield();
     this.BuildPlanet();
     this.BuildStation();
+    this.cameraFraming.setReviewStation(this.station);
     Object.assign(this, BuildStationDetails(this.station, this.materials));
     this.BuildVisitor();
     this.BuildRobot();
@@ -712,8 +714,10 @@ export class LittleSpaceStationScene {
     this.chargingRing = chargingRing;
     this.chargingRingMaterial = chargingRing.material;
 
-    this.dreamVisual = new AntennaDreamVisual(this.scene);
-    this.phantomDreamVisual = new PhantomDreamVisual(this.scene);
+    this.dreamCompositor = new DreamCompositor(this.scene);
+    this.dreamVisual = new AntennaDreamVisual(this.dreamCompositor.scene);
+    this.phantomDreamVisual = new PhantomDreamVisual(this.dreamCompositor.scene);
+    this.dreamVisuals = [this.dreamVisual, this.phantomDreamVisual];
 
     this.robot = new THREE.Group();
     this.station.add(this.robot);
@@ -842,6 +846,7 @@ export class LittleSpaceStationScene {
     this.camera.aspect = width / height;
     this.camera.fov = this.camera.aspect < 1.35 ? 45 : 39;
     this.camera.updateProjectionMatrix();
+    this.cameraFraming.setViewport(width, height);
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(width, height, false);
   }
@@ -948,8 +953,9 @@ export class LittleSpaceStationScene {
     this.remembranceVisual.update(eventState);
 
     this.cameraFraming.update(time, frameSeconds, this.robot);
-    this.dreamVisual.update(eventState.dream, this.camera, this.robotHead);
-    this.phantomDreamVisual.update(eventState.dream, this.camera, this.robotHead);
+    const activeCamera = this.cameraFraming.getActiveCamera();
+    this.dreamVisual.update(eventState.dream, activeCamera, this.robotHead);
+    this.phantomDreamVisual.update(eventState.dream, activeCamera, this.robotHead);
   }
 
   ConfigureVisitor(visitorType, visitId = "") {
@@ -1059,7 +1065,8 @@ export class LittleSpaceStationScene {
   }
 
   render() {
-    this.renderer.render(this.scene, this.camera);
+    this.dreamCompositor.prepare(this.renderer, this.cameraFraming.getActiveCamera(), this.dreamVisuals);
+    this.renderer.render(this.scene, this.cameraFraming.getActiveCamera());
   }
 
   getPipDiagnostics() {

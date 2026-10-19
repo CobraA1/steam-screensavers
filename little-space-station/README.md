@@ -15,7 +15,7 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `world.js` is the compatibility entry point; `station-identity.js` owns seeded visual identity.
 - `environment.js` derives illumination, rotation, and seasons; `environment-renderer.js` maps that state onto existing lights and materials.
 - `scene.js` builds the Three.js diorama and visualizes simulation state.
-- `camera-framing.js` owns the 140% production view and the preview framing comparison controls.
+- `camera-framing.js` owns the 140% production view and the preview framing comparison controls, including preview-only station-axis top (+Y), front (+X) and side (+Z) orthographic inspection.
 - `expansion-preview.js` builds lightweight wireframe layout studies; it is reachable only through the dynamically loaded preview tools.
 - `pip-behavior.js`, `pip-animation.js`, and `station-details.js` map deterministic task stages to Pip's poses, equipment work, and physically attached cargo handling.
 - `autumn-2026.js` derives the 2026 calendar, seasonal cargo manifests, decorations, installations, oddities, and cleanup without persisting routine state.
@@ -27,13 +27,17 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 
 No network connection, package installation, or build step is required.
 
+## Multi-view placement and animation review
+
+Before accepting a 3D placement, attachment, movement or manipulation change, use **Camera experiment → View** in preview to compare **Station overview** with **Top orthographic**, **Front orthographic** and **Side orthographic**. The station-local orthographic views expose hidden depth gaps, collisions, clearance problems and missed hand-to-prop contact. They are diagnostic only; production retains the original perspective. See the [mandatory multi-view review procedure](docs/expectations/animation-expectations.md#mandatory-multi-view-3d-inspection).
+
 ## Project expectations
 
 Project-specific rules now live in [docs/expectations/](docs/expectations/README.md), including [animation](docs/expectations/animation-expectations.md), [dreams](docs/expectations/dream-expectations.md), and [story design](docs/expectations/story-expectations.md). The root `AGENTS.md` remains the shared Steam Deck platform guide.
 
 ## Transparency rendering direction
 
-Steam Deck tests of the transparency stress lab favor **evaluating offscreen group compositing first for whole-object/whole-scene fades**. The initial target is the **Stubborn Antenna and Phantom Visitor dream-bubble fade-in/out**, not all translucent materials. No dream renderer migration has been performed yet. The [October 2026 findings, performance/safety limits and acceptance criteria](docs/performance/transparency-findings-2026-10.md) document the measurements and next implementation work.
+Both **Stubborn Antenna and Phantom Visitor** now fade their entire thought-bubble presentation using one shared offscreen compositor. Independent actor fades remain inside the memory. See [dream compositing](docs/performance/dream-compositing.md) for bounded render targets, alpha handling, resource lifetime and the head-plane depth approximation, and the [October 2026 findings](docs/performance/transparency-findings-2026-10.md) for the original experimental motivation. Dream presentations are exempt from orthographic aesthetic review; live-world objects and incidents still require it.
 
 ## Transparency Lab (development only)
 

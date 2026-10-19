@@ -49,7 +49,7 @@ test("FPS rolling window reports measured wall-time frames", () => {
 
 test("benchmark summaries use robust median/p95 and ignore invalid samples", () => {
   assert.equal(Percentile([1, 2, 3, 4, 5], 0.5), 3);
-  assert.equal(Percentile([1, 3, 5], 0.95), 4.8);
+  assert.ok(Math.abs(Percentile([1, 3, 5], 0.95) - 4.8) < 1e-12);
   assert.equal(Percentile([NaN, Infinity, 5, 9], 0.5), 7);
   const summary = BenchmarkSummary({ frames: [0, 10, 20], cpu: [1, 2, 8], gpu: [0.3, 0.5, 0.7] });
   assert.equal(summary.fps, 100);
