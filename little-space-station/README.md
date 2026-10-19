@@ -31,6 +31,10 @@ No network connection, package installation, or build step is required.
 
 Project-specific rules now live in [docs/expectations/](docs/expectations/README.md), including [animation](docs/expectations/animation-expectations.md), [dreams](docs/expectations/dream-expectations.md), and [story design](docs/expectations/story-expectations.md). The root `AGENTS.md` remains the shared Steam Deck platform guide.
 
+## Transparency Lab (development only)
+
+The [Transparency Lab](experiments/transparency-lab/README.md) is a separate browser experiment comparing **normal alpha blending**, **alpha hashing**, and **opaque-group offscreen compositing** with identical overlapping animated shapes. It includes FPS, frame/render submission time, draw calls, Chromium JS heap (when exposed), and a carefully labeled GPU allocation estimate. It is not loaded by the production screensaver. Start the repository preview server and open `/little-space-station/experiments/transparency-lab/index.html` directly.
+
 ## Traffic and station behavior
 
 Traffic is derived from the world seed and absolute time instead of a repeating animation cycle. Visits have stable IDs, never overlap at the single berth, and are separated by deterministic quiet gaps. Default gaps are 6–22 minutes with occasional 25–55 minute gaps. Service durations depend on purpose:
