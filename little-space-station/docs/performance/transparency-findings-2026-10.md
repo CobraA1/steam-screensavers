@@ -1,6 +1,6 @@
 # Transparency Lab findings — October 2026
 
-**Status:** observational results and implementation direction, **not** a production renderer change.
+**Status:** the observations below describe the original experiment. The two production dream presentations now implement its recommendation through the shared [offscreen dream compositor](dream-compositing.md); other transparency effects are unchanged.
 
 This note summarizes user-run tests of [the standalone Transparency Lab](../../experiments/transparency-lab/README.md) on a **Steam Deck**, including an external Acer monitor at 1920×1080 / 144 Hz and an external TV displaying 4K output. The benchmark deliberately forces many overlapping animated low-poly meshes. It is **not representative of normal Little Space Station scene composition**.
 
@@ -39,9 +39,9 @@ For new fades that should make a **compound object or a whole staged presentatio
 
 This is **not** a blanket change to all transparency: retain conventional materials for genuine translucency and additive light effects, use continuous geometry where possible (e.g. the Phantom covering), and apply offscreen rendering only when a bounded buffer and a correct relationship to the rest of the 3D scene can be demonstrated. Alpha hashing remains a possible specialized alternative if its grain is acceptable or can be smoothed.
 
-**First production candidate (planned, not implemented):** both **Stubborn Antenna** and **Phantom Visitor** dreams, specifically the fade-in and fade-out of the whole memory/bubble presentation. Preserve each dream's visual palette, miniature-Pip geometry, beat choreography, independent in-dream actor fades, and deterministic seeking. Keep normal station rendering and production-passive behavior unchanged.
+**Implemented production use:** both **Stubborn Antenna** and **Phantom Visitor** dreams now composite the whole memory/bubble presentation before fading. Their palettes, shared miniature Pip, beat choreography, independent actor fades, and deterministic seeking remain intact. The bounded target, head-plane occlusion approximation, alpha handling and resource lifetime are documented in [dream compositing](dream-compositing.md). This does not convert other station transparency effects.
 
-### Requirements for the dream prototype
+### Acceptance requirements retained from the original prototype recommendation
 
 1. Reuse one shared offscreen-bubble composition approach; avoid separate per-dream infrastructure that drifts.
 2. Verify **whole-bubble fade** is uniform; children must not independently accumulate opacity during the group transition. Preserve story-specific actor fades *inside* the fully composed dream.
@@ -51,4 +51,4 @@ This is **not** a blanket change to all transparency: retain conventional materi
 6. Benchmark the **real station** with and without dream compositing, including 4K output; avoid extreme stress-test settings. Compare visible draw calls, triangles, CPU submission and FPS. If genuine GPU query results are unavailable, say so.
 7. Keep the Transparency Lab opt-in; never load benchmark UI, event listeners or stress-test settings in production.
 
-**Safety/performance direction:** The screensaver is meant to run unattended for hours on a Steam Deck. Smooth pacing, modest resource consumption, clean lifecycle management and reliability are more important than maximizing stress-test FPS. No offscreen dream compositor has been implemented by this documentation change.
+**Safety/performance direction:** The screensaver is meant to run unattended for hours on a Steam Deck. Smooth pacing, modest resource consumption, clean lifecycle management and reliability are more important than maximizing stress-test FPS. The production compositor uses one bounded dream pass; the extreme benchmark figures above must not be presented as its measured performance.

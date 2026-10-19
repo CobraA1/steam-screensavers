@@ -37,7 +37,7 @@ Project-specific rules now live in [docs/expectations/](docs/expectations/README
 
 ## Transparency rendering direction
 
-Steam Deck tests of the transparency stress lab favor **evaluating offscreen group compositing first for whole-object/whole-scene fades**. The initial target is the **Stubborn Antenna and Phantom Visitor dream-bubble fade-in/out**, not all translucent materials. No dream renderer migration has been performed yet. The [October 2026 findings, performance/safety limits and acceptance criteria](docs/performance/transparency-findings-2026-10.md) document the measurements and next implementation work.
+Both **Stubborn Antenna and Phantom Visitor** now fade their entire thought-bubble presentation using one shared offscreen compositor. Independent actor fades remain inside the memory. See [dream compositing](docs/performance/dream-compositing.md) for bounded render targets, alpha handling, resource lifetime and the head-plane depth approximation, and the [October 2026 findings](docs/performance/transparency-findings-2026-10.md) for the original experimental motivation. Dream presentations are exempt from orthographic aesthetic review; live-world objects and incidents still require it.
 
 ## Transparency Lab (development only)
 

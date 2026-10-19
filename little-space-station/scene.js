@@ -7,6 +7,7 @@ import { UpdateEnvironmentVisuals } from "./environment-renderer.js";
 import { CameraFramingController } from "./camera-framing.js";
 import { AntennaDreamVisual } from "./dream-renderer.js";
 import { PhantomDreamVisual } from "./phantom-dream-renderer.js";
+import { DreamCompositor } from "./dream-compositor.js";
 import { Autumn2026Visual } from "./seasonal-renderer.js";
 import { SERVICE_DECK_ANCHORS, SeasonalServiceDeckVisual } from "./seasonal-service-deck.js";
 import { PhantomVisitorVisual } from "./phantom-renderer.js";
@@ -713,8 +714,10 @@ export class LittleSpaceStationScene {
     this.chargingRing = chargingRing;
     this.chargingRingMaterial = chargingRing.material;
 
-    this.dreamVisual = new AntennaDreamVisual(this.scene);
-    this.phantomDreamVisual = new PhantomDreamVisual(this.scene);
+    this.dreamCompositor = new DreamCompositor(this.scene);
+    this.dreamVisual = new AntennaDreamVisual(this.dreamCompositor.scene);
+    this.phantomDreamVisual = new PhantomDreamVisual(this.dreamCompositor.scene);
+    this.dreamVisuals = [this.dreamVisual, this.phantomDreamVisual];
 
     this.robot = new THREE.Group();
     this.station.add(this.robot);
@@ -1062,6 +1065,7 @@ export class LittleSpaceStationScene {
   }
 
   render() {
+    this.dreamCompositor.prepare(this.renderer, this.cameraFraming.getActiveCamera(), this.dreamVisuals);
     this.renderer.render(this.scene, this.cameraFraming.getActiveCamera());
   }
 

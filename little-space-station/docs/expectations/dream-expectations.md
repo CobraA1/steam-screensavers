@@ -23,9 +23,9 @@ Read this before changing dream selection, memory records, miniature actors, or 
 
 ## Whole-dream transparency and fades
 
-- For a complete dream or thought-bubble group's **entry/exit fade**, prefer evaluating **offscreen group compositing** first, rather than fading every overlapping actor/prop material individually. This is a design preference based on [Steam Deck transparency experiments](../performance/transparency-findings-2026-10.md), **not an already-implemented feature or a universal rule for translucent objects**.
+- Both existing dreams use the shared [offscreen dream compositor](../performance/dream-compositing.md) for the complete presentation's **entry/exit fade**. Bubble, rim, thought dots, stage, actors, and props render together before that fade is applied once. Do not reintroduce whole-dream opacity multiplication in child materials. This implements the original [Steam Deck transparency experiment recommendation](../performance/transparency-findings-2026-10.md); it is not a universal rule for translucent objects.
 - Retain independent fades **inside** a dream when needed for the narrative, such as the Phantom's departing drone. Do not replace actual see-through materials with a flat opaque-group result where their layered transparency is intentional.
-- The composited bubble must remain anchored to Pip and visually occlude/be occluded appropriately by real-world station objects; inspect any boundary and depth limitations before adopting this technique.
+- The composited bubble must remain anchored to Pip. Its billboard tests against live-world depth at Pip's head plane, with no depth writes. This is an intentional approximation for a camera-facing thought bubble, not per-actor world occlusion; inspect overlaps from the production camera when changing placement.
 - Keep render targets small, reusable, resizable, and disposed when unused. Fade transitions must be deterministic and fully reconstructible after seek, pause, resume and dream switches. No preview controls or additional production input handling.
 - Compare complete dreams at native Deck resolution, 1080p and 4K output before accepting a new approach. Watch for seams, halos, group opacity, crop/stretch, lost actor visibility, and FPS or resource regressions.
 
