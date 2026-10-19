@@ -1,3 +1,20 @@
-little-space-station.zip
-storage-diagnostics/
-bouncinglogo/
+# Ignore all root-level files and folders unless explicitly whitelisted below.
+/*
+
+# Repository metadata and shared documentation.
+!/.gitignore
+!/AGENTS.md
+!/LICENSE
+!/PREVIEW.md
+!/procedural-narrative-screensaver-design-principles.md
+!/screensaver-preview.py
+
+# Screensavers tracked by this repository.
+!/little-space-station/
+!/little-space-station/**
+!/monolith-drift/
+!/monolith-drift/**
+!/orbital-bloom/
+!/orbital-bloom/**
+!/starfield-screensaver/
+!/starfield-screensaver/**
