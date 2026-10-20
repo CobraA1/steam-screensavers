@@ -102,6 +102,29 @@ export function CreatePreviewTools({ director, runtime, scene }) {
   cameraSection.append(cameraReadout);
   panel.append(cameraSection);
 
+  // Planet inspection is deliberately independent of world-clock jumps:
+  // changing this slider never advances visitors, Pip, or seasonal stories.
+  const planetSection = MakeElement("details", "preview-tools__environment");
+  planetSection.append(MakeElement("summary", "preview-tools__environment-summary", "Planet inspection"));
+  const planetViewButton = MakeElement("button", "preview-tools__button", "View planet");
+  planetViewButton.type = "button";
+  planetSection.append(planetViewButton);
+  const planetDaySlider = MakeElement("input", "preview-tools__select");
+  planetDaySlider.type = "range";
+  planetDaySlider.min = "0";
+  planetDaySlider.max = "1440";
+  planetDaySlider.step = "5";
+  planetDaySlider.value = "0";
+  AddField(planetSection, "Rotation day · 00:00–24:00", planetDaySlider);
+  const planetRotationValue = MakeElement("p", "preview-tools__hint", "Rotation follows world time");
+  planetSection.append(planetRotationValue);
+  const planetResetButton = MakeElement("button", "preview-tools__button", "Follow world rotation");
+  planetResetButton.type = "button";
+  planetSection.append(planetResetButton);
+  planetSection.append(MakeElement("p", "preview-tools__hint",
+    "The slider rotates only the planet, not the world clock, traffic, Pip, or saved progress."));
+  panel.append(planetSection);
+
   const expansionSection = MakeElement("details", "preview-tools__environment");
   expansionSection.append(MakeElement("summary", "preview-tools__environment-summary", "Station expansion"));
   const expansionSelect = MakeElement("select", "preview-tools__select");
@@ -472,12 +495,28 @@ export function CreatePreviewTools({ director, runtime, scene }) {
   worldTimeSelect.addEventListener("change", () => { if (worldTimeSelect.value === "actual") runtime.clock.useActualTime(); else runtime.clock.jumpWorld(worldTimeSelect.value); worldTimeSelect.value = "actual"; });
   dateInput.addEventListener("change", () => { const time = new Date(dateInput.value).getTime(); if (Number.isFinite(time)) runtime.clock.setWorldTime(time); });
   framingSelect.addEventListener("change", () => scene.cameraFraming.setPreset(framingSelect.value));
-  cameraModeSelect.addEventListener("change", () => scene.cameraFraming.setMode(cameraModeSelect.value));
+  let previousStationCameraMode = "overview";
+  cameraModeSelect.addEventListener("change", () => {
+    if (cameraModeSelect.value !== "planet") previousStationCameraMode = cameraModeSelect.value;
+    scene.cameraFraming.setMode(cameraModeSelect.value);
+  });
   resetCameraButton.addEventListener("click", () => {
     scene.cameraFraming.reset();
     framingSelect.value = "original";
     cameraModeSelect.value = "overview";
+    previousStationCameraMode = "overview";
   });
+  planetViewButton.addEventListener("click", () => {
+    const viewingPlanet = cameraModeSelect.value === "planet";
+    if (!viewingPlanet) previousStationCameraMode = cameraModeSelect.value;
+    const nextMode = viewingPlanet ? previousStationCameraMode : "planet";
+    scene.cameraFraming.setMode(nextMode);
+    cameraModeSelect.value = nextMode;
+  });
+  planetDaySlider.addEventListener("input", () => {
+    scene.setPlanetRotationPreview(Number(planetDaySlider.value) / 1440);
+  });
+  planetResetButton.addEventListener("click", () => scene.setPlanetRotationPreview(null));
   expansionSelect.addEventListener("change", () => expansionPreview.setLayout(expansionSelect.value));
   expansionVisibility.addEventListener("change", () => expansionPreview.setVisible(expansionVisibility.value === "show"));
   illuminationSelect.addEventListener("change", () => runtime.environment.setIlluminationOverride(illuminationSelect.value));
@@ -805,6 +844,17 @@ export function CreatePreviewTools({ director, runtime, scene }) {
       environmentValues.phase.textContent = (environment.illuminationPhase || "—") + " · " + Math.round((environment.illuminationProgress || 0) * 100) + "%";
       environmentValues.light.textContent = (environment.illuminationState || "—") + (environment.forcedIllumination ? " · forced" : "");
       environmentValues.rotation.textContent = Math.round((environment.planetRotationPhase || 0) * 100) + "%";
+      const planetOverride = scene.getPlanetRotationPreview();
+      const planetPhase = planetOverride === null ? (environment.planetRotationPhase || 0) : planetOverride;
+      const planetMinutes = Math.max(0, Math.min(1440, Math.round(planetPhase * 288) * 5));
+      planetDaySlider.value = String(planetMinutes);
+      const hours = String(Math.floor(planetMinutes / 60)).padStart(2, "0");
+      const minutes = String(planetMinutes % 60).padStart(2, "0");
+      planetRotationValue.textContent = hours + ":" + minutes + " · " +
+        Math.round(planetPhase * 360) + "° · " +
+        (planetOverride === null ? "world rotation" : "preview override");
+      planetViewButton.textContent = scene.getCameraDiagnostics().mode === "planet"
+        ? "Return to station" : "View planet";
       environmentValues.season.textContent = (environment.seasonalLabel || "—") + " · " + Math.round((environment.seasonalPhase || 0) * 100) + "%" + (environment.forcedSeason ? " · forced" : "");
       const seasonal = state.seasonal || {};
       seasonalValues.phase.textContent = (seasonal.phase || "ordinary") + (seasonal.forced ? " · forced" : "");

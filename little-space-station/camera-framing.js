@@ -12,6 +12,7 @@ export const DEFAULT_CAMERA_PRESET_ID = "very-close";
 export const CAMERA_VIEW_MODES = Object.freeze([
   Object.freeze({ id: "overview", label: "Station overview" }),
   Object.freeze({ id: "activity", label: "Activity focus" }),
+  Object.freeze({ id: "planet", label: "Planet close-up · preview only" }),
   Object.freeze({ id: "top", label: "Top orthographic · station axes" }),
   Object.freeze({ id: "front", label: "Front orthographic (+X) · station axes" }),
   Object.freeze({ id: "side", label: "Side orthographic (+Z) · station axes" }),
@@ -48,6 +49,11 @@ export class CameraFramingController {
     this.viewDirection = new THREE.Vector3();
     // Preview inspection only: production never creates this camera.
     this.orthographicCamera = preview ? new THREE.OrthographicCamera(-10, 10, 6, -6, 0.1, 100) : null;
+    this.planetCamera = preview ? new THREE.PerspectiveCamera(camera.fov || 39, 1, 0.1, 100) : null;
+    this.reviewPlanet = null;
+    this.planetRadius = 5.7;
+    this.planetCenter = new THREE.Vector3();
+    this.planetDirection = new THREE.Vector3(0.5, 0.38, 0.78).normalize();
     this.reviewStation = null;
     this.reviewAspect = 16 / 10;
     this.reviewTarget = new THREE.Vector3();
@@ -61,10 +67,21 @@ export class CameraFramingController {
     if (this.preview) this.reviewStation = station;
   }
 
+  setReviewPlanet(planet, radius = 5.7) {
+    if (!this.preview) return;
+    this.reviewPlanet = planet;
+    this.planetRadius = radius;
+  }
+
   setViewport(width, height) {
     if (!this.preview) return;
     this.reviewAspect = Math.max(1, width) / Math.max(1, height);
     this.updateOrthographicFrustum();
+    if (this.planetCamera) {
+      this.planetCamera.aspect = this.reviewAspect;
+      this.planetCamera.fov = this.camera.fov;
+      this.planetCamera.updateProjectionMatrix();
+    }
   }
 
   updateOrthographicFrustum() {
@@ -80,6 +97,7 @@ export class CameraFramingController {
   }
 
   getActiveCamera() {
+    if (this.preview && this.mode === "planet") return this.planetCamera;
     return this.preview && ORTHOGRAPHIC_MODES[this.mode] ? this.orthographicCamera : this.camera;
   }
 
@@ -143,6 +161,20 @@ export class CameraFramingController {
     this.currentTarget.lerp(this.desiredTarget, smoothing);
     this.camera.position.copy(this.currentPosition);
     this.camera.lookAt(this.currentTarget);
+
+    if (this.mode === "planet" && this.reviewPlanet) {
+      this.reviewPlanet.updateWorldMatrix(true, false);
+      this.reviewPlanet.getWorldPosition(this.planetCenter);
+      // Keep the entire sphere in frame at both landscape and portrait sizes.
+      // Unlike the overview preset, this independent camera has no station drift.
+      const halfFov = this.planetCamera.fov * Math.PI / 360;
+      const fit = 0.76 * Math.min(1, this.reviewAspect);
+      const distance = this.planetRadius / (Math.sin(halfFov) * fit);
+      this.planetCamera.position.copy(this.planetCenter).addScaledVector(this.planetDirection, distance);
+      this.planetCamera.lookAt(this.planetCenter);
+      this.planetCamera.updateMatrixWorld(true);
+      return;
+    }
 
     const mode = ORTHOGRAPHIC_MODES[this.mode];
     if (!mode) return;
