@@ -315,8 +315,8 @@ export class LittleSpaceStationScene {
       // highland ranges. The earlier evergreen threshold (>0.76 moisture)
       // rarely activated, leaving almost every autumn triangle orange.
       // Narrow transitions create recognizable connected regions, not noise.
-      const dryRegion = 1 - Smooth((terrain.moisture - 0.41) / 0.12);
-      const forestRegion = Smooth((terrain.moisture - 0.49) / 0.09);
+      const dryRegion = 1 - Smooth((terrain.moisture - 0.34) / 0.14);
+      const forestRegion = Smooth((terrain.moisture - 0.53) / 0.12);
       const uplandRegion = Smooth((terrain.highland - 0.55) / 0.16);
       for (const [season, buffer] of Object.entries(seasonalColors)) {
         sample.copy(seasonLand[season][0]).lerp(seasonLand[season][1], tones);
