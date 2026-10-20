@@ -13,8 +13,8 @@ const LOBES = [
   [[-0.20, 0.12, -0.96], 0.84],
   [[-0.60, 0.40, -0.73], 0.56],
   [[0.36, -0.40, -0.85], 0.48],
-  [[0, -1, 0], 0.48],
-  [[0, 1, 0], 0.32],
+  [[0, -1, 0], 0.60],
+  [[0, 1, 0], 0.60],
 ].map(([point, radius]) => {
   const length = Math.hypot(...point);
   return { x: point[0] / length, y: point[1] / length, z: point[2] / length, edge: Math.cos(radius) };
