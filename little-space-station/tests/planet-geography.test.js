@@ -33,7 +33,7 @@ test("the globe contains sizeable oceans and continents, not arbitrary latitudin
     if (landHere > 0 && landHere < 72) shorelineByLatitude.add(lat);
   }
   const landFraction = landArea / totalArea;
-  assert.ok(landFraction > 0.25 && landFraction < 0.65, `Expected continents and oceans, got ${landFraction}`);
+  assert.ok(landFraction > 0.22 && landFraction < 0.40, `Expected ocean-dominant geography with smaller continents, got ${landFraction}`);
   assert.ok(shorelineByLatitude.size >= 8, "Expected coastlines spanning several latitudes");
 });
 
