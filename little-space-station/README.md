@@ -14,6 +14,7 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `simulation-world.js` owns absolute-time traffic, visit facts, Pip tasks, equipment state, and presentation checkpoints.
 - `world.js` is the compatibility entry point; `station-identity.js` owns seeded visual identity.
 - `environment.js` derives illumination, rotation, and seasons; `environment-renderer.js` maps that state onto existing lights and materials.
+- `planet-geography.js` generates seeded, fixed continental silhouettes in planet-local coordinates; `scene.js` assigns per-face seasonal colors and integrates snow onto land.
 - `scene.js` builds the Three.js diorama and visualizes simulation state.
 - `camera-framing.js` owns the 140% production view and the preview framing comparison controls, including preview-only station-axis top (+Y), front (+X) and side (+Z) orthographic inspection.
 - `expansion-preview.js` builds lightweight wireframe layout studies; it is reachable only through the dynamically loaded preview tools.
@@ -109,7 +110,7 @@ Halloween preparations include a marked crate, jack-o'-lantern, orange/purple li
 
 The world seed and absolute world timestamp drive a 97-minute stylized sunlight/shadow cycle, a 24-hour planet rotation, and a 365-day fictional year. Seeded offsets keep different worlds from sharing the same phase. No environment state is persisted, and date/time jumps reconstruct it immediately.
 
-Sunset and sunrise use smooth transitions. In planetary shadow, direct sunlight and planetary bounce recede while cool hemisphere fill keeps the miniature readable; windows, equipment lights, Pip's tool, navigation lights, and a visitor cabin light become more prominent. Seasons continuously blend four terrain palettes: bright meadow greens in spring, darker forest greens and dry golds in summer, rust and sand in autumn, and broad snow cover in winter. Atmosphere tint, polar-cap appearance, and a small light-angle bias change with them without regenerating geometry.
+Sunset and sunrise use smooth transitions. In planetary shadow, direct sunlight and planetary bounce recede while cool hemisphere fill keeps the miniature readable; windows, equipment lights, Pip's tool, navigation lights, and a visitor cabin light become more prominent. The planet has deterministic, connected faceted continents and broad oceans, assembled as one vertex-colored low-poly globe. Each triangle gets a single land or ocean color, so geography remains recognizable as the world rotates. Coastlines do not move with the seasons. Seasons continuously blend four terrain palettes: spring greens, deeper summer greens and golds, autumn rust and sand, and winter snow. Polar snow is painted directly onto land faces, without the old separate transparent ice mesh. The subtle translucent atmospheric glow remains; no clouds are rendered. Atmosphere tint and a small light-angle bias change with the seasons without regenerating geometry.
 
 ## Previewing and event tools
 
