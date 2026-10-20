@@ -73,7 +73,6 @@ export function UpdateEnvironmentVisuals(scene, state) {
   palette.scratchB.copy(palette.neutralAtmosphere).lerp(palette.scratchA, state.seasonalEffectStrength);
   scene.planetAtmosphereMaterial.color.copy(palette.scratchB);
   scene.planetAtmosphereMaterial.opacity = 0.12 + shadow * 0.035 + state.seasonalEffectStrength * (0.025 + state.iceCoverage * 0.012);
-  scene.planetIceMaterial.opacity = 0.08 + state.seasonalEffectStrength * (state.iceCoverage * 0.48 - 0.04);
 
   scene.materials.window.emissiveIntensity = 2.2 + artificial * 1.9;
   scene.materials.warmWindow.emissiveIntensity = 2 + artificial * 2.5;
