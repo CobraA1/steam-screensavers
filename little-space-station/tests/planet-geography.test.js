@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as THREE from "../vendor/three.module.js";
 import { CreatePlanetGeography, SamplePlanetFaces } from "../planet-geography.js";
 
 test("continent geography is seeded, deterministic, and unchanged by sampling order", () => {
@@ -49,4 +50,22 @@ test("each triangle uses one spherical geography sample", () => {
   assert.equal(facets.length, 2);
   assert.deepEqual(facets[0], CreatePlanetGeography("planet-faces")(2.8 / 3, 0.1 / 3, 0.1 / 3));
   assert.throws(() => SamplePlanetFaces({ count: 5 }, "planet-faces"), /complete triangles/);
+});
+
+test("actual low-poly geometry has triangle-local colors and both surface types", () => {
+  const geometry = new THREE.IcosahedronGeometry(5.7, 5);
+  try {
+    // The color buffers depend on these non-indexed triangle triplets.
+    assert.equal(geometry.index, null);
+    const positions = geometry.getAttribute("position");
+    const facets = SamplePlanetFaces(positions, "little-station-001");
+    assert.equal(facets.length * 3, positions.count);
+    const landCount = facets.filter(face => face.land).length;
+    assert.ok(landCount > facets.length * 0.2);
+    assert.ok(landCount < facets.length * 0.8);
+    assert.ok(facets.some(face => face.land && face.latitude > 0.9), "Polar terrain should belong to the globe");
+    assert.ok(facets.some(face => !face.land && face.latitude < 0.3), "Open equatorial oceans should exist");
+  } finally {
+    geometry.dispose();
+  }
 });
