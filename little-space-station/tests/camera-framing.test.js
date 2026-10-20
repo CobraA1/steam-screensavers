@@ -36,7 +36,7 @@ test("preview camera controls retain mode across presentation updates and reset 
 
   controller.reset();
   assert.deepEqual(controller.getDiagnostics(), { preset: "original", apparentScale: 1, mode: "overview" });
-  assert.deepEqual(CAMERA_VIEW_MODES.map((mode) => mode.id), ["overview", "activity", "top", "front", "side"]);
+  assert.deepEqual(CAMERA_VIEW_MODES.map((mode) => mode.id), ["overview", "activity", "planet", "top", "front", "side"]);
 });
 
 test("production camera uses the approved close default and ignores experimental setters", () => {
@@ -97,10 +97,43 @@ test("preview orthographic views use station-local orthogonal axes", () => {
   assert.strictEqual(controller.getActiveCamera(), perspective);
 });
 
+test("planet inspection camera centers the globe and fits portrait as well as landscape", () => {
+  const perspective = new THREE.PerspectiveCamera(39, 1.6, 0.1, 100);
+  const controller = new CameraFramingController(perspective, { preview: true });
+  const planet = new THREE.Group();
+  planet.position.set(7.65, -4.5, -10.5);
+  controller.setReviewPlanet(planet, 5.7);
+  controller.setViewport(1280, 800);
+  assert.equal(controller.setMode("planet"), true);
+  controller.update(0, 0.016);
+  const closeup = controller.getActiveCamera();
+  assert.ok(closeup.isPerspectiveCamera);
+  assert.notStrictEqual(closeup, perspective);
+  assert.equal(closeup.aspect, 1.6);
+  const center = new THREE.Vector3();
+  planet.getWorldPosition(center);
+  const cameraDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(closeup.quaternion);
+  const toCenter = center.clone().sub(closeup.position).normalize();
+  assert.ok(cameraDirection.distanceTo(toCenter) < 1e-7);
+  const landscapeDistance = closeup.position.distanceTo(center);
+
+  controller.setViewport(700, 1000);
+  controller.update(0, 0.016);
+  assert.equal(closeup.aspect, 0.7);
+  assert.ok(closeup.position.distanceTo(center) > landscapeDistance, "Portrait must fit the full globe");
+  controller.setMode("overview");
+  assert.strictEqual(controller.getActiveCamera(), perspective);
+  controller.setMode("planet");
+  controller.reset();
+  assert.strictEqual(controller.getActiveCamera(), perspective);
+});
+
 test("production never constructs or accepts an orthographic review camera", () => {
   const perspective = new THREE.PerspectiveCamera(39, 1.6, 0.1, 100);
   const controller = new CameraFramingController(perspective);
   assert.equal(controller.orthographicCamera, null);
+  assert.equal(controller.planetCamera, null);
   assert.equal(controller.setMode("top"), false);
+  assert.equal(controller.setMode("planet"), false);
   assert.strictEqual(controller.getActiveCamera(), perspective);
 });
