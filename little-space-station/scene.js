@@ -112,6 +112,9 @@ export class LittleSpaceStationScene {
     this.BuildPlanet();
     this.BuildStation();
     this.cameraFraming.setReviewStation(this.station);
+    this.cameraFraming.setReviewPlanet(this.planet, 5.7);
+    // Preview-only, visual rotation scrub: never changes the simulated world time.
+    this.previewPlanetRotation = null;
     Object.assign(this, BuildStationDetails(this.station, this.materials));
     this.BuildVisitor();
     this.BuildRobot();
@@ -944,7 +947,9 @@ export class LittleSpaceStationScene {
     this.elapsed += stepSeconds;
     const time = this.elapsed;
     UpdateEnvironmentVisuals(this, environmentState);
-    this.planetGlobe.rotation.y = environmentState.planetRotationPhase * Math.PI * 2;
+    const rotationPhase = this.cameraFraming.preview && this.previewPlanetRotation !== null
+      ? this.previewPlanetRotation : environmentState.planetRotationPhase;
+    this.planetGlobe.rotation.y = rotationPhase * Math.PI * 2;
     this.planet.rotation.z = environmentState.seasonalSunTilt * 0.08 + Math.sin(time * 0.025) * 0.006;
     this.stars.rotation.y = time * 0.0018;
 
@@ -1167,8 +1172,36 @@ export class LittleSpaceStationScene {
   }
 
   render() {
+    if (this.cameraFraming.preview && this.cameraFraming.mode === "planet") {
+      // Preview inspection renders the planet alone, without the station or
+      // thought-bubble overlay blocking geography. Restore live visibility.
+      this.dreamCompositor.releaseTarget();
+      const stationVisible = this.station.visible;
+      this.station.visible = false;
+      try {
+        this.renderer.render(this.scene, this.cameraFraming.getActiveCamera());
+      } finally {
+        this.station.visible = stationVisible;
+      }
+      return;
+    }
     this.dreamCompositor.prepare(this.renderer, this.cameraFraming.getActiveCamera(), this.dreamVisuals);
     this.renderer.render(this.scene, this.cameraFraming.getActiveCamera());
+  }
+
+  setPlanetRotationPreview(phase) {
+    if (!this.cameraFraming.preview) return false;
+    if (phase === null) {
+      this.previewPlanetRotation = null;
+      return true;
+    }
+    if (!Number.isFinite(phase) || phase < 0 || phase > 1) return false;
+    this.previewPlanetRotation = phase;
+    return true;
+  }
+
+  getPlanetRotationPreview() {
+    return this.cameraFraming.preview ? this.previewPlanetRotation : null;
   }
 
   getPipDiagnostics() {
