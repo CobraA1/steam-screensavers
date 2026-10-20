@@ -7,7 +7,7 @@ const DAY_MS = 24 * 60 * MINUTE_MS;
 export const PHASE_NAMES = Object.freeze(["quiet", "approach", "dock", "service", "departure", "afterglow"]);
 
 export const EVENT_CATALOG = Object.freeze([
-  Object.freeze({ id: "cargo-run", label: "Cargo Run", purpose: "Transfer one cargo container", visitorType: "freighter", serviceTask: "cargo-transfer", payoffCheckpoint: "cargo-transferred", serviceMinutes: [3, 8] }),
+  Object.freeze({ id: "cargo-run", label: "Cargo Run", purpose: "Unload the paired freight racks", visitorType: "freighter", serviceTask: "cargo-transfer", payoffCheckpoint: "cargo-transferred", serviceMinutes: [3, 8] }),
   Object.freeze({ id: "courier-stop", label: "Courier Stop", purpose: "Exchange a dispatch canister", visitorType: "courier", serviceTask: "dispatch-exchange", payoffCheckpoint: "dispatch-exchanged", serviceMinutes: [1, 3] }),
   Object.freeze({ id: "survey-call", label: "Survey Call", purpose: "Synchronize survey and communications arrays", visitorType: "surveyor", serviceTask: "survey-sync", payoffCheckpoint: "survey-synchronized", serviceMinutes: [2, 5] }),
 ]);
@@ -24,13 +24,14 @@ const DEFAULT_TRAFFIC = Object.freeze({
   quietGapMinutes: [6, 22],
   longGapChance: 0.28,
   longGapMinutes: [25, 55],
-  approachSeconds: 20,
-  dockSeconds: 8,
-  departureSeconds: 18,
+  approachSeconds: 30,
+  dockSeconds: 14,
+  departureSeconds: 40,
   afterglowSeconds: 25,
 });
 const DEFAULT_MAINTENANCE = Object.freeze({ slotMinutes: 15, activeChance: 0.62 });
-const FORCED_DURATIONS = Object.freeze({ quiet: 3, approach: 8, dock: 3, service: 30, departure: 10, afterglow: 7 });
+const FORCED_DURATIONS = Object.freeze({ quiet: 3, approach: 30, dock: 14, service: 45, departure: 40, afterglow: 7 });
+const ForcedDurations = eventId => ({ ...FORCED_DURATIONS, service: eventId === 'cargo-run' ? 180 : 45 });
 const SERVICE_STAGE_DEFINITIONS = Object.freeze({
   "cargo-run": Object.freeze([["prepare", 0.08], ["travel-to-cargo", 0.21], ["inspect-cargo", 0.3], ["retrieve-cargo", 0.47], ["deliver-cargo", 0.7], ["stow-cargo", 0.84], ["verify", 0.91], ["react-success", 0.95], ["return", 1]]),
   "courier-stop": Object.freeze([["prepare", 0.12], ["travel-to-cargo", 0.27], ["inspect-cargo", 0.39], ["retrieve-cargo", 0.54], ["deliver-cargo", 0.72], ["stow-cargo", 0.82], ["verify", 0.88], ["react-success", 0.92], ["return", 1]]),
@@ -156,6 +157,7 @@ function ServiceTask(event, progress) {
     pipTaskOverallProgress: progress,
     pipGestureVariant: DeriveSeed(event.visitId || event.id, "pip-service-gesture-v1") % 3,
     cargoState,
+    cargoKind: event.id === "courier-stop" ? "dispatch" : event.id === "cargo-run" ? "cargo" : "none",
     equipmentLightState: "normal",
     antennaState: event.id === "survey-call" ? (progress < 0.49 ? "waiting" : progress < 0.72 ? "synchronizing" : "aligned") : "tracking",
     lastSignificantActivity: event.label + " — " + stage.id.replaceAll("-", " "),
@@ -185,6 +187,7 @@ function MaintenanceState(worldSeed, worldTimeMs, settings = {}) {
       pipTaskOverallProgress: taskProgress,
       pipGestureVariant: gestureVariant,
       cargoState: "none",
+      cargoKind: "none",
       equipmentLightState: taskId === "repair-light" && !completed ? "flickering" : "normal",
       antennaState: taskId === "adjust-antenna" && !completed ? "drifted" : "tracking",
       lastSignificantActivity: completed ? (taskId === "repair-light" ? "Equipment light repaired" : "Communications antenna realigned") : "Station quiet",
@@ -200,6 +203,7 @@ function MaintenanceState(worldSeed, worldTimeMs, settings = {}) {
     pipTaskOverallProgress: taskProgress,
     pipGestureVariant: gestureVariant,
     cargoState: "none",
+    cargoKind: "none",
     equipmentLightState: taskId === "repair-light" && taskProgress < 0.7 ? (stage.id === "repair" ? "repairing" : "flickering") : "normal",
     antennaState: taskId === "adjust-antenna" ? (taskProgress < 0.51 ? "drifted" : taskProgress < 0.72 ? "adjusting" : "aligned") : "tracking",
     lastSignificantActivity: (taskId === "repair-light" ? "Light repair" : "Antenna adjustment") + " — " + stage.id.replaceAll("-", " "),
@@ -228,7 +232,8 @@ export class EventDirector {
     if (!PHASE_NAMES.includes(phaseName)) return this.state;
     if (!this.forcedEventId) this.forcedEventId = this.state.eventId || EVENT_CATALOG[0].id;
     let elapsed = 0;
-    for (const name of PHASE_NAMES) { if (name === phaseName) break; elapsed += FORCED_DURATIONS[name]; }
+    const durations = ForcedDurations(this.forcedEventId);
+    for (const name of PHASE_NAMES) { if (name === phaseName) break; elapsed += durations[name]; }
     this.forcedElapsed = elapsed + 0.02;
     return this.update(0, this.state.worldTimeMs);
   }
@@ -237,12 +242,13 @@ export class EventDirector {
     this.forcedElapsed += Math.max(0, stepSeconds);
     if (this.ambientOnly) return { event: null, visit: null, phase: "quiet", progress: 0, phaseTime: this.forcedElapsed };
     const event = EVENT_BY_ID.get(this.forcedEventId) || EVENT_CATALOG[0];
-    const duration = PHASE_NAMES.reduce((total, phase) => total + FORCED_DURATIONS[phase], 0);
+    const durations = ForcedDurations(event.id);
+    const duration = PHASE_NAMES.reduce((total, phase) => total + durations[phase], 0);
     const cycleTime = this.forcedElapsed % duration;
     let cursor = 0;
     for (const phase of PHASE_NAMES) {
-      const end = cursor + FORCED_DURATIONS[phase];
-      if (cycleTime < end) return { event, visit: { ...event, visitId: "forced-" + event.id, serviceEndMs: this.state.worldTimeMs + FORCED_DURATIONS.service * SECOND_MS }, phase, progress: (cycleTime - cursor) / FORCED_DURATIONS[phase], phaseTime: cycleTime - cursor };
+      const end = cursor + durations[phase];
+      if (cycleTime < end) return { event, visit: { ...event, visitId: "forced-" + event.id, serviceEndMs: this.state.worldTimeMs + durations.service * SECOND_MS }, phase, progress: (cycleTime - cursor) / durations[phase], phaseTime: cycleTime - cursor };
       cursor = end;
     }
     return { event, visit: null, phase: "quiet", progress: 0, phaseTime: 0 };

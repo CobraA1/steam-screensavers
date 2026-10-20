@@ -12,6 +12,21 @@ import { TrafficScheduler } from "../simulation-world.js";
 
 const SEED = "autumn-regression-station";
 
+test('ordinary freight uses two racks and unloads both without seasonal decoration', () => {
+  const time=Date.UTC(2026,7,20), seasonal=ResolveAutumn2026(SEED,time);
+  const sample=progress=>ApplyAutumn2026State({eventId:'cargo-run',visitId:'ordinary-pair',visitStartMs:time,worldTimeMs:time,phase:'service',progress,pipTaskOverallProgress:progress,cargoState:'ship'},seasonal,SEED);
+  const first=sample(.2), second=sample(.65), done=sample(.95);
+  for(const state of [first,second,done]){
+    assert.equal(state.cargoPackageCount,2);
+    assert.equal(state.seasonalCargo,null);
+    assert.equal(state.pipTaskId,'cargo-transfer');
+    assert.deepEqual(state.cargoManifest,[null,null]);
+  }
+  assert.equal(first.cargoPackageIndex,0);
+  assert.equal(second.cargoPackageIndex,1);
+  assert.equal(done.cargoState,'stored');
+});
+
 test("Autumn 2026 calendar boundaries are UTC-derived and deterministic", () => {
   const samples = [
     [Date.UTC(2026, 8, 21, 23, 59), "ordinary"],

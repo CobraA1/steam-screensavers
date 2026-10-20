@@ -4,6 +4,7 @@ import { ResolveServiceDeck } from "./service-deck-lifecycle.js";
 const SECOND_MS = 1000;
 const MINUTE_MS = 60 * SECOND_MS;
 const DAY_MS = 24 * 60 * MINUTE_MS;
+const ORDINARY_FREIGHT = Object.freeze({ theme: 'freight', packageCount: 2, packages: Object.freeze([null, null]) });
 
 export const AUTUMN_2026_DATES = Object.freeze({
   autumnBegins: Date.UTC(2026, 8, 22),
@@ -343,11 +344,11 @@ function ApplySeasonalCargo(state, manifest) {
     packageIndex = Math.min(count - 1, Math.floor(packagePosition));
     const packageProgress = packagePosition - packageIndex;
     stage = Stage(packageProgress, [
-      [packageIndex === 0 ? "travel-to-cargo" : "return-to-cargo", 0.13],
-      ["inspect-cargo", 0.24],
-      ["retrieve-cargo", 0.4],
-      ["deliver-cargo", 0.7],
-      ["stow-cargo", 0.9],
+      [packageIndex === 0 ? "travel-to-cargo" : "return-to-cargo", 0.25],
+      ["inspect-cargo", 0.32],
+      ["retrieve-cargo", 0.48],
+      ["deliver-cargo", 0.78],
+      ["stow-cargo", 0.94],
       ["package-confirm", 1],
     ]);
     cargoState = stage.id === "retrieve-cargo" || stage.id === "deliver-cargo"
@@ -426,14 +427,28 @@ export function ApplyAutumn2026State(state, seasonal, worldSeed) {
   state.cargoPackageIndex = 0;
   state.seasonalCargo = null;
 
-  if (state.eventId === "cargo-run" && state.phase === "service") {
+  if (state.eventId === "cargo-run" && ['approach', 'dock', 'service'].includes(state.phase)) {
     const manifest = CreateSeasonalManifest(worldSeed, {
       eventId: state.eventId,
       visitId: state.visitId,
       approachStartMs: state.visitStartMs,
       worldTimeMs: state.worldTimeMs,
     }, { forceTheme: seasonal.previewMode === "fall-cargo" ? "fall" : seasonal.previewMode === "halloween-cargo" ? "halloween" : seasonal.previewMode === "remembrance-cargo" ? "remembrance" : null });
-    if (manifest) ApplySeasonalCargo(state, manifest);
+    const freight = manifest || ORDINARY_FREIGHT;
+    if (state.phase === 'service') {
+      ApplySeasonalCargo(state, freight);
+      if (!manifest) {
+        state.seasonalCargo = null;
+        state.pipTaskId = 'cargo-transfer';
+        state.pipTaskLabel = 'Unload freight';
+        state.robotActivity = state.ambientJob = 'cargo-transfer';
+        state.ambientJobLabel = 'Freight · package ' + Math.min(2, state.cargoPackageIndex + 1) + ' of 2';
+        state.lastSignificantActivity = 'Freight delivery — ' + state.pipTaskStage.replaceAll('-', ' ');
+      }
+    } else {
+      state.cargoManifest = freight.packages;
+      state.cargoPackageCount = freight.packageCount;
+    }
   }
   ApplyInstallation(state, seasonal.installation);
   ApplyOddity(state, seasonal.ambientOddity, seasonal.installation);

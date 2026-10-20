@@ -11,7 +11,7 @@ export const PIP_TASK_STAGES = Object.freeze({
   "watch-arrival": Object.freeze(["observe"]),
   "repair-light": Object.freeze(["notice", "travel-to-light", "inspect-light", "prepare-tool", "repair", "verify", "react-success", "return"]),
   "adjust-antenna": Object.freeze(["notice", "travel-to-antenna", "inspect-antenna", "prepare-tool", "adjust", "verify", "react-success", "return"]),
-  "cargo-transfer": Object.freeze(["prepare", "travel-to-cargo", "inspect-cargo", "retrieve-cargo", "deliver-cargo", "stow-cargo", "verify", "react-success", "return"]),
+  "cargo-transfer": Object.freeze(["prepare", "travel-to-cargo", "return-to-cargo", "inspect-cargo", "retrieve-cargo", "deliver-cargo", "stow-cargo", "package-confirm", "verify", "react-success", "return"]),
   "seasonal-cargo": Object.freeze(["prepare", "travel-to-cargo", "return-to-cargo", "inspect-cargo", "retrieve-cargo", "deliver-cargo", "stow-cargo", "package-confirm", "verify", "react-success", "return"]),
   "seasonal-install": Object.freeze(["notice-decor", "travel-to-supplies", "collect-decoration", "carry-decoration", "install-decoration", "verify-decoration", "react-success", "return"]),
   "seasonal-cleanup": Object.freeze(["notice-decor", "travel-to-decoration", "remove-decoration", "carry-away", "stow-decoration", "verify-decoration", "return"]),
@@ -76,6 +76,14 @@ export function ResolvePipPose(taskId, stage) {
     if (stage === "remembrance-stillness") return "remembrance-stillness";
     if (stage === "remembrance-return") return "remembrance-return";
   }
+  if (taskId === "dispatch-exchange") {
+    if (stage === "prepare") return "prepare-dispatch";
+    if (stage === "inspect-cargo") return "inspect-dispatch";
+    if (stage === "retrieve-cargo") return "grasp-dispatch";
+    if (stage === "deliver-cargo") return "carry-dispatch";
+    if (stage === "stow-cargo") return "insert-dispatch";
+    if (stage === "verify") return "verify-dispatch";
+  }
   if (stage === "standby") return "standby";
   if (stage === "notice-decor" || stage === "notice-oddity") return "notice";
   if (stage === "observe") return "observe";
@@ -107,6 +115,7 @@ export function ResolvePipPose(taskId, stage) {
 }
 
 export function PreviousPipPose(taskId, stage) {
+  if (stage === 'return-to-cargo') return 'verify-cargo';
   const stages = PIP_TASK_STAGES[taskId] || PIP_TASK_STAGES.standby;
   const index = stages.indexOf(stage);
   return index > 0 ? ResolvePipPose(taskId, stages[index - 1]) : "standby";
@@ -133,6 +142,7 @@ export function ApplyPipPreviewOverride(state, override) {
   state.equipmentLightState = "normal";
   state.antennaState = "tracking";
   state.cargoState = "none";
+  state.cargoKind = "none";
 
   if (taskId === "repair-light") {
     state.equipmentLightState = stage === "repair" ? "repairing" : COMPLETED_STAGES.has(stage) ? "normal" : "flickering";
@@ -141,6 +151,7 @@ export function ApplyPipPreviewOverride(state, override) {
   } else if (taskId === "survey-sync") {
     state.antennaState = stage === "synchronize" ? "synchronizing" : COMPLETED_STAGES.has(stage) ? "aligned" : "waiting";
   } else if (taskId === "cargo-transfer" || taskId === "dispatch-exchange" || taskId === "seasonal-cargo") {
+    state.cargoKind = taskId === "dispatch-exchange" ? "dispatch" : "cargo";
     if (CARGO_SHIP_STAGES.has(stage)) state.cargoState = "ship";
     else if (CARGO_CARRIED_STAGES.has(stage)) state.cargoState = "carried";
     else if (stage === "stow-cargo") state.cargoState = "stowing";

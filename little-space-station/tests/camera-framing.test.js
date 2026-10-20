@@ -61,8 +61,8 @@ test("preview geometry remains behind the dynamic preview boundary and routes st
   assert.doesNotMatch(appSource, /expansion-preview/);
   assert.match(sceneSource, /shipApproach = new THREE\.Vector3\(18, 5, -7\)/);
   assert.match(sceneSource, /shipDock = new THREE\.Vector3\(3\.55, 0\.03, 0\.02\)/);
-  assert.match(sceneSource, /shipBackout = new THREE\.Vector3\(7\.2, 0\.38, 0\.15\)/);
-  assert.match(sceneSource, /shipDeparture = new THREE\.Vector3\(19, 4, -9\)/);
+  assert.match(sceneSource, /shipBackout = new THREE\.Vector3\(5\.8, 0\.03, 0\.02\)/);
+  assert.match(sceneSource, /shipDeparture = new THREE\.Vector3\(19, 0\.03, -9\)/);
 });
 
 test("preview orthographic views use station-local orthogonal axes", () => {

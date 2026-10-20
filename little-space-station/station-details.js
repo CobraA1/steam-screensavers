@@ -1,12 +1,41 @@
 import * as THREE from "./vendor/three.module.js";
+import { TransferPosition, CargoRackPosition } from './cargo-choreography.js';
 
 function Clamp01(value) { return Math.max(0, Math.min(1, Number(value) || 0)); }
 function Smooth(value) { const t = Clamp01(value); return t * t * (3 - 2 * t); }
 
-function CargoGripPosition(scene) {
-  scene.robotCargoGrip.getWorldPosition(scene.robotCargoWorldPosition);
-  scene.station.worldToLocal(scene.robotCargoWorldPosition);
-  return scene.robotCargoWorldPosition;
+function BuildDispatchCanister(materials) {
+  const group = new THREE.Group();
+  const shell = new THREE.MeshStandardMaterial({
+    color: 0x3d9d96,
+    roughness: 0.42,
+    metalness: 0.32,
+    flatShading: true,
+  });
+  const signal = new THREE.MeshStandardMaterial({
+    color: 0xffd479,
+    emissive: 0xd66d27,
+    emissiveIntensity: 1.7,
+    roughness: 0.35,
+  });
+  group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.26, 10), shell));
+  for (const y of [-0.14, 0.14]) {
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.035, 10), materials.dark);
+    cap.position.y = y;
+    group.add(cap);
+  }
+  for (const y of [-0.1, 0.1]) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.012, 5, 10), materials.orange);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = y;
+    group.add(ring);
+  }
+  const dispatchStripe = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.18, 0.025), signal);
+  dispatchStripe.position.z = 0.09;
+  dispatchStripe.rotation.z = -0.55;
+  group.add(dispatchStripe);
+  group.visible = false;
+  return group;
 }
 
 function BuildCargoPackage(materials) {
@@ -55,27 +84,23 @@ function SetPackageStyle(group, descriptor) {
   parts.bodyMaterial.color.setHex(descriptor ? descriptor.bodyColor : 0xe7dcc0);
   parts.railMaterial.color.setHex(descriptor ? descriptor.railColor : 0xb95532);
   parts.markMaterial.color.setHex(descriptor ? descriptor.markColor : 0xf0d889);
-  parts.leaf.visible = descriptor && descriptor.symbol === "leaf";
-  parts.gourd.visible = descriptor && descriptor.symbol === "gourd";
-  parts.sun.visible = descriptor && descriptor.symbol === "sun";
-  parts.moon.visible = descriptor && descriptor.symbol === "moon";
-  parts.ghost.visible = descriptor && descriptor.symbol === "ghost";
+  parts.leaf.visible = Boolean(descriptor && descriptor.symbol === "leaf");
+  parts.gourd.visible = Boolean(descriptor && descriptor.symbol === "gourd");
+  parts.sun.visible = Boolean(descriptor && descriptor.symbol === "sun");
+  parts.moon.visible = Boolean(descriptor && descriptor.symbol === "moon");
+  parts.ghost.visible = Boolean(descriptor && descriptor.symbol === "ghost");
 }
 
 function CargoStartPosition(scene, index, count, target) {
-  const column = index % 2;
-  const row = Math.floor(index / 2);
-  target.copy(scene.cargoStart);
-  target.y += count === 2 ? (index - 0.5) * 0.34 : (row - (count > 2 ? 0.5 : 0)) * 0.34;
-  target.z += count > 1 ? (column - 0.5) * 0.42 : 0;
-  return target;
+  return CargoRackPosition(scene, index, count, target);
 }
 
 export function BuildStationDetails(station, materials) {
   const lightHousing = new THREE.Group();
-  lightHousing.position.set(0.82, 0.72, 0.94);
+  lightHousing.position.set(0.32, 0.64, 0.94);
   station.add(lightHousing);
-  const housing = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.3, 0.12), materials.dark);
+  const housing = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.24, 0.38), materials.dark);
+  housing.position.z = -0.1;
   lightHousing.add(housing);
   const lightMaterial = new THREE.MeshStandardMaterial({
     color: 0x91f4ce,
@@ -91,10 +116,19 @@ export function BuildStationDetails(station, materials) {
   lightHousing.add(equipmentGlow);
 
   const cargoHatch = new THREE.Group();
-  cargoHatch.position.set(1.12, 0.34, 0.94);
+  cargoHatch.position.set(1.05, 0.48, 1.06);
   station.add(cargoHatch);
-  const hatchFrame = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.58, 0.12), materials.metal);
-  cargoHatch.add(hatchFrame);
+  for (const x of [-0.32, 0.32]) {
+    const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.62, 0.5), materials.metal);
+    jamb.position.set(x, 0, -0.16); cargoHatch.add(jamb);
+  }
+  for (const y of [-0.27, 0.27]) {
+    const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.08, 0.5), materials.metal);
+    jamb.position.set(0, y, -0.16); cargoHatch.add(jamb);
+  }
+  const hatchRecess = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.46, 0.035), materials.black);
+  hatchRecess.position.z = -0.02;
+  cargoHatch.add(hatchRecess);
   const hatchDoor = new THREE.Group();
   hatchDoor.position.set(-0.265, 0, 0.09);
   cargoHatch.add(hatchDoor);
@@ -109,10 +143,16 @@ export function BuildStationDetails(station, materials) {
     cargoContainers.push(cargoPackage);
   }
   const cargoContainer = cargoContainers[0];
+  const dispatchCanister = BuildDispatchCanister(materials);
+  station.add(dispatchCanister);
 
-  const cargoStart = new THREE.Vector3(2.92, 0.48, 0.68);
-  const cargoEnd = new THREE.Vector3(1.3, 0.58, 0.88);
-  return { equipmentLight, equipmentGlow, lightHousing, cargoHatch, hatchDoor, cargoContainer, cargoContainers, cargoPackageStart: new THREE.Vector3(), lightMaterial, cargoStart, cargoEnd };
+  const cargoEnd = new THREE.Vector3(1.05, 0.48, 0.7);
+  return {
+    equipmentLight, equipmentGlow, lightHousing, cargoHatch, hatchDoor,
+    cargoContainer, cargoContainers, cargoPackageStart: new THREE.Vector3(),
+    dispatchCanister,
+    lightMaterial, cargoEnd,
+  };
 }
 
 export function UpdateStationDetails(scene, state) {
@@ -129,42 +169,46 @@ export function UpdateStationDetails(scene, state) {
   scene.equipmentGlow.intensity = 1.8 * lightLevel * shadowBoost;
   scene.equipmentLight.scale.setScalar(0.96 + lightLevel * 0.09);
 
-  const cargoState = state.cargoState || "none";
-  const manifest = Array.isArray(state.cargoManifest) && state.cargoManifest.length ? state.cargoManifest : [null];
-  const count = Math.min(scene.cargoContainers.length, state.cargoPackageCount || (cargoState === "none" ? 0 : 1));
-  const currentIndex = Math.min(count, Math.max(0, state.cargoPackageIndex || 0));
-  for (let index = 0; index < scene.cargoContainers.length; index += 1) {
-    const cargoPackage = scene.cargoContainers[index];
-    SetPackageStyle(cargoPackage, manifest[index] || null);
-    cargoPackage.visible = index < count && index >= currentIndex;
-    cargoPackage.scale.setScalar(manifest[index] ? manifest[index].scale : 1);
-    if (cargoPackage.visible) CargoStartPosition(scene, index, count, cargoPackage.position);
+  const dispatch = state.visitorType === 'courier' || state.pipTaskId === 'dispatch-exchange';
+  const incoming = state.shipVisible && ['courier', 'freighter'].includes(state.visitorType) && ['approach', 'dock'].includes(state.phase);
+  const cargoState = incoming ? 'ship' : state.cargoState || 'none';
+  const stage = state.pipTaskStage, p = Clamp01(state.pipTaskProgress);
+  const manifest = state.cargoManifest || [null];
+  const count = dispatch ? 0 : Math.min(4, incoming ? state.cargoPackageCount || 1 : state.cargoPackageCount || (cargoState === 'none' ? 0 : 1));
+  const current = Math.min(count, state.cargoPackageIndex || 0);
+  for (let i = 0; i < scene.cargoContainers.length; i++) {
+    const box = scene.cargoContainers[i];
+    SetPackageStyle(box, manifest[i]);
+    box.visible = i < count && i >= current && cargoState !== 'none' && (i > current || cargoState !== 'stored');
+    box.scale.setScalar(manifest[i]?.scale || 1);
+    box.rotation.set(0, 0, 0);
+    CargoStartPosition(scene, i, count, box.position);
+    if (incoming) box.quaternion.copy(scene.ship.quaternion);
   }
-  const cargoContainer = currentIndex < count ? scene.cargoContainers[currentIndex] : scene.cargoContainer;
-  const baseScale = manifest[currentIndex] ? manifest[currentIndex].scale : 1;
-  cargoContainer.visible = currentIndex < count && cargoState !== "none" && cargoState !== "stored";
-  cargoContainer.scale.setScalar(baseScale);
-  if (cargoState === "ship") {
-    CargoStartPosition(scene, currentIndex, count, cargoContainer.position);
-    scene.hatchDoor.rotation.y = 0;
-  } else if (cargoState === "carried") {
-    const grip = CargoGripPosition(scene);
-    if (state.pipTaskStage === "retrieve-cargo") {
-      CargoStartPosition(scene, currentIndex, count, scene.cargoPackageStart);
-      cargoContainer.position.lerpVectors(scene.cargoPackageStart, grip, Smooth(state.pipTaskProgress));
-    } else {
-      cargoContainer.position.copy(grip);
-    }
-    scene.hatchDoor.rotation.y = 0;
-  } else if (cargoState === "stowing") {
-    const stow = Smooth(state.pipTaskProgress);
-    cargoContainer.position.lerpVectors(CargoGripPosition(scene), scene.cargoEnd, stow);
-    cargoContainer.position.z += stow * 0.12;
-    cargoContainer.scale.setScalar(baseScale * (1 - stow * 0.82));
-    scene.hatchDoor.rotation.y = -stow * Math.PI * 0.42;
-  } else if (cargoState === "stored" && state.pipTaskStage === "verify") {
-    scene.hatchDoor.rotation.y = -(1 - Smooth(state.pipTaskProgress)) * Math.PI * 0.42;
-  } else {
-    scene.hatchDoor.rotation.y = 0;
+  CargoStartPosition(scene, current, count, scene.cargoPackageStart);
+  scene.dispatchCanister.visible = dispatch && cargoState !== 'none' && cargoState !== 'stored';
+  scene.dispatchCanister.scale.setScalar(1);
+  scene.dispatchCanister.rotation.set(0, 0, 0);
+  const payload = dispatch ? scene.dispatchCanister : scene.cargoContainers[Math.min(current, 3)];
+  if (dispatch) {
+    payload.position.set(0, 0, 0.01);
+    scene.courierDispatchBay.localToWorld(payload.position);
+    scene.station.worldToLocal(payload.position);
+    payload.quaternion.copy(scene.ship.quaternion);
   }
+  if (cargoState === 'carried' || cargoState === 'stowing') {
+    TransferPosition(scene, state, payload.position);
+    payload.rotation.set(0, 0, 0);
+  }
+  // Open before insertion, keep a fixed-size payload, and let the actual hull
+  // occlude it. The closing beat starts at the same door angle as insertion.
+  scene.hatchDoor.rotation.y = cargoState === 'stowing'
+    ? -Smooth(p / 0.25) * Math.PI * 0.48
+    : cargoState === 'stored' && ['verify', 'package-confirm'].includes(stage)
+      ? -(1 - Smooth(p)) * Math.PI * 0.48 : 0;
+  const bayOpen = !dispatch || incoming ? 0
+    : stage === 'inspect-cargo' ? Smooth(p)
+      : stage === 'retrieve-cargo' ? 1
+        : stage === 'deliver-cargo' ? 1 - Smooth(p) : 0;
+  scene.courierDispatchBayDoor.position.x = bayOpen * 0.48;
 }

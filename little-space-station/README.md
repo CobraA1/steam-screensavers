@@ -47,9 +47,13 @@ The [Transparency Lab](experiments/transparency-lab/README.md) is a separate bro
 
 Traffic is derived from the world seed and absolute time instead of a repeating animation cycle. Visits have stable IDs, never overlap at the single berth, and are separated by deterministic quiet gaps. Default gaps are 6–22 minutes with occasional 25–55 minute gaps. Service durations depend on purpose:
 
-- **Courier Stop:** 1–3 minutes to exchange a dispatch container.
+- **Courier Stop:** 1–3 minutes for a quick dispatch-canister handoff.
 - **Survey Call:** 2–5 minutes to synchronize the ship and station arrays.
-- **Cargo Run:** 3–8 minutes to transfer one visible container into the cargo hatch.
+- **Cargo Run:** 3–8 minutes to unload two ordinary crates, or a seasonal manifest of two to four packages, into the cargo hatch. Matching racks sit on both sides of the hull. Pip retrieves far-side packages by going around the engine end rather than through the ship.
+
+Default approach, docking, and departure take 30, 14, and 40 seconds. Departure separates straight out, spends about 14 seconds turning, then accelerates along the new heading. Opposing RCS pairs accelerate the eased rotation and reverse to brake it; the main engine stays off until the turn ends. The cleared turning position remains close enough to see in the production camera.
+
+Forced previews use the same maneuver durations, with 180 seconds for freight service and 45 seconds for courier/survey service. Seasonal packages share that larger freight window instead of being squeezed into a 30-second demo. Use preview speed controls when a faster test is useful.
 
 Starting during a docked visit is expected. Jumping directly to any timestamp reconstructs the visit, transfer, antenna, light, and Pip task state without replaying missed frames.
 
@@ -57,9 +61,13 @@ During quiet periods Pip either rests, performs a restrained visual inspection, 
 
 Pip also follows a separate seeded recharge rhythm. It is deliberately independent of the 97-minute orbital light cycle and only takes over during a quiet, conflict-free standby window. At the pad Pip settles, dims its visor and status light, and uses a soft pulse. Completed Stubborn Antenna and Phantom Visitor stories can appear in a softly outlined thought bubble connected to sleeping Pip. The selected memory retains its saved variant and outcome: antenna dreams replay the failed repair and plate installation, while Phantom dreams replay the white cover, trapped inspection drone, release, departure, and final joke. The bubble faces the viewer, fits the current camera view, and fades in and out. Dreams are read-only and leave real traffic, equipment, cargo, and story consequences unchanged. The All Saints' observance is deliberately not dream-eligible.
 
-Pip approaches the equipment light from its exposed face and turns toward it before beginning repairs. It likewise turns back toward the mast and dish during antenna adjustment and synchronization. The cargo hatch uses an edge-mounted hinge, so its door swings outward instead of rotating through its center.
+Pip approaches the equipment light from its exposed face and turns toward it before beginning repairs. It likewise turns back toward the mast and dish during antenna adjustment and synchronization. The raised cargo hatch has a dark recessed opening and an edge-mounted hinge, so its door is readable and swings outward instead of rotating through its center. Its task light sits above and to one side, identifying the work area without blocking Pip or the docking corridor.
 
 Pip is a compact articulated robot with a teal body, cream head, luminous visor, chest indicator, elbow joints, and a wrist-mounted maintenance tool. Its pose vocabulary distinguishes curiosity, fault recognition, tool preparation, light repair, antenna manipulation, cargo grasp/carry/stow, verification, and a short satisfied reaction. Infrequent idle looks and seeded task variations add personality without continuous motion. Cargo follows a grip point on Pip while carried rather than moving on an unrelated path.
+
+Courier visits use a small teal dispatch canister with dark end caps and an amber marking. It starts inside a hull-mounted bay whose door slides sideways on guides. Pip retrieves it with the camera-facing hand, carries it along the station's exposed side, places it in the receiver, verifies delivery, and returns. Both hands and payload use one deterministic transfer path; insertion keeps the payload at full size until the receiver conceals it. The courier has a restrained teal hull, swept fins, small nacelles, and a dark cockpit.
+
+The freighter carries visible rectangular crates on matching permanent side racks from arrival onward. The same crates are unloaded one at a time; the empty racks stay attached during departure. Seasonal deliveries populate the racks with their actual manifest before arrival, and Pip approaches each slot individually, including the far side. Both courier and freight deliveries are performed from in front of the station hatch. The hatch jambs and separate light housing extend into the curved hull so they read as mounted equipment.
 
 Visitor craft carry four axial RCS ports at both the fore and aft ends. Arrival uses the main engine while the craft crosses into view, then hands final braking and alignment to the forward RCS bank. Departure continues to back out on RCS, rotate clear, and engage the main engine only after the turn.
 
@@ -171,7 +179,7 @@ No packages need to be installed. The Steam Deck screensaver runtime itself does
 Manual browser checks to perform on the Deck:
 
 1. Open preview mode at 1280×800 and force each visitor; confirm the craft enters from off-screen, docks with RCS, remains quiet during idle service moments, backs out, turns clear, and then uses its main engine.
-2. Jump within cargo service and confirm the container progresses from ship to Pip to the cargo hatch without popping through station geometry.
+2. Jump within cargo service and confirm the container progresses from its rack to Pip to the cargo hatch without changing size. Repeat with the courier: its bay must open before extraction, and the canister should remain in the camera-facing hand until placed in the receiver. Check arrival and departure as well: loaded crates must follow the incoming ship and must not return on the empty rack after delivery.
 3. Use ambient-only mode and time jumps to find both maintenance jobs; confirm the fault is visible before Pip acts and the light/antenna is restored afterward.
 4. Pause and single-step at task and departure boundaries, then test 100× speed for clean reconstruction.
 5. Change preview resolutions, including the current-browser-window option, and confirm camera framing and diagnostics remain usable.
@@ -202,7 +210,6 @@ Manual browser checks to perform on the Deck:
 
 ## Known limitations and follow-up
 
-- The courier reuses the simple transfer-container visual rather than a dedicated canister model.
 - Autumn, Halloween, Phantom Visitor, and Lights of Remembrance are intentionally 2026-specific. The service deck's January 7 removal is implemented as a deterministic first renewal consequence; Thanksgiving, Christmas, recurrence rules, and the full January refurbishment story are not implemented.
 - Seasonal inventories are inferred from calendar and seed rather than modeled as a generalized stock system. This keeps missed days recoverable and avoids a second simulation.
 - The Phantom cover uses authored low-poly motion rather than cloth physics.

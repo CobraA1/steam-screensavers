@@ -83,8 +83,8 @@ export class LittleSpaceStationScene {
     // The approach phase can therefore make the craft cross into view naturally.
     this.shipApproach = new THREE.Vector3(18, 5, -7);
     this.shipDock = new THREE.Vector3(3.55, 0.03, 0.02);
-    this.shipBackout = new THREE.Vector3(7.2, 0.38, 0.15);
-    this.shipDeparture = new THREE.Vector3(19, 4, -9);
+    this.shipBackout = new THREE.Vector3(5.8, 0.03, 0.02);
+    this.shipDeparture = new THREE.Vector3(19, 0.03, -9);
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -570,13 +570,15 @@ export class LittleSpaceStationScene {
     nose.rotation.z = Math.PI / 2;
     nose.position.x = -1.12;
     this.ship.add(nose);
+    this.shipNose = nose;
     const cockpit = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 10, 6),
-      this.materials.window,
+      this.materials.window.clone(),
     );
     cockpit.scale.set(1.35, 0.68, 0.82);
     cockpit.position.set(-0.48, 0.29, 0);
     this.ship.add(cockpit);
+    this.shipCockpit = cockpit;
     this.shipCabinLight = new THREE.PointLight(0x7de2d4, 0.25, 3.2, 2);
     this.shipCabinLight.position.set(-0.25, 0.08, 0.12);
     cockpit.add(this.shipCabinLight);
@@ -586,23 +588,77 @@ export class LittleSpaceStationScene {
 
     this.shipCargo = new THREE.Group();
     this.ship.add(this.shipCargo);
+    // A permanent pallet rack stays on the freighter after the visible crates
+    // are unloaded. It is structure, not a substitute cargo silhouette.
     for (const side of [-1, 1]) {
-      const pod = MakeBarrel(0.21, 0.82, this.shipAccentMaterial, 9);
-      pod.position.set(0.17, side * 0.48, 0);
-      this.shipCargo.add(pod);
-      const strap = MakeBarrel(0.235, 0.09, this.materials.dark, 9);
-      strap.position.set(0.17, side * 0.48, 0);
-      this.shipCargo.add(strap);
+      const rack = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.68, 0.2), this.materials.dark);
+      rack.position.set(-0.05, 0.03, side * 0.39);
+      this.shipCargo.add(rack);
+      for (const y of [-0.33, 0.39]) {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.055, 0.28), this.materials.orange);
+        rail.position.set(-0.05, y, side * 0.52);
+        this.shipCargo.add(rail);
+      }
     }
 
     this.shipCourier = new THREE.Group();
     this.ship.add(this.shipCourier);
-    const courierFinCount = visitor.finStyle === "twin" ? 2 : 1;
-    for (let index = 0; index < courierFinCount; index += 1) {
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.055, 0.5), this.shipAccentMaterial);
-      fin.position.set(0.38, courierFinCount === 1 ? -0.36 : (index ? 0.36 : -0.36), 0);
-      fin.rotation.x = courierFinCount === 1 ? 0 : Math.PI / 8 * (index ? 1 : -1);
+    // Courier-only fittings keep the common docking hull while giving the fast
+    // dispatch craft a compact, swept silhouette and a readable delivery bay.
+    for (const side of [-1, 1]) {
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.055, 0.32), this.shipBodyMaterial);
+      fin.position.set(0.28, side * 0.4, -0.03);
+      fin.rotation.z = side * -0.17;
+      fin.rotation.y = -0.16;
       this.shipCourier.add(fin);
+      const nacelle = MakeBarrel(0.105, 0.58, this.shipBodyMaterial, 8);
+      nacelle.position.set(0.46, side * 0.43, -0.02);
+      this.shipCourier.add(nacelle);
+      const nacelleCap = MakeBarrel(0.125, 0.09, this.materials.dark, 8);
+      nacelleCap.position.set(0.76, side * 0.43, -0.02);
+      this.shipCourier.add(nacelleCap);
+    }
+    const courierTail = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.055), this.shipBodyMaterial);
+    courierTail.position.set(0.55, 0.3, 0);
+    courierTail.rotation.z = -0.22;
+    this.shipCourier.add(courierTail);
+
+    this.courierDispatchBay = new THREE.Group();
+    this.courierDispatchBay.position.set(-0.25, 0.05, 0.37);
+    this.shipCourier.add(this.courierDispatchBay);
+    const bayInterior = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.44, 0.02), this.materials.black);
+    bayInterior.position.z = 0.075;
+    this.courierDispatchBay.add(bayInterior);
+    for (const y of [-0.25, 0.25]) {
+      const guide = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.035, 0.12), this.materials.dark);
+      guide.position.set(0.23, y, 0.13);
+      this.courierDispatchBay.add(guide);
+    }
+    // Deep side walls meet the curved hull; the payload emerges through their
+    // opening instead of being created in front of a solid plate.
+    for (const x of [-0.245, 0.245]) {
+      const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.5, 0.36), this.materials.dark);
+      jamb.position.set(x, 0, -0.02); this.courierDispatchBay.add(jamb);
+    }
+    for (const y of [-0.23, 0.23]) {
+      const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.055, 0.36), this.materials.dark);
+      jamb.position.set(0, y, -0.02); this.courierDispatchBay.add(jamb);
+    }
+    const bayDoor = new THREE.Mesh(new THREE.BoxGeometry(0.43, 0.43, 0.055), this.shipBodyMaterial);
+    bayDoor.position.z = 0.18;
+    this.courierDispatchBay.add(bayDoor);
+    this.courierDispatchBayDoor = bayDoor;
+    const dispatchMarkMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffc86b,
+      emissive: 0xc96a22,
+      emissiveIntensity: 1.5,
+      roughness: 0.4,
+    });
+    for (const offset of [-0.075, 0.075]) {
+      const mark = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.035, 0.018), dispatchMarkMaterial);
+      mark.position.set(offset * 0.25, offset, 0.035);
+      mark.rotation.z = -0.55;
+      bayDoor.add(mark);
     }
 
     this.shipSurvey = new THREE.Group();
@@ -668,7 +724,7 @@ export class LittleSpaceStationScene {
       plume.position.set(port.x + port.direction * 0.21, port.y, port.z);
       plume.visible = false;
       this.ship.add(plume);
-      this.shipRcs.push({ plume, material, group: port.group, phaseOffset: this.shipRcs.length * 1.7 });
+      this.shipRcs.push({ plume, material, group: port.group, z: port.z, direction: port.direction, phaseOffset: this.shipRcs.length * 1.7 });
     }
     this.ship.position.set(9, 2.4, 3.7);
     this.currentVisitorType = "";
@@ -677,8 +733,10 @@ export class LittleSpaceStationScene {
   BuildRobot() {
     const m = this.materials;
     this.robotHome = new THREE.Vector3(-0.2, 1.16, 0.72);
-    this.robotWork = new THREE.Vector3(2.24, 0.72, 0.59);
-    this.robotCargoDrop = new THREE.Vector3(1.2, 0.72, 0.76);
+    this.robotWork = new THREE.Vector3(3.55, -0.27, 1.05);
+    this.robotCargoDrop = new THREE.Vector3(1.2, 0.15, 1.65);
+    this.robotDispatchPickup = new THREE.Vector3(3.23, -0.27, 0.95);
+    this.robotDispatchDrop = new THREE.Vector3(0.98, 0.15, 1.65);
     this.robotAntennaSafe = new THREE.Vector3(-0.72, 1.18, 0.76);
     this.robotSeasonalInstall = new THREE.Vector3(...SERVICE_DECK_ANCHORS.pipSeasonalWork);
     this.robotPhantomWork = new THREE.Vector3(-2.22, 1.58, 1.48);
@@ -686,14 +744,14 @@ export class LittleSpaceStationScene {
     this.robotRemembranceWork = new THREE.Vector3(...SERVICE_DECK_ANCHORS.pipRemembranceWork);
     this.robotTaskTargets = Object.freeze({
       // The light's service face points toward +Z; Pip works from that side.
-      "repair-light": new THREE.Vector3(0.48, 0.72, 1.35),
+      "repair-light": new THREE.Vector3(0.05, 0.3, 1.38),
       "adjust-antenna": new THREE.Vector3(0.08, 1.38, 0.48),
       "cargo-transfer": this.robotWork,
       "seasonal-cargo": this.robotWork,
       "seasonal-install": this.robotSeasonalInstall,
       "phantom-visitor": this.robotPhantomWork,
       "lights-of-remembrance": this.robotRemembranceWork,
-      "dispatch-exchange": this.robotWork,
+      "dispatch-exchange": this.robotDispatchPickup,
       "survey-sync": new THREE.Vector3(0.08, 1.38, 0.48),
       "stubborn-antenna": new THREE.Vector3(0.08, 1.38, 0.48),
     });
@@ -968,6 +1026,9 @@ export class LittleSpaceStationScene {
     this.shipBodyMaterial.color.copy(style.body).offsetHSL(hueShift, 0, lightShift);
     this.shipAccentMaterial.color.copy(style.accent).offsetHSL(hueShift * 0.5, 0, -lightShift * 0.45);
     this.ship.scale.setScalar(style.scale);
+    this.shipNose.material = visitorType === 'courier' ? this.shipBodyMaterial : this.shipAccentMaterial;
+    this.shipCockpit.material.emissiveIntensity = visitorType === 'courier' ? 0.35 : 2.4;
+    this.shipCockpit.material.color.setHex(visitorType === 'courier' ? 0x24545b : 0x87d6c9);
     this.shipCargo.visible = visitorType === "freighter";
     this.shipCourier.visible = visitorType === "courier";
     this.shipSurvey.visible = visitorType === "surveyor";
@@ -978,9 +1039,8 @@ export class LittleSpaceStationScene {
     this.ship.visible = state.shipVisible;
     if (!state.shipVisible) return;
     this.ConfigureVisitor(state.visitorType, state.visitId);
-    // The small external manifest packages replace the freighter's generic pod
-    // silhouette during a seasonal unloading sequence.
-    this.shipCargo.visible = state.visitorType === "freighter" && !state.seasonalCargo;
+    // Both permanent racks remain after the manifest has been unloaded.
+    this.shipCargo.visible = state.visitorType === "freighter";
 
     const laneOffset = state.visitorType === "surveyor"
       ? -0.7
@@ -990,6 +1050,7 @@ export class LittleSpaceStationScene {
 
     if (state.phase === "approach") {
       this.ship.position.lerpVectors(this.shipApproach, this.shipDock, state.shipTravel);
+      this.ship.position.x += 0.6 * state.shipTravel;
       this.ship.position.y += Math.sin(state.progress * Math.PI) * 0.5;
       this.ship.position.z += laneOffset * (1 - state.shipTravel);
       this.ship.rotation.set(
@@ -998,9 +1059,9 @@ export class LittleSpaceStationScene {
         (-0.12 + laneOffset * 0.08) * (1 - state.progress),
       );
     } else if (state.phase === "departure") {
-      const outward = 1 - state.shipTravel;
+      const outward = state.progress;
       const backoutPortion = 0.36;
-      const turnPortion = 0.18;
+      const turnPortion = 0.34;
       const launchStart = backoutPortion + turnPortion;
       if (outward < backoutPortion) {
         // Reverse straight out through the docking corridor before turning away.
@@ -1015,29 +1076,31 @@ export class LittleSpaceStationScene {
       } else {
         const departureProgress = (outward - launchStart) / (1 - launchStart);
         this.ship.position.lerpVectors(this.shipBackout, this.shipDeparture, EaseInOut(departureProgress));
-        this.ship.position.z += laneOffset * departureProgress;
       }
       const turn = Math.max(0, Math.min(1, (outward - backoutPortion) / turnPortion));
-      this.ship.rotation.set(-0.04 * outward, Math.PI * EaseInOut(turn), 0.14 * turn);
+      const heading = Math.atan2(this.shipDeparture.z - this.shipBackout.z, this.shipBackout.x - this.shipDeparture.x);
+      const targetYaw = heading < 0 ? heading + Math.PI * 2 : heading;
+      const easedTurn = turn * turn * turn * (10 + turn * (-15 + turn * 6));
+      this.ship.rotation.set(0, targetYaw * easedTurn, 0);
+    } else if (state.phase === 'dock') {
+      this.ship.position.copy(this.shipDock);
+      this.ship.position.x += 0.6 * (1 - SmoothStep(state.progress));
+      this.ship.rotation.set(0, 0, 0);
     } else {
       this.ship.position.copy(this.shipDock);
-      this.ship.rotation.set(0, 0, Math.sin(this.elapsed * 0.8) * 0.008);
+      this.ship.rotation.set(0, 0, 0);
     }
 
     if (state.visitorType === "surveyor") {
       this.shipSurvey.rotation.y = this.elapsed * 0.8;
     }
-    if (state.serviceTask === "cargo-transfer" && state.phase === "service") {
-      this.shipCargo.position.y = Math.sin(state.progress * Math.PI) * -0.12;
-    } else {
-      this.shipCargo.position.y = 0;
-    }
+    this.shipCargo.position.y = 0;
 
-    const departureOutward = state.phase === "departure" ? 1 - state.shipTravel : 0;
+    const departureOutward = state.phase === "departure" ? state.progress : 0;
     // Stay on the main engine long enough to enter the tighter camera frame, then
     // hand the final braking/alignment portion to the forward RCS bank.
     const mainDuringArrival = state.phase === "approach" && state.shipTravel < 0.82;
-    const mainAfterTurn = state.phase === "departure" && departureOutward >= 0.54;
+    const mainAfterTurn = state.phase === "departure" && departureOutward >= 0.70;
     const mainFiring = mainDuringArrival || mainAfterTurn;
     this.shipExhaust.visible = mainFiring;
     if (mainFiring) {
@@ -1050,12 +1113,21 @@ export class LittleSpaceStationScene {
 
     // Final docking, berth separation, and the turn are RCS-only maneuvers.
     const rcsManeuvering = (state.phase === "approach" && !mainDuringArrival) ||
-      (state.phase === "departure" && !mainAfterTurn);
-    const turning = state.phase === "departure" && departureOutward >= 0.36 && departureOutward < 0.54;
-    const activeGroup = "fore";
+      state.phase === 'dock' || (state.phase === "departure" && !mainAfterTurn);
+    const turning = state.phase === "departure" && departureOutward >= 0.36 && departureOutward < 0.70;
+    const turnProgress = (departureOutward - 0.36) / 0.34;
+    // Axial jets on opposite sides form a torque couple, with zero net force.
+    // Reverse that couple halfway through the eased yaw to brake to rest.
+    const torqueSign = turnProgress < 0.5 ? 1 : -1;
+    const activeGroup = state.phase === 'dock' ? (state.progress < 0.5 ? 'aft' : 'fore')
+      : state.phase === 'departure' && departureOutward > 0.18 ? 'aft' : 'fore';
     for (const rcs of this.shipRcs) {
-      const firing = rcsManeuvering && (turning || rcs.group === activeGroup);
-      const pulse = 0.72 + Math.sin(this.elapsed * 22 + rcs.phaseOffset) * 0.2;
+      const firing = rcsManeuvering && (turning
+        ? Math.sign(-rcs.z * rcs.direction) === torqueSign && Math.abs(turnProgress - 0.5) > 0.025
+        : rcs.group === activeGroup);
+      const pulse = turning
+        ? Math.abs(60 * turnProgress * (1 - turnProgress) * (1 - 2 * turnProgress)) / 5.78
+        : 0.72 + Math.sin(this.elapsed * 22 + rcs.phaseOffset) * 0.2;
       rcs.plume.visible = firing;
       if (firing) {
         rcs.plume.scale.set(1, pulse, 1);

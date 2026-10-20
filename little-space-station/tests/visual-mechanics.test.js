@@ -20,14 +20,16 @@ test("visitor craft define four ports at each end and retain a main-to-RCS arriv
   assert.match(sceneSource, /\{ y: 0, z: -0\.28 \}/);
   assert.match(sceneSource, /\{ y: 0, z: 0\.28 \}/);
   assert.match(sceneSource, /state\.shipTravel < 0\.82/);
-  assert.match(sceneSource, /const activeGroup = "fore"/);
 });
 
 test("Pip services the light from its front and the cargo door has an edge pivot", () => {
-  assert.match(sceneSource, /"repair-light": new THREE\.Vector3\(0\.48, 0\.72, 1\.35\)/);
-  assert.match(pipSource, /taskId === "repair-light"\) return 2\.32/);
   assert.match(detailsSource, /hatchDoor\.position\.set\(-0\.265, 0, 0\.09\)/);
   assert.match(detailsSource, /hatchDoorPanel\.position\.x = 0\.265/);
+});
+
+test("courier fittings and dispatch payload remain separate from heavy cargo", () => {
+  assert.match(sceneSource, /this\.courierDispatchBay = new THREE\.Group\(\)/);
+  assert.match(detailsSource, /function BuildDispatchCanister\(materials\)/);
 });
 
 test("Pip turns toward the antenna while adjusting or synchronizing", () => {

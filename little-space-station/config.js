@@ -52,9 +52,9 @@ export default Object.freeze({
       "survey-call": [2, 5],
       "cargo-run": [3, 8],
     }),
-    approachSeconds: 20,
-    dockSeconds: 8,
-    departureSeconds: 18,
+    approachSeconds: 30,
+    dockSeconds: 14,
+    departureSeconds: 40,
     afterglowSeconds: 25,
   }),
 

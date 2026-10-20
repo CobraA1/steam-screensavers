@@ -18,6 +18,11 @@ test("maintenance and cargo stages resolve to distinct readable poses", () => {
   assert.equal(ResolvePipPose("cargo-transfer", "deliver-cargo"), "carry-cargo");
   assert.equal(ResolvePipPose("look-around", "inspect-routine"), "routine-inspection");
   assert.equal(ResolvePipPose("repair-light", "react-success"), "satisfied");
+  assert.equal(ResolvePipPose("dispatch-exchange", "retrieve-cargo"), "grasp-dispatch");
+  assert.equal(ResolvePipPose("dispatch-exchange", "deliver-cargo"), "carry-dispatch");
+  assert.equal(ResolvePipPose("dispatch-exchange", "stow-cargo"), "insert-dispatch");
+  assert.equal(ResolvePipPose("dispatch-exchange", "verify"), "verify-dispatch");
+  assert.notEqual(ResolvePipPose("dispatch-exchange", "deliver-cargo"), ResolvePipPose("cargo-transfer", "deliver-cargo"));
 });
 
 test("preview overrides produce coherent task, equipment, and cargo states", () => {
@@ -27,10 +32,15 @@ test("preview overrides produce coherent task, equipment, and cargo states", () 
 
   ApplyPipPreviewOverride(state, { taskId: "cargo-transfer", stage: "deliver-cargo", progress: 0.4, variant: 1 });
   assert.equal(state.cargoState, "carried");
+  assert.equal(state.cargoKind, "cargo");
   ApplyPipPreviewOverride(state, { taskId: "cargo-transfer", stage: "stow-cargo", progress: 0.4, variant: 1 });
   assert.equal(state.cargoState, "stowing");
   ApplyPipPreviewOverride(state, { taskId: "cargo-transfer", stage: "verify", progress: 0.4, variant: 1 });
   assert.equal(state.cargoState, "stored");
+
+  ApplyPipPreviewOverride(state, { taskId: "dispatch-exchange", stage: "deliver-cargo", progress: 0.4, variant: 1 });
+  assert.equal(state.cargoState, "carried");
+  assert.equal(state.cargoKind, "dispatch");
 });
 
 test("every preview task stage has a valid pose and bounded progress", () => {

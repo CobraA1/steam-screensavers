@@ -1,4 +1,5 @@
 import { PreviousPipPose, ResolvePipPose } from "./pip-behavior.js";
+import { TransferPosition, CargoRackPosition, CargoHandContact } from './cargo-choreography.js';
 import * as THREE from "./vendor/three.module.js";
 import { PHANTOM_WORK_YAW, PhantomActors } from "./phantom-choreography.js";
 
@@ -43,6 +44,7 @@ const POSES = Object.freeze({
   travel: Pose({ headPitch: -0.04, bodyPitch: 0.04, leftShoulderZ: -0.24, rightShoulderZ: 0.24 }),
   prepare: Pose({ headYaw: 0.28, headPitch: -0.14, leftShoulderZ: -0.4, rightShoulderZ: 0.26 }),
   "prepare-cargo": Pose({ headYaw: 0.3, headPitch: 0.12, bodyPitch: 0.04, leftShoulderZ: -0.5, rightShoulderZ: 0.5, eyeWidth: 1.1 }),
+  "prepare-dispatch": Pose({ headYaw: 0.34, headPitch: 0.02, bodyPitch: 0.02, leftShoulderZ: -0.22, rightShoulderZ: 0.42, eyeWidth: 1.14 }),
   "inspect-light": Pose({ headYaw: 0.28, headPitch: -0.28, headRoll: -0.12, bodyPitch: 0.1, leftShoulderZ: -0.72, leftShoulderX: -0.28, leftElbowZ: -0.36, rightShoulderZ: 0.24 }),
   "prepare-repair-tool": Pose({ headYaw: 0.2, headPitch: -0.18, leftShoulderZ: -0.74, leftShoulderX: -0.5, leftElbowZ: -0.42, rightShoulderZ: 0.48, rightShoulderX: -0.18, tool: 1 }),
   "repair-light": Pose({ headYaw: 0.16, headPitch: -0.24, bodyPitch: 0.08, leftShoulderZ: -1.02, leftShoulderX: -0.62, leftElbowZ: -0.52, rightShoulderZ: 0.64, rightShoulderX: -0.28, rightElbowZ: 0.3, tool: 1 }),
@@ -74,9 +76,14 @@ const POSES = Object.freeze({
   "grasp-cargo": Pose({ headPitch: 0.2, bodyPitch: 0.14, leftShoulderZ: -0.68, leftShoulderX: -0.86, leftElbowZ: 0.28, rightShoulderZ: 0.68, rightShoulderX: -0.86, rightElbowZ: -0.28 }),
   "carry-cargo": Pose({ headPitch: 0.1, bodyPitch: 0.05, leftShoulderZ: -0.5, leftShoulderX: -1.02, leftElbowZ: 0.38, rightShoulderZ: 0.5, rightShoulderX: -1.02, rightElbowZ: -0.38 }),
   "stow-cargo": Pose({ headPitch: 0.2, bodyPitch: 0.13, leftShoulderZ: -0.6, leftShoulderX: -0.92, leftElbowZ: 0.24, rightShoulderZ: 0.6, rightShoulderX: -0.92, rightElbowZ: -0.24 }),
+  "inspect-dispatch": Pose({ headYaw: 0.12, headPitch: 0.22, headRoll: -0.08, bodyPitch: 0.08, leftShoulderZ: -0.18, rightShoulderZ: 0.55, rightShoulderX: -0.38, rightElbowZ: -0.18, eyeWidth: 1.18 }),
+  "grasp-dispatch": Pose({ headPitch: 0.16, bodyPitch: 0.08, leftShoulderZ: -0.72, leftShoulderX: -0.82, leftElbowZ: 0.36, rightShoulderZ: 0.2, eyeWidth: 1.12 }),
+  "carry-dispatch": Pose({ headYaw: -0.08, headPitch: 0.04, leftShoulderZ: -0.46, leftShoulderX: -1.08, leftElbowZ: 0.48, rightShoulderZ: 0.18, eyeWidth: 1.12 }),
+  "insert-dispatch": Pose({ headPitch: 0.18, bodyPitch: 0.09, leftShoulderZ: -0.68, leftShoulderX: -1.0, leftElbowZ: 0.26, rightShoulderZ: 0.24, eyeWidth: 1.08 }),
   "verify-light": Pose({ headYaw: -0.24, headPitch: -0.12, headRoll: 0.12, leftShoulderZ: -0.35, rightShoulderZ: 0.22, eyeWidth: 1.14 }),
   "verify-antenna": Pose({ headYaw: -0.28, headPitch: -0.35, headRoll: -0.08, leftShoulderZ: -0.28, rightShoulderZ: 0.42, eyeWidth: 1.14 }),
   "verify-cargo": Pose({ headYaw: -0.22, headPitch: 0.12, headRoll: 0.08, leftShoulderZ: -0.3, rightShoulderZ: 0.3, eyeWidth: 1.1 }),
+  "verify-dispatch": Pose({ headYaw: -0.16, headPitch: 0.08, headRoll: 0.07, leftShoulderZ: -0.18, rightShoulderZ: 0.86, rightShoulderX: -0.18, rightElbowZ: 0.24, eyeWidth: 1.18, eyeHeight: 1.08 }),
   satisfied: Pose({ headPitch: 0.08, bodyPitch: -0.03, lift: 0.05, leftShoulderZ: -0.45, rightShoulderZ: 0.45, eyeWidth: 1.22, eyeHeight: 1.14 }),
   return: Pose({ headYaw: -0.08, headPitch: 0.02, leftShoulderZ: -0.2, rightShoulderZ: 0.2 }),
 });
@@ -88,12 +95,12 @@ const FOCUSED_STAGES = new Set(["repair", "adjust", "synchronize", "retrieve-car
 function TaskYaw(taskId) {
   // The equipment light is mounted on the station's +Z face. This yaw lets Pip
   // arrive in front of it and naturally turn back toward the service panel.
-  if (taskId === "repair-light") return 2.32;
+  if (taskId === "repair-light") return 2.6;
   // Antenna jobs are staged on the +Z side of the mast; face back toward the
   // dish rather than outward into space. Travel and return interpolate to it.
   if (taskId === "adjust-antenna" || taskId === "survey-sync") return 2.8;
   if (taskId === "stubborn-antenna") return 2.8;
-  if (taskId === "cargo-transfer" || taskId === "dispatch-exchange" || taskId === "seasonal-cargo") return 0.5;
+  if (taskId === "cargo-transfer" || taskId === "dispatch-exchange" || taskId === "seasonal-cargo") return -2.8;
   if (taskId === "seasonal-install") return 2.55;
   if (taskId === "seasonal-cleanup") return 2.55;
   if (taskId === "seasonal-oddity") return 2.32;
@@ -103,7 +110,7 @@ function TaskYaw(taskId) {
   return -0.16;
 }
 
-function SetRobotPosition(scene, taskId, stage, progress) {
+function SetRobotPosition(scene, taskId, stage, progress, state) {
   if (taskId === "charging" || taskId === "dream-antenna" || taskId === "dream-phantom") {
     scene.robot.position.copy(scene.robotHome);
     scene.robot.rotation.y = -0.16;
@@ -293,39 +300,64 @@ function SetRobotPosition(scene, taskId, stage, progress) {
     scene.robot.rotation.z = stride * 0.025;
     return true;
   }
-  const target = scene.robotTaskTargets[taskId] || scene.robotHome;
+  let target = scene.robotTaskTargets[taskId] || scene.robotHome;
   const cargoTask = taskId === "cargo-transfer" || taskId === "dispatch-exchange" || taskId === "seasonal-cargo";
+  const dispatchTask = taskId === "dispatch-exchange";
+  const farCargo = cargoTask && !dispatchTask && state.cargoPackageIndex % 2 === 1;
+  let cargoPickup = dispatchTask ? scene.robotDispatchPickup : scene.robotWork;
+  if (taskId === 'seasonal-cargo' || taskId === 'cargo-transfer' && state.cargoPackageCount > 1) {
+    cargoPickup = scene.cargoPickupScratch ||= new THREE.Vector3();
+    CargoRackPosition(scene, state.cargoPackageIndex || 0, state.cargoPackageCount || 1, cargoPickup);
+    cargoPickup.x += 0.15; cargoPickup.y -= 0.3; cargoPickup.z += farCargo ? -0.4 : 0.4;
+    target = cargoPickup;
+  }
+  const cargoDrop = dispatchTask ? scene.robotDispatchDrop : scene.robotCargoDrop;
   const traveling = stage.startsWith("travel-to-");
   const returningToCargo = stage === "return-to-cargo";
   const returning = stage === "return";
   const delivering = stage === "deliver-cargo";
   const atCargoDrop = cargoTask && CARGO_DROP_STAGES.has(stage);
-  const taskYaw = TaskYaw(taskId);
+  const taskYaw = farCargo ? 0.34 : TaskYaw(taskId);
+  // Reach the opposite rack by going around the engine end, never through the
+  // ship or station. Fixed waypoints make backward seeking exactly repeatable.
+  const cargoRoute = (from, to, amount, reverse = false) => {
+    if (!farCargo) { scene.robot.position.lerpVectors(from, to, Smooth(amount)); return; }
+    const a = scene.cargoRouteA ||= new THREE.Vector3();
+    const b = scene.cargoRouteB ||= new THREE.Vector3();
+    a.set(5.7, 0.3, reverse ? -1.5 : 1.5);
+    b.set(5.7, 0.3, reverse ? 1.5 : -1.5);
+    if (amount < 0.35) scene.robot.position.lerpVectors(from, a, Smooth(amount / 0.35));
+    else if (amount < 0.65) scene.robot.position.lerpVectors(a, b, Smooth((amount - 0.35) / 0.3));
+    else scene.robot.position.lerpVectors(b, to, Smooth((amount - 0.65) / 0.35));
+  };
   let motion = false;
 
   if (returningToCargo) {
-    scene.robot.position.lerpVectors(scene.robotCargoDrop, scene.robotWork, Smooth(progress));
-    scene.robot.rotation.y = Mix(0.3, taskYaw, Smooth(progress));
+    cargoRoute(cargoDrop, cargoPickup, progress);
+    scene.robot.rotation.y = Mix(-2.8, taskYaw, Smooth(progress));
     motion = true;
   } else if (traveling) {
-    scene.robot.position.lerpVectors(scene.robotHome, target, Smooth(progress));
-    scene.robot.rotation.y = Mix(-0.16, taskYaw, Smooth(progress));
+    cargoRoute(scene.robotHome, target, progress);
+    if (cargoTask && !farCargo) scene.robot.position.z += Math.sin(progress * Math.PI) * 1.0;
+    scene.robot.rotation.y = Mix(-0.16, cargoTask && !farCargo ? taskYaw + Math.PI * 2 : taskYaw, Smooth(progress));
     motion = true;
   } else if (returning) {
-    const returnStart = cargoTask ? scene.robotCargoDrop : target;
+    const returnStart = cargoTask ? cargoDrop : target;
     scene.robot.position.lerpVectors(returnStart, scene.robotHome, Smooth(progress));
-    scene.robot.rotation.y = Mix(cargoTask ? 0.3 : taskYaw, -0.16, Smooth(progress));
+    if (cargoTask) scene.robot.position.z += Math.sin(progress * Math.PI) * 0.7;
+    scene.robot.rotation.y = Mix(cargoTask ? -2.8 : taskYaw, -0.16, Smooth(progress));
     motion = true;
   } else if (delivering) {
-    scene.robot.position.lerpVectors(scene.robotWork, scene.robotCargoDrop, Smooth(progress));
-    scene.robot.rotation.y = Mix(taskYaw, 0.3, Smooth(progress));
+    cargoRoute(cargoPickup, cargoDrop, progress, true);
+    scene.robot.rotation.y = Mix(taskYaw, -2.8, Smooth(progress));
     motion = true;
   } else if (atCargoDrop || stage === "package-confirm") {
-    scene.robot.position.copy(scene.robotCargoDrop);
-    scene.robot.rotation.y = 0.3;
+    scene.robot.position.copy(cargoDrop);
+    scene.robot.rotation.y = -2.8;
   } else if (HOME_STAGES.has(stage)) {
     scene.robot.position.copy(scene.robotHome);
-    scene.robot.rotation.y = taskId === "watch-arrival" ? TaskYaw(taskId) : -0.16;
+    const settle = state.phase === 'dock' ? Smooth(Math.max(0, (progress - 0.6) / 0.4)) : 0;
+    scene.robot.rotation.y = taskId === "watch-arrival" ? Mix(TaskYaw(taskId), -0.16, settle) : -0.16;
   } else {
     scene.robot.position.copy(target);
     scene.robot.rotation.y = taskYaw;
@@ -383,6 +415,45 @@ function ReachPhantomCover(scene, stage, progress) {
   arm.elbow.quaternion.slerp(s.elbow, weight);
 }
 
+// Authored two-joint contact, using the same payload path as the renderer.
+// This is a pose constraint, not another simulation; every seek starts fresh.
+function ReachServiceContact(scene, state) {
+  const lamp = state.pipTaskId === 'repair-light';
+  if (!(lamp ? ['prepare-tool', 'repair', 'verify'] : ['retrieve-cargo', 'deliver-cargo', 'stow-cargo']).includes(state.pipTaskStage)) return;
+  const p = Clamp01(state.pipTaskProgress);
+  const weight = lamp ? state.pipTaskStage === 'prepare-tool' ? Smooth(p) : state.pipTaskStage === 'verify' ? 1 - Smooth(p) : 1
+    : state.pipTaskStage === 'retrieve-cargo' ? Smooth(p / 0.4)
+      : state.pipTaskStage === 'stow-cargo' ? 1 - Smooth((p - 0.6) / 0.4) : 1;
+  const s = scene.cargoReachScratch ||= { tip: new THREE.Vector3(), payload: new THREE.Vector3(), target: new THREE.Vector3(), direction: new THREE.Vector3(),
+    bend: new THREE.Vector3(), upper: new THREE.Vector3(), lower: new THREE.Vector3(), base: new THREE.Vector3(),
+    shoulder: new THREE.Quaternion(), elbow: new THREE.Quaternion(), inverse: new THREE.Quaternion() };
+  if (lamp) { scene.equipmentLight.getWorldPosition(s.payload); scene.station.worldToLocal(s.payload); }
+  else TransferPosition(scene, state, s.payload);
+  const dispatch = state.pipTaskId === 'dispatch-exchange';
+  for (const arm of scene.robotArms) {
+    if ((dispatch || lamp) && arm.side > 0) continue;
+    s.target.copy(s.payload);
+    if (!lamp) CargoHandContact(scene, dispatch, arm.side, s.target);
+    scene.station.localToWorld(s.target);
+    scene.robot.worldToLocal(s.target);
+    s.target.sub(arm.shoulder.position);
+    s.tip.copy(arm.hand.position);
+    if (lamp) s.tip.add(scene.robotToolGlow.position);
+    const a = arm.elbow.position.length(), b = s.tip.length();
+    const distance = Math.min(a + b - 0.001, Math.max(0.01, s.target.length()));
+    s.direction.copy(s.target).normalize();
+    s.target.copy(s.direction).multiplyScalar(distance);
+    const along = (a * a - b * b + distance * distance) / (2 * distance);
+    s.bend.set(0, -1, 0).addScaledVector(s.direction, s.direction.y).normalize();
+    s.upper.copy(s.direction).multiplyScalar(along).addScaledVector(s.bend, Math.sqrt(Math.max(0, a * a - along * along)));
+    s.shoulder.setFromUnitVectors(s.base.copy(arm.elbow.position).normalize(), s.lower.copy(s.upper).normalize());
+    s.lower.copy(s.target).sub(s.upper).applyQuaternion(s.inverse.copy(s.shoulder).invert()).normalize();
+    s.elbow.setFromUnitVectors(s.base.copy(s.tip).normalize(), s.lower);
+    arm.shoulder.quaternion.slerp(s.shoulder, weight);
+    arm.elbow.quaternion.slerp(s.elbow, weight);
+  }
+}
+
 export function UpdatePip(scene, state) {
   const taskId = state.pipTaskId || "standby";
   const stage = state.pipTaskStage || "standby";
@@ -393,12 +464,17 @@ export function UpdatePip(scene, state) {
   let from = POSES[previousPoseName] || POSES.standby;
   let to = POSES[poseName] || POSES.standby;
   let blend = stage === "return" ? Smooth(progress) : Smooth(Math.min(1, progress * 2.4));
+  if (taskId === 'watch-arrival') {
+    from = POSES.observe;
+    to = POSES.standby;
+    blend = state.phase === 'dock' ? Smooth(Math.max(0, (progress - 0.6) / 0.4)) : 0;
+  }
   if (stage === "phantom-surprise" && progress >= 0.65) {
     from = POSES["phantom-surprise"];
     to = POSES.standby;
     blend = Smooth((progress - 0.65) / 0.35);
   }
-  const motion = SetRobotPosition(scene, taskId, stage, progress);
+  const motion = SetRobotPosition(scene, taskId, stage, progress, state);
 
   let headYaw = Mix(from.headYaw, to.headYaw, blend);
   let headPitch = Mix(from.headPitch, to.headPitch, blend);
@@ -461,7 +537,7 @@ export function UpdatePip(scene, state) {
     if (variant === 1) { bodyLean -= recoil * 0.1; lift += recoil * 0.04; }
     if (variant === 2) { bodyPitch += recoil * 0.13; headRoll += recoil * 0.12; }
   }
-  if (motion) bodyPitch += 0.035;
+  if (motion) bodyPitch += 0.035 * (['cargo-transfer', 'seasonal-cargo', 'dispatch-exchange'].includes(taskId) ? stageEnvelope : 1);
 
   scene.robot.position.y += lift;
   scene.robot.rotation.x = bodyPitch;
@@ -488,6 +564,7 @@ export function UpdatePip(scene, state) {
   }
   ApplyArmPose(scene.robotArms[0], "left", from, to, blend, workingMotion);
   ApplyArmPose(scene.robotArms[1], "right", from, to, blend, -workingMotion);
+  if (['cargo-transfer', 'seasonal-cargo', 'dispatch-exchange', 'repair-light'].includes(taskId)) ReachServiceContact(scene, state);
   if (taskId === "phantom-visitor" && ["phantom-reveal", "phantom-untangle", "phantom-wave"].includes(stage)) {
     ReachPhantomCover(scene, stage, progress);
   }

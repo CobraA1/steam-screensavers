@@ -77,15 +77,41 @@ test("absolute time reconstructs an in-progress visit without replay", () => {
 
 test("Pip task stages have recognizable beginnings, work, and outcomes", () => {
   const director = new EventDirector({ ...CONFIG, testScenario: "cargo-run" });
-  director.update(14.1, 0);
+  director.jumpToPhase('service');
   assert.equal(director.state.phase, "service");
   assert.equal(director.state.pipTaskStage, "prepare");
-  director.update(9, 9_000);
+  director.update(54, 54_000);
   assert.match(director.state.pipTaskStage, /cargo/);
   assert.notEqual(director.state.cargoState, "none");
-  director.update(19, 28_000);
+  director.update(115, 169_000);
   assert.equal(director.state.cargoState, "stored");
   assert.match(director.state.pipTaskStage, /verify|react-success|return/);
+});
+
+test('forced freight leaves time for a multi-package service and leisurely maneuvers', () => {
+  const director=new EventDirector({...CONFIG,testScenario:'cargo-run'});
+  director.jumpToPhase('dock'); director.update(13,0);
+  assert.equal(director.state.phase,'dock');
+  director.jumpToPhase('service'); director.update(179,0);
+  assert.equal(director.state.phase,'service');
+  director.update(1,0); assert.equal(director.state.phase,'departure');
+  director.update(39,0); assert.equal(director.state.phase,'departure');
+});
+
+test("courier visits reconstruct a dedicated dispatch canister lifecycle", () => {
+  const first = new EventDirector({ ...CONFIG, testScenario: "courier-stop" });
+  const second = new EventDirector({ ...CONFIG, testScenario: "courier-stop" });
+  first.jumpToPhase('service'); second.jumpToPhase('service');
+  const samples = [0, 12, 10, 10, 10];
+  for (const seconds of samples) {
+    const firstState = { ...first.update(seconds, seconds * 1000) };
+    const secondState = { ...second.update(seconds, seconds * 1000) };
+    assert.equal(firstState.cargoKind, "dispatch");
+    assert.deepEqual(
+      [firstState.phase, firstState.pipTaskStage, firstState.cargoState, firstState.cargoKind],
+      [secondState.phase, secondState.pipTaskStage, secondState.cargoState, secondState.cargoKind],
+    );
+  }
 });
 
 test("forced preview visits do not change the natural schedule", () => {
