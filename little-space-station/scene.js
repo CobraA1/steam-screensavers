@@ -268,8 +268,21 @@ export class LittleSpaceStationScene {
       winter: new THREE.Color(0x999b91),
     };
     const autumnCopper = new THREE.Color(0xba613b);
-    const autumnEvergreen = new THREE.Color(0x577b56);
-    const uplandRock = new THREE.Color(0x7b8d85);
+    // Geography already supplies coherent moisture/highland fields. Give
+    // those regions distinct vegetation and rock colors instead of applying
+    // nearly the same seasonal color across an entire continent.
+    const seasonForest = {
+      spring: new THREE.Color(0x347b51),
+      summer: new THREE.Color(0x28503c),
+      autumn: new THREE.Color(0x41704b),
+      winter: new THREE.Color(0x567a6e),
+    };
+    const seasonUplands = {
+      spring: new THREE.Color(0x788c71),
+      summer: new THREE.Color(0x877e63),
+      autumn: new THREE.Color(0x96795e),
+      winter: new THREE.Color(0x80919a),
+    };
     const snowLines = { spring: 0.69, summer: 0.80, autumn: 0.61, winter: 0.31 };
     const Clamp01 = (value) => Math.max(0, Math.min(1, value));
     const Smooth = (value) => { const t = Clamp01(value); return t * t * (3 - 2 * t); };
@@ -298,20 +311,23 @@ export class LittleSpaceStationScene {
 
       const coast = 1 - Clamp01(terrain.coast / 0.052);
       const tones = 0.12 + terrain.tone * 0.76;
-      // Coherent, varied inland greens/dry patches avoid the previous flat
-      // mustard-colored landmass. These masks do not shift between seasons.
-      const dry = Smooth((0.43 - terrain.moisture) / 0.30);
-      const rocky = Smooth((terrain.highland - 0.70) / 0.25);
+      // These thresholds intentionally fall within the actual moisture and
+      // highland ranges. The earlier evergreen threshold (>0.76 moisture)
+      // rarely activated, leaving almost every autumn triangle orange.
+      // Narrow transitions create recognizable connected regions, not noise.
+      const dryRegion = 1 - Smooth((terrain.moisture - 0.41) / 0.12);
+      const forestRegion = Smooth((terrain.moisture - 0.49) / 0.09);
+      const uplandRegion = Smooth((terrain.highland - 0.55) / 0.16);
       for (const [season, buffer] of Object.entries(seasonalColors)) {
         sample.copy(seasonLand[season][0]).lerp(seasonLand[season][1], tones);
-        sample.lerp(seasonDry[season], dry * 0.76);
         if (season === "autumn") {
-          // A little retained evergreen interrupts the fall color, while
-          // russet patches remain visible even in the wetter continental areas.
-          sample.lerp(autumnCopper, (0.14 + terrain.tone * 0.23) * (1 - dry * 0.45));
-          sample.lerp(autumnEvergreen, Smooth((terrain.moisture - 0.76) / 0.2) * 0.25);
+          // Keep autumn visibly copper, with green groves, golden dry
+          // country, and muted rocky uplands interrupting the orange.
+          sample.lerp(autumnCopper, 0.14 + terrain.tone * 0.23);
         }
-        sample.lerp(uplandRock, rocky * 0.22);
+        sample.lerp(seasonDry[season], dryRegion * (season === "spring" ? 0.38 : 0.78));
+        sample.lerp(seasonForest[season], forestRegion * (season === "autumn" ? 0.88 : 0.78));
+        sample.lerp(seasonUplands[season], uplandRegion * (season === "winter" ? 0.36 : 0.48));
         // A narrow warm shoreline, not a flat sandy continent.
         sample.lerp(beach, coast * 0.16);
         // Snow is part of the same land polygons as forest and rock.
