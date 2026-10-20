@@ -248,18 +248,24 @@ export class LittleSpaceStationScene {
     const oceanCoast = new THREE.Color(0x45959d);
     const beach = new THREE.Color(0xc5af80);
     const snow = new THREE.Color(0xeaf2ee);
+    // Keep seasonal geography fixed while letting its vegetation respond in
+    // ways that remain readable from the production camera at planet scale:
+    // spring is fresh bright green, summer has darker forest and golden dry
+    // country, and autumn grows distinctly copper/orange instead of beige.
     const seasonLand = {
-      spring: [new THREE.Color(0x37664c), new THREE.Color(0x83ad6d)],
-      summer: [new THREE.Color(0x315e4b), new THREE.Color(0x829d60)],
-      autumn: [new THREE.Color(0x4d7054), new THREE.Color(0x9f9e68)],
+      spring: [new THREE.Color(0x377f50), new THREE.Color(0x8cd36b)],
+      summer: [new THREE.Color(0x2b5444), new THREE.Color(0x639058)],
+      autumn: [new THREE.Color(0x85533e), new THREE.Color(0xce8748)],
       winter: [new THREE.Color(0x607e77), new THREE.Color(0xa6b0a1)],
     };
     const seasonDry = {
-      spring: new THREE.Color(0xc6ae78),
-      summer: new THREE.Color(0xc3a16d),
-      autumn: new THREE.Color(0xb99769),
+      spring: new THREE.Color(0xa0bc6f),
+      summer: new THREE.Color(0xc9ac6a),
+      autumn: new THREE.Color(0xda9857),
       winter: new THREE.Color(0x999b91),
     };
+    const autumnCopper = new THREE.Color(0xba613b);
+    const autumnEvergreen = new THREE.Color(0x577b56);
     const uplandRock = new THREE.Color(0x7b8d85);
     const snowLines = { spring: 0.69, summer: 0.80, autumn: 0.61, winter: 0.31 };
     const Clamp01 = (value) => Math.max(0, Math.min(1, value));
@@ -296,6 +302,12 @@ export class LittleSpaceStationScene {
       for (const [season, buffer] of Object.entries(seasonalColors)) {
         sample.copy(seasonLand[season][0]).lerp(seasonLand[season][1], tones);
         sample.lerp(seasonDry[season], dry * 0.76);
+        if (season === "autumn") {
+          // A little retained evergreen interrupts the fall color, while
+          // russet patches remain visible even in the wetter continental areas.
+          sample.lerp(autumnCopper, (0.14 + terrain.tone * 0.23) * (1 - dry * 0.45));
+          sample.lerp(autumnEvergreen, Smooth((terrain.moisture - 0.76) / 0.2) * 0.25);
+        }
         sample.lerp(uplandRock, rocky * 0.22);
         // A narrow warm shoreline, not a flat sandy continent.
         sample.lerp(beach, coast * 0.16);
