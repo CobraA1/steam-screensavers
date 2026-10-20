@@ -230,8 +230,8 @@ export class LittleSpaceStationScene {
     const radius = 5.7;
     // A little extra geometry makes recognizable coastlines possible while
     // retaining the deliberately faceted low-poly silhouette.
-    const detail = this.config.visualQuality === "high" ? 6
-      : this.config.visualQuality === "low" ? 4 : 5;
+    const detail = this.config.visualQuality === "high" ? 9
+      : this.config.visualQuality === "low" ? 5 : 7;
     const geometry = new THREE.IcosahedronGeometry(radius, detail);
     const positions = geometry.attributes.position;
     const faces = SamplePlanetFaces(positions, this.config.worldSeed);
@@ -243,17 +243,24 @@ export class LittleSpaceStationScene {
     };
     const currentColors = new Float32Array(positions.count * 3);
     const sample = new THREE.Color();
-    const oceanDeep = new THREE.Color(0x174b69);
-    const oceanBright = new THREE.Color(0x287f93);
-    const oceanCoast = new THREE.Color(0x4397a2);
-    const beach = new THREE.Color(0xc1b78a);
+    const oceanDeep = new THREE.Color(0x163e5b);
+    const oceanBright = new THREE.Color(0x2b748a);
+    const oceanCoast = new THREE.Color(0x45959d);
+    const beach = new THREE.Color(0xc5af80);
     const snow = new THREE.Color(0xeaf2ee);
     const seasonLand = {
-      spring: [new THREE.Color(0x377958), new THREE.Color(0x8cba70)],
-      summer: [new THREE.Color(0x336e55), new THREE.Color(0xafa063)],
-      autumn: [new THREE.Color(0x98674c), new THREE.Color(0xc9a56a)],
-      winter: [new THREE.Color(0x738b86), new THREE.Color(0xb3bbb0)],
+      spring: [new THREE.Color(0x37664c), new THREE.Color(0x83ad6d)],
+      summer: [new THREE.Color(0x315e4b), new THREE.Color(0x829d60)],
+      autumn: [new THREE.Color(0x4d7054), new THREE.Color(0x9f9e68)],
+      winter: [new THREE.Color(0x607e77), new THREE.Color(0xa6b0a1)],
     };
+    const seasonDry = {
+      spring: new THREE.Color(0xc6ae78),
+      summer: new THREE.Color(0xc3a16d),
+      autumn: new THREE.Color(0xb99769),
+      winter: new THREE.Color(0x999b91),
+    };
+    const uplandRock = new THREE.Color(0x7b8d85);
     const snowLines = { spring: 0.69, summer: 0.80, autumn: 0.61, winter: 0.31 };
     const Clamp01 = (value) => Math.max(0, Math.min(1, value));
     const Smooth = (value) => { const t = Clamp01(value); return t * t * (3 - 2 * t); };
@@ -274,21 +281,26 @@ export class LittleSpaceStationScene {
       const first = face * 3;
       if (!terrain.land) {
         // Deep ocean and a little shallow turquoise along continental shores.
-        sample.copy(oceanDeep).lerp(oceanBright, 0.22 + terrain.tone * 0.5);
-        sample.lerp(oceanCoast, 0.32 * Clamp01((terrain.coast + 0.12) / 0.12));
+        sample.copy(oceanDeep).lerp(oceanBright, 0.16 + terrain.tone * 0.64);
+        sample.lerp(oceanCoast, 0.55 * Clamp01((terrain.coast + 0.10) / 0.10));
         for (const buffer of Object.values(seasonalColors)) WriteFaceColor(buffer, first, sample);
         continue;
       }
 
-      const coast = 1 - Clamp01(terrain.coast / 0.065);
-      const tones = 0.17 + terrain.tone * 0.68;
+      const coast = 1 - Clamp01(terrain.coast / 0.052);
+      const tones = 0.12 + terrain.tone * 0.76;
+      // Coherent, varied inland greens/dry patches avoid the previous flat
+      // mustard-colored landmass. These masks do not shift between seasons.
+      const dry = Smooth((0.43 - terrain.moisture) / 0.30);
+      const rocky = Smooth((terrain.highland - 0.70) / 0.25);
       for (const [season, buffer] of Object.entries(seasonalColors)) {
         sample.copy(seasonLand[season][0]).lerp(seasonLand[season][1], tones);
-        // Shoreline highlights still belong to the land surface.
-        sample.lerp(beach, coast * 0.26);
-        // Polar snow is part of the land polygons, never a second shell.
-        // Winter extends its snow line toward the equator; continents stay fixed.
-        const snowAmount = Smooth((terrain.latitude + (terrain.tone - 0.5) * 0.07 - snowLines[season]) / 0.18);
+        sample.lerp(seasonDry[season], dry * 0.76);
+        sample.lerp(uplandRock, rocky * 0.22);
+        // A narrow warm shoreline, not a flat sandy continent.
+        sample.lerp(beach, coast * 0.16);
+        // Snow is part of the same land polygons as forest and rock.
+        const snowAmount = Smooth((terrain.latitude + (terrain.highland - 0.5) * 0.06 - snowLines[season]) / 0.18);
         sample.lerp(snow, snowAmount * (season === "summer" ? 0.90 : 1));
         WriteFaceColor(buffer, first, sample);
       }
