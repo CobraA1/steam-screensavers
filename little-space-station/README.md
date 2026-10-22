@@ -7,6 +7,11 @@ followed by the calculated four Sundays of Advent. See the [implementation and
 preview guide](docs/thanksgiving-advent.md) for choreography, scheduling,
 persistence compatibility, date controls, and Christmas scope.
 
+Advent and Christmas **future story ideas** (tree, weekly build-up, possible returning explorer,
+and Christmas Eve preparation deadline) are tracked in the [working Advent/Christmas
+planning notes](docs/advent-christmas-story-planning.md). These are not yet implemented
+or final decisions.
+
 The Phantom Visitor uses `phantom-choreography.js` for continuous cover/drone paths and shared target orientation. Pip reaches the cloth with the existing two-joint arm rig; both live and miniature covers have connected, downward-flared skirts. The 68-second live story now finishes its exit after committing the final payoff. Its dream retains the original memory identity/year/outcome, brings miniature Pip into contact with the cover, fades the departing drone independently, and preserves the empty-cover joke. Preview it under **Story · Phantom Visitor** (beat/point or **Force / play**) and **Pip recharge & memory → Show Phantom dream** (whole-dream scrubber).
 
 A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a small retro-futuristic station above a procedural planet. Production launches contain no controls or input listeners.
