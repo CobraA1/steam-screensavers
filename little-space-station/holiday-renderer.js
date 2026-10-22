@@ -56,18 +56,31 @@ export class HolidayVisual {
     cylinder(this.lantern,.055,.19,[-.12,.34,-.23],glow);
     cylinder(this.lantern,.085,.035,[-.12,.45,-.23],gold);
     this.advent=new THREE.Group();this.table.add(this.advent);
-    cylinder(this.advent,.24,.035,[0,.2,0],blue);
-    this.lamps=[];
-    for(let i=0;i<4;i++) {
-      const angle=i*Math.PI/2+Math.PI/4,x=.17*Math.cos(angle),z=.17*Math.sin(angle);
-      cylinder(this.advent,.05,.11,[x,.265,z],blue);
-      cylinder(this.advent,.054,.025,[x,.32,z],gold);
-      const lamp=cylinder(this.advent,.034,.055,[x,.36,z],material(0x9c865c));
-      this.lamps.push(lamp);
+    this.advent.name='five-candle-advent-wreath';
+    cylinder(this.advent,.285,.025,[0,.2,0],gold);
+    const evergreen=material(0x28523d),tips=material(0x3e7050);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.225,.047,5,20),evergreen);
+    ring.rotation.x=Math.PI/2;ring.position.y=.25;this.advent.add(ring);
+    const sprigGeometry=new THREE.IcosahedronGeometry(1,0);
+    for(let i=0;i<20;i++) {
+      const angle=i*Math.PI/10;
+      const sprig=new THREE.Mesh(sprigGeometry,i%2?evergreen:tips);
+      sprig.position.set(.225*Math.cos(angle),.26,.225*Math.sin(angle));
+      sprig.scale.set(.085,.032,.04);sprig.rotation.y=-angle+Math.PI/2;
+      this.advent.add(sprig);
     }
-    this.star=new THREE.Group();this.star.position.set(0,.45,0);this.advent.add(this.star);
-    for(const rotation of [0,Math.PI/2]) {
-      const ray=box(this.star,[.035,.22,.035],[0,0,0],glow);ray.rotation.z=rotation;
+    this.lamps=[];this.candles=[];
+    const rose=material(0xc5788c),white=material(0xf3ead6),wick=material(0x302a25);
+    for(let i=0;i<5;i++) {
+      const center=i===4,angle=i*Math.PI/2+Math.PI/4;
+      const x=center?0:.205*Math.cos(angle),z=center?0:.205*Math.sin(angle);
+      const height=center?.43:.3,radius=center?.05:.035,base=.27;
+      cylinder(this.advent,radius+.018,.03,[x,base-.015,z],gold);
+      this.candles.push(cylinder(this.advent,radius,height,[x,base+height/2,z],center?white:i===2?rose:blue));
+      cylinder(this.advent,.005,.018,[x,base+height+.009,z],wick);
+      const flame=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),material(0xffd795,0xffb34d));
+      flame.position.set(x,base+height+.045,z);flame.scale.set(.018,.045,.018);
+      this.advent.add(flame);this.lamps.push(flame);
     }
     this.construction=BuildConstructionDrone({window:glow},gold,teal,glow);
     this.inspection=BuildInspectionDrone();this.root.add(this.construction,this.inspection);
@@ -80,18 +93,16 @@ export class HolidayVisual {
     this.construction.visible=this.inspection.visible=Boolean(story);
     const advent=!story && (h.adventWeek>0||h.christmasHandoff);
     this.harvest.visible=!advent || h.transition<1;
-    // Harvest tray retracts below the tabletop; the four-light tray rises in
+    // Harvest tray retracts below the tabletop; the evergreen wreath rises in
     // its place. Calendar-derived, so missed mornings never replay a story.
     this.harvest.position.y=advent?-.48*Ease(h.transition):0;
     this.harvest.scale.setScalar(advent?1-Ease(h.transition):1);
     this.advent.visible=advent;
     this.advent.position.y=advent?-.3*(1-Ease(h.transition)):0;
-    this.star.visible=h.christmasHandoff;
     this.lamps.forEach((lamp,i)=>{
-      const lit=i<h.adventWeek||h.christmasHandoff;
-      lamp.material.color.setHex(lit?0xffd48a:0x58738b);
-      lamp.material.emissive.setHex(lit?0xd9a653:0);
-      lamp.material.emissiveIntensity=lit?.7:0;
+      const lit=i===4 ? Boolean(h.christCandleLit) : Boolean(i<h.adventWeek||h.christmasHandoff);
+      lamp.visible=lit;
+      lamp.material.emissiveIntensity=lit?1.1:0;
     });
     this.tray.position.x=h.preparing?0:.38;
     this.lantern.position.z=0;
@@ -109,8 +120,10 @@ export class HolidayVisual {
     s.robotEye.scale.set(1+.08*a.welcome,1-.12*a.reach,1);
     s.robotTool.visible=false;
     for(const arm of s.robotArms) {
-      arm.shoulder.rotation.set(-.6*a.reach,0,arm.side*(.16+.8*a.armWave));
-      arm.elbow.rotation.set(-.3*a.reach,0,arm.side*.3*a.welcome);
+      // Wave with the right hand above the visor; the other arm rests.
+      const waving=arm.side>0?a.armWave:0;
+      arm.shoulder.rotation.set(-.6*a.reach,0,arm.side*.16+2.15*waving);
+      arm.elbow.rotation.set(-.3*a.reach,0,.3*waving);
     }
     HolidayReach(s,s.robotArms[0],[-5.47,.32,1.79+a.lanternNudge],a.lanternContact);
     HolidayReach(s,s.robotArms[1],[-5.01+a.tray,.22,1.805],a.trayContact);

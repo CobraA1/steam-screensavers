@@ -21,7 +21,7 @@ export class HolidayRuntime {
       if(state.phase!=='quiet'||r.incidentPreview||r.phantomPreview||r.remembrancePreview||r.restPreview||r.pipOverride||r.seasonalPreview!=='natural')
         r.thanksgivingPreview=null;
       const p=r.thanksgivingPreview;
-      if(p){if(p.playing){p.elapsed=Math.min(112,p.elapsed+step);if(p.elapsed>=112)p.playing=false;}
+      if(p){if(p.playing){p.elapsed=Math.min(THANKSGIVING_SECONDS,p.elapsed+step);if(p.elapsed>=THANKSGIVING_SECONDS)p.playing=false;}
         state.thanksgiving=ThanksgivingTimeline(p.elapsed);}
     } else {
       const otherIncomplete=r.incidentPlayback||r.phantomPlayback||r.remembrancePlayback||
