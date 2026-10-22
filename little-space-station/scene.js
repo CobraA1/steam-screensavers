@@ -13,6 +13,7 @@ import { Autumn2026Visual } from "./seasonal-renderer.js";
 import { SERVICE_DECK_ANCHORS, SeasonalServiceDeckVisual } from "./seasonal-service-deck.js";
 import { PhantomVisitorVisual } from "./phantom-renderer.js";
 import { RemembranceVisual } from "./remembrance-renderer.js";
+import { HolidayVisual } from './holiday-renderer.js';
 
 const QUALITY = Object.freeze({
   low: { stars: 520, radialSegments: 10, sphereSegments: 18 },
@@ -122,6 +123,7 @@ export class LittleSpaceStationScene {
     this.autumn2026Visual = new Autumn2026Visual(this);
     this.phantomVisitorVisual = new PhantomVisitorVisual(this);
     this.remembranceVisual = new RemembranceVisual(this);
+    this.holidayVisual = new HolidayVisual(this);
   }
 
   CreateMaterials() {
@@ -1070,6 +1072,7 @@ export class LittleSpaceStationScene {
     this.autumn2026Visual.Update(eventState);
     this.phantomVisitorVisual.update(eventState.phantomVisitor);
     this.remembranceVisual.update(eventState);
+    this.holidayVisual.update(eventState);
 
     this.cameraFraming.update(time, frameSeconds, this.robot);
     const activeCamera = this.cameraFraming.getActiveCamera();

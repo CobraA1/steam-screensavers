@@ -10,6 +10,7 @@ import CONFIG from "./config.js";
 import { DeckDurationMs, DECK_STAGES } from "./service-deck-lifecycle.js";
 import { AdvancePhantomVisitorIncident, CreatePhantomVisitorIncident, CreatePhantomVisitorPreview, CreatePhantomVisitorResume, PHANTOM_VISITOR_BEATS, PHANTOM_VISITOR_TYPE, PHANTOM_VISITOR_VARIANTS } from "./phantom-visitor.js";
 import { AdvanceRemembranceIncident, CreateRemembranceIncident, CreateRemembrancePreview, CreateRemembranceResume, REMEMBRANCE_BEATS, REMEMBRANCE_TYPE, REMEMBRANCE_VARIANTS } from "./lights-of-remembrance.js";
+import { HolidayPreview } from './holiday-preview.js';
 
 function MakeElement(tagName, className, text) {
   const element = document.createElement(tagName);
@@ -480,6 +481,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
     readout.append(values[key]);
   }
   panel.append(readout);
+  const updateHolidayPreview = HolidayPreview(panel,runtime,director);
   document.body.append(panel);
 
   eventSelect.addEventListener("change", () => {
@@ -831,6 +833,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
 
   return {
     update(state, snapshot = {}) {
+      updateHolidayPreview();
       if (runtime.restPreview === "dream" && runtime.dreamPreview) {
         const dream = runtime.dreamPreview;
         if (dream.playing) dreamPoint.value = String(dream.elapsed / dream.duration);

@@ -9,7 +9,13 @@ test("continent geography is seeded, deterministic, and unchanged by sampling or
   const different = CreatePlanetGeography("planet-seed-b");
   const positions = [[1, 0.3, 0.2], [-0.4, 0.2, 0.8], [0.1, -0.6, -0.9]];
   assert.deepEqual(positions.map(p => first(...p)), positions.map(p => again(...p)));
-  assert.deepEqual(first(1, 0.3, 0.2), first(10, 3, 2));
+  // Normalizing scaled floating-point inputs can differ by a few ULPs.
+  // Identical inputs above still require exact deterministic reconstruction.
+  const unit = first(1, 0.3, 0.2), scaled = first(10, 3, 2);
+  for (const key of Object.keys(unit)) {
+    if (typeof unit[key] === 'number') assert.ok(Math.abs(unit[key] - scaled[key]) < 1e-12, key);
+    else assert.equal(unit[key], scaled[key]);
+  }
   assert.ok(positions.some(p => Math.abs(first(...p).coast - different(...p).coast) > 0.01));
 });
 

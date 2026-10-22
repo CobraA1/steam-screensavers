@@ -10,6 +10,10 @@ const REMEMBRANCE_TYPE = "lights-of-remembrance-2026";
 const MAX_COMPLETED_STORIES = 12;
 const ANTENNA_MILESTONES = Object.freeze({ none: 0, "payoff-presented": 1, "repair-presented": 2 });
 const SEASONAL_TYPES = Object.freeze({
+  'room-for-one-more-2026': Object.freeze({
+    checkpoints: Object.freeze(['preparations','invitation','together','gathering-complete']),
+    outcome: 'welcomed-old-friends', eligibleForDream: false,
+  }),
   [PHANTOM_TYPE]: Object.freeze({
     checkpoints: Object.freeze(["intro", "drone-revealed", "drone-freed", "story-complete"]),
     outcome: "inspection-drone-freed",
@@ -74,7 +78,7 @@ function NormalizeSeasonalIncident(value) {
     variant: Math.abs(Math.floor(NumberValue(value.variant, 0))) % 3,
     milestone,
     checkpoint: definition.checkpoints[milestone],
-    lifecycle: resolved ? "resolved" : "presenting",
+    lifecycle: resolved ? "resolved" : value.type === 'room-for-one-more-2026' && value.lifecycle === 'expired' ? 'expired' : "presenting",
   };
 }
 
@@ -254,7 +258,7 @@ export function CreateNarrativeStore({ onEvent = () => {}, storage = globalThis.
       const previous = rawLoad(worldSeed).record || EmptyRecord(worldSeed);
       const current = previous.seasonalIncident;
       const currentDefinition = current && SEASONAL_TYPES[current.type];
-      const currentIncomplete = current && currentDefinition && current.milestone < currentDefinition.checkpoints.length - 1;
+      const currentIncomplete = current && current.lifecycle !== 'expired' && currentDefinition && current.milestone < currentDefinition.checkpoints.length - 1;
       if (currentIncomplete && current.instanceId !== next.instanceId) return { ok: false, status: "incomplete seasonal incident" };
       const sameInstance = current && current.type === next.type && current.instanceId === next.instanceId;
       const seasonalIncident = sameInstance && current.milestone > next.milestone ? current : next;

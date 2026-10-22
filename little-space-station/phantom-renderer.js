@@ -16,7 +16,7 @@ function BuildCover() {
   return root;
 }
 
-function BuildDrone() {
+export function BuildInspectionDrone() {
   const root = new THREE.Group();
   const teal = BasicMaterial(0x367b7b);
   const orange = BasicMaterial(0xd27637);
@@ -53,7 +53,7 @@ export class PhantomVisitorVisual {
     scene.station.add(this.root);
     this.cover = BuildCover();
     this.looseCover = BuildCover();
-    this.drone = BuildDrone();
+    this.drone = BuildInspectionDrone();
     this.root.add(this.cover, this.looseCover, this.drone);
     // A soft, unshadowed fill preserves the reveal in planetary night without
     // changing the station's orbital lighting or flattening the whole scene.

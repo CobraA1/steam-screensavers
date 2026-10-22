@@ -1,5 +1,6 @@
 import { CreateRandom, DeriveSeed, Pick } from "./random.js";
 import { ResolveServiceDeck } from "./service-deck-lifecycle.js";
+import { HolidayCalendar, Advent, DAY } from './holiday-calendar.js';
 
 const SECOND_MS = 1000;
 const MINUTE_MS = 60 * SECOND_MS;
@@ -72,6 +73,7 @@ const REMEMBRANCE_PACKAGE_STYLES = Object.freeze([
 ]);
 
 const PACKAGE_THEMES = Object.freeze({
+  thanksgiving: Object.freeze({ styles:FALL_PACKAGE_STYLES, labels:Object.freeze(['Gathering energy cells','Lantern fittings','Refreshment trays','Commons provisions']) }),
   fall: Object.freeze({ styles: FALL_PACKAGE_STYLES, labels: Object.freeze(["Garland fittings", "Harvest lights", "Gourd ornaments", "Copper leaf trim"]) }),
   halloween: Object.freeze({ styles: HALLOWEEN_PACKAGE_STYLES, labels: Object.freeze(["Jack-o'-lantern kit", "Purple light string", "Ghost pennant", "Moon-marked trim"]) }),
   remembrance: Object.freeze({ styles: REMEMBRANCE_PACKAGE_STYLES, labels: Object.freeze(["Memorial lamps", "Blue-and-gold fittings", "Beacon lenses", "Remembrance lights"]) }),
@@ -103,6 +105,7 @@ function PhaseFor(time) {
 
 function NaturalFallDecorLevel(time) {
   if (time < AUTUMN_2026_DATES.autumnBegins || time >= AUTUMN_2026_DATES.autumnEnds) return 0;
+  if (time >= Advent(2026)) return 1 - Clamp01((time-Advent(2026))/(7*DAY));
   if (time >= AUTUMN_2026_DATES.fallDecorComplete) return 1;
   return Clamp01(0.12 + (time - AUTUMN_2026_DATES.autumnBegins) /
     (AUTUMN_2026_DATES.fallDecorComplete - AUTUMN_2026_DATES.autumnBegins) * 0.88);
@@ -269,6 +272,7 @@ export function ResolveAutumn2026(worldSeed, worldTimeMs, { previewMode = "natur
 }
 
 function SeasonalThemeFor(time) {
+  if (HolidayCalendar(time).gathering) return 'thanksgiving';
   if (time < AUTUMN_2026_DATES.autumnBegins || time >= AUTUMN_2026_DATES.cleanupComplete) return null;
   if (time >= AUTUMN_2026_DATES.remembranceSupplies && time < AUTUMN_2026_DATES.cleanupBegins) return "remembrance";
   if (time >= AUTUMN_2026_DATES.halloweenPreparations) return "halloween";
@@ -276,6 +280,7 @@ function SeasonalThemeFor(time) {
 }
 
 function ShipmentChance(theme, time) {
+  if (theme === 'thanksgiving') return .5;
   if (theme === "fall") {
     return time < AUTUMN_2026_DATES.fallDecorComplete ? 0.48 : 0.18;
   }

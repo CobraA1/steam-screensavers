@@ -1,4 +1,5 @@
 import USER_CONFIG from "./config.js";
+import { HolidayRuntime, ApplyThanksgiving } from './holiday-runtime.js';
 import { LittleSpaceStationScene } from "./scene.js";
 import { CreateWorldIdentity } from "./world.js";
 import { EventDirector } from "./simulation-world.js";
@@ -66,6 +67,7 @@ let storyDirector;
 let phantomDirector;
 let remembranceDirector;
 let previewTools;
+let holidayRuntime;
 let lastFrame;
 
 function Log(message) { if (IS_PREVIEW) { runtime.logs.unshift({ at: new Date().toISOString(), message }); runtime.logs.length = 32; } }
@@ -123,10 +125,11 @@ function RunFrame(currentTime) {
     deckPreview: IS_PREVIEW ? runtime.deckPreview : null,
   });
   ApplyAutumn2026State(eventState, seasonalState, CONFIG.worldSeed);
+  const thanksgivingActive = holidayRuntime.update(eventState, stepSeconds, clock.worldTimeMs, clock.presentationSeconds, director.isForcedScenario());
   const completedStories = runtime.persistedNarrative && runtime.persistedNarrative.record && runtime.persistedNarrative.record.completedStories || [];
   eventState.remembranceCompleted = completedStories.some((entry) => entry.type === REMEMBRANCE_TYPE && entry.storyYear === 2026);
   const antennaIncompleteBeforeSelection = runtime.incidentPlayback || (runtime.incidentRecord && runtime.incidentRecord.milestone < STUBBORN_ANTENNA_MILESTONES["repair-presented"]);
-  if (!IS_PREVIEW && !runtime.phantomPlayback && !runtime.remembrancePlayback && !antennaIncompleteBeforeSelection) {
+  if (!IS_PREVIEW && !thanksgivingActive && !runtime.phantomPlayback && !runtime.remembrancePlayback && !antennaIncompleteBeforeSelection) {
     const selectedPhantom = phantomDirector.update({
       stepSeconds,
       presentationSeconds: clock.presentationSeconds,
@@ -147,7 +150,7 @@ function RunFrame(currentTime) {
       Log(result.ok ? "started Phantom Visitor" : "started in-memory Phantom Visitor");
     }
   }
-  if (!IS_PREVIEW && !runtime.remembrancePlayback && !runtime.phantomPlayback && !antennaIncompleteBeforeSelection) {
+  if (!IS_PREVIEW && !thanksgivingActive && !runtime.remembrancePlayback && !runtime.phantomPlayback && !antennaIncompleteBeforeSelection) {
     const selectedRemembrance = remembranceDirector.update({
       stepSeconds,
       presentationSeconds: clock.presentationSeconds,
@@ -165,7 +168,7 @@ function RunFrame(currentTime) {
       Log(result.ok ? "started Lights of Remembrance" : "started in-memory Lights of Remembrance");
     }
   }
-  if (!IS_PREVIEW && !runtime.incidentPlayback && !runtime.incidentRecord && !runtime.phantomPlayback && !runtime.remembrancePlayback) {
+  if (!IS_PREVIEW && !thanksgivingActive && !runtime.incidentPlayback && !runtime.incidentRecord && !runtime.phantomPlayback && !runtime.remembrancePlayback) {
     const selected = storyDirector.update({
       stepSeconds,
       presentationSeconds: clock.presentationSeconds,
@@ -278,8 +281,9 @@ function RunFrame(currentTime) {
       if (runtime.remembranceRecord.milestone >= REMEMBRANCE_MILESTONES["observance-complete"]) runtime.remembrancePlayback = null;
     }
   }
+  ApplyThanksgiving(eventState);
   const recharge = ResolvePipRecharge(CONFIG.worldSeed, clock.worldTimeMs, CONFIG.pipRhythm);
-  const incompleteIncident = runtime.incidentPlayback || runtime.phantomPlayback || runtime.remembrancePlayback ||
+  const incompleteIncident = thanksgivingActive || runtime.incidentPlayback || runtime.phantomPlayback || runtime.remembrancePlayback ||
     (runtime.incidentRecord && runtime.incidentRecord.milestone < STUBBORN_ANTENNA_MILESTONES["repair-presented"]) ||
     (runtime.phantomRecord && runtime.phantomRecord.type === PHANTOM_VISITOR_TYPE && runtime.phantomRecord.milestone < PHANTOM_VISITOR_MILESTONES["story-complete"]) ||
     (runtime.remembranceRecord && runtime.remembranceRecord.type === REMEMBRANCE_TYPE && runtime.remembranceRecord.milestone < REMEMBRANCE_MILESTONES["observance-complete"]);
@@ -360,6 +364,7 @@ function Init() {
     }
     runtime.clock = clock;
     runtime.store = store;
+    holidayRuntime = new HolidayRuntime({ preview:IS_PREVIEW, seed:CONFIG.worldSeed, store, runtime });
     environment = new EnvironmentSystem(CONFIG.worldSeed, CONFIG.environment);
     storyDirector = new IncidentDirector(CONFIG, { onTransition: ({ state }) => Log("antenna story " + state) });
     phantomDirector = new PhantomVisitorDirector(CONFIG);
