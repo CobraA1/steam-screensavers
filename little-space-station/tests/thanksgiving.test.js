@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Thanksgiving, Advent, HolidayCalendar, DAY } from '../holiday-calendar.js';
-import { ThanksgivingActors, ThanksgivingIncident, ThanksgivingCheckpoint, ThanksgivingResume, THANKSGIVING_BEATS } from '../thanksgiving.js';
+import { ThanksgivingActors, ThanksgivingIncident, ThanksgivingCheckpoint, ThanksgivingResume, THANKSGIVING_BEATS, THANKSGIVING_SECONDS } from '../thanksgiving.js';
 import { HolidayRuntime } from '../holiday-runtime.js';
 import { CreateNarrativeStore } from '../persistence.js';
 function storage(){const map=new Map();return {getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)};}
@@ -31,9 +31,9 @@ test('all actor channels remain continuous at every beat boundary and determinis
   let t=0;for(const beat of THANKSGIVING_BEATS){t+=beat.duration;const a=ThanksgivingActors(t-1e-6),b=ThanksgivingActors(t+1e-6);
     for(const k of Object.keys(a)){const av=[a[k]].flat(),bv=[b[k]].flat();av.forEach((x,i)=>assert.ok(Math.abs(x-bv[i])<1e-4,k+' at '+t));}
   }
-  const samples=Array.from({length:225},(_,i)=>ThanksgivingActors(i*.5));
-  for(let i=224;i>=0;i--)assert.deepEqual(ThanksgivingActors(i*.5),samples[i]);
-  assert.deepEqual(ThanksgivingActors(112).pip,[-.2,1.16,.72]);
+  const samples=Array.from({length:THANKSGIVING_SECONDS*2+1},(_,i)=>ThanksgivingActors(i*.5));
+  for(let i=samples.length-1;i>=0;i--)assert.deepEqual(ThanksgivingActors(i*.5),samples[i]);
+  assert.deepEqual(ThanksgivingActors(THANKSGIVING_SECONDS).pip,[-.2,1.16,.72]);
 });
 test('legacy migration preserves unfinished seasonal stories and completed memories',()=>{
   const s=storage();const seed='test';
@@ -41,7 +41,7 @@ test('legacy migration preserves unfinished seasonal stories and completed memor
   const store=CreateNarrativeStore({storage:s});assert.equal(store.load(seed).record.seasonalIncident.milestone,1);
   assert.equal(store.commitSeasonalIncident(seed,ThanksgivingIncident(seed)).status,'incomplete seasonal incident');
   store.commitSeasonalIncident(seed,{...store.load(seed).record.seasonalIncident,milestone:3});
-  const record=ThanksgivingCheckpoint(ThanksgivingIncident(seed),112);
+  const record=ThanksgivingCheckpoint(ThanksgivingIncident(seed),THANKSGIVING_SECONDS);
   store.commitSeasonalIncident(seed,record);store.commitSeasonalIncident(seed,record);
   assert.equal(store.load(seed).record.completedStories.length,2);
   assert.equal(store.load(seed).record.completedStories.at(-1).eligibleForDream,false);
@@ -62,9 +62,22 @@ test('safe scheduling, storage failure, completion across midnight and preview r
   const state={phase:'quiet',pipTaskId:'standby',worldTimeMs:time,nextArrivalMs:time+200000,seasonal:{serviceDeck:{ready:true}}};
   h.update({...state,shipVisible:true},20,time,20,false);assert.equal(h.playback,null);
   h.update(state,13,time+13000,33,false);assert.ok(h.playback);
-  h.update(state,100,time+113000,133,false);assert.equal(h.record.milestone,3);
+  h.update(state,THANKSGIVING_SECONDS,time+(13+THANKSGIVING_SECONDS)*1000,153,false);assert.equal(h.record.milestone,3);
   const before=s.getItem(store.key),r={seasonalPreview:'natural',thanksgivingPreview:{elapsed:50,playing:true}},p=new HolidayRuntime({preview:true,seed:'x',store,runtime:r});
-  p.update(state,70,time,100,false);assert.equal(state.thanksgiving.elapsed,112);assert.equal(s.getItem(store.key),before);
+  p.update(state,THANKSGIVING_SECONDS,time,100,false);assert.equal(state.thanksgiving.elapsed,THANKSGIVING_SECONDS);assert.equal(s.getItem(store.key),before);
+});
+test('Christ candle lights on Christmas Eve and remains lit through the twelve days, across years',()=>{
+ for(let year=2026;year<=2125;year++){
+  assert.equal(HolidayCalendar(Date.UTC(year,11,23,23,59,59,999)).christCandleLit,false);
+  assert.equal(HolidayCalendar(Date.UTC(year,11,24)).christCandleLit,true);
+  assert.equal(HolidayCalendar(Date.UTC(year,11,24)).christmasHandoff,false);
+  assert.equal(HolidayCalendar(Date.UTC(year,11,25)).christCandleLit,true);
+  assert.equal(HolidayCalendar(Date.UTC(year+1,0,5,23,59,59,999)).christCandleLit,true);
+  assert.equal(HolidayCalendar(Date.UTC(year+1,0,6)).christCandleLit,false);
+  assert.equal(HolidayCalendar(Date.UTC(year+1,0,1)).transition,1);
+ }
+ assert.equal(HolidayCalendar(Date.UTC(2028,11,24,12)).adventWeek,4);
+ assert.equal(HolidayCalendar(Date.UTC(2028,11,24,12)).christCandleLit,true);
 });
 test('unfinished stories, dreams, forced events and short quiet windows exclude Thanksgiving',()=>{
  const time=Thanksgiving(2026)+DAY;

@@ -2,7 +2,7 @@
 
 Animation and narrative reviews follow the project-local [animation](docs/expectations/animation-expectations.md), [story](docs/expectations/story-expectations.md), and [dream](docs/expectations/dream-expectations.md) expectations.
 
-Thanksgiving 2026 adds **Room for One More**, a 112-second Commons Deck gathering,
+Thanksgiving 2026 adds **Room for One More**, a 120-second Commons Deck gathering,
 followed by the calculated four Sundays of Advent. See the [implementation and
 preview guide](docs/thanksgiving-advent.md) for choreography, scheduling,
 persistence compatibility, date controls, and Christmas scope.

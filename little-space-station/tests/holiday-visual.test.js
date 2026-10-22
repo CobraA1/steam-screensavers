@@ -40,13 +40,39 @@ test('rendered actor positions, joints and expressions are continuous at every b
   objects.forEach((o,i)=>o.matrixWorld.toArray().forEach((x,j)=>assert.ok(Math.abs(x-before[i][j])<1e-4,beat.id+' '+i+' '+j)));
  }
 });
-test('Advent has exactly four independent lights, Christmas handoff, and no props on a removed deck',()=>{
+test('evergreen wreath has three blue, one rose and a taller central white candle, with distinct Christmas lighting',()=>{
  const s=fixture();
+ assert.equal(s.holiday.candles.length,5);
+ assert.equal(s.holiday.candles[0].material.color.getHex(),0x305674);
+ assert.equal(s.holiday.candles[2].material.color.getHex(),0xc5788c);
+ assert.equal(s.holiday.candles[4].material.color.getHex(),0xf3ead6);
+ assert.ok(s.holiday.candles[4].position.y>s.holiday.candles[0].position.y);
  for(let week=1;week<=4;week++){
   s.holiday.update({holiday:{adventWeek:week,transition:1},seasonal:{serviceDeck:{ready:true}}});
   assert.equal(s.holiday.lamps.filter(x=>x.material.emissiveIntensity>0).length,week);
   assert.equal(s.holiday.harvest.visible,false);assert.equal(s.holiday.inspection.visible,false);
+  assert.equal(s.holiday.lamps[4].visible,false);
+  assert.equal(s.holiday.lamps[2].visible,week>=3);
  }
- s.holiday.update({holiday:{christmasHandoff:true,transition:1},seasonal:{serviceDeck:{ready:true}}});assert.equal(s.holiday.star.visible,true);
+ s.holiday.update({holiday:HolidayCalendar(Date.UTC(2026,11,25)),seasonal:{serviceDeck:{ready:true}}});
+ assert.equal(s.holiday.lamps.filter(x=>x.visible).length,5);
+ s.holiday.update({holiday:HolidayCalendar(Date.UTC(2026,11,24)),seasonal:{serviceDeck:{ready:true}}});
+ assert.equal(s.holiday.lamps.filter(x=>x.visible).length,5);
+ s.holiday.update({holiday:HolidayCalendar(Date.UTC(2026,11,23,23,59,59,999)),seasonal:{serviceDeck:{ready:true}}});
+ assert.equal(s.holiday.lamps.filter(x=>x.visible).length,4);
  s.holiday.update({holiday:{christmasHandoff:true},seasonal:{serviceDeck:{ready:false}}});assert.equal(s.holiday.root.visible,false);
+});
+test('Pip waves one hand above the visor while facing each waiting guest before it departs',()=>{
+ const s=fixture();
+ for(const [t,guest,departure] of [[97.5,'construction',99],[102.5,'inspection',104]]){
+  pose(s,t);const a=ThanksgivingActors(t);
+  const expected=Math.atan2(a[guest][0]-a.pip[0],a[guest][2]-a.pip[2]);
+  assert.ok(Math.abs(a.yaw-expected)<1e-6);
+  assert.deepEqual(a[guest],ThanksgivingActors(departure)[guest]);
+  const hand=s.robotArms[1].hand.getWorldPosition(new THREE.Vector3());
+  const head=s.robotHead.getWorldPosition(new THREE.Vector3());
+  assert.ok(hand.y>head.y+.08,'raised hand above head');
+  assert.ok(s.robotArms[0].hand.getWorldPosition(new THREE.Vector3()).y<head.y-.25,'other hand stays down');
+  assert.notDeepEqual(ThanksgivingActors(departure+.2)[guest],a[guest]);
+ }
 });
