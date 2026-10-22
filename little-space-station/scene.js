@@ -638,17 +638,27 @@ export class LittleSpaceStationScene {
 
     this.shipCargo = new THREE.Group();
     this.ship.add(this.shipCargo);
+    this.shipCargoBays = [];
     // A permanent pallet rack stays on the freighter after the visible crates
     // are unloaded. It is structure, not a substitute cargo silhouette.
     for (const side of [-1, 1]) {
-      const rack = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.68, 0.2), this.materials.dark);
+      const rack = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 0.2), this.materials.dark);
       rack.position.set(-0.05, 0.03, side * 0.39);
       this.shipCargo.add(rack);
-      for (const y of [-0.33, 0.39]) {
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.055, 0.28), this.materials.orange);
-        rail.position.set(-0.05, y, side * 0.52);
-        this.shipCargo.add(rail);
+      const bay = { side, panels: [] };
+      for (const edge of [-1, 1]) {
+        const pivot = new THREE.Group();
+        pivot.position.set(-0.05, 0.03 + edge * 0.26, side * 0.52);
+        this.shipCargo.add(pivot);
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.055, 0.23), this.materials.orange);
+        rail.position.z = side * 0.115;
+        pivot.add(rail);
+        const hinge = MakeBarrel(0.035, 1.24, this.materials.metal, 8);
+        hinge.position.copy(pivot.position);
+        this.shipCargo.add(hinge);
+        bay.panels.push({ pivot, edge, rail });
       }
+      this.shipCargoBays.push(bay);
     }
 
     this.shipCourier = new THREE.Group();
