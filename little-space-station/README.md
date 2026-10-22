@@ -2,6 +2,11 @@
 
 Animation and narrative reviews follow the project-local [animation](docs/expectations/animation-expectations.md), [story](docs/expectations/story-expectations.md), and [dream](docs/expectations/dream-expectations.md) expectations.
 
+Thanksgiving 2026 adds **Room for One More**, a 112-second Commons Deck gathering,
+followed by the calculated four Sundays of Advent. See the [implementation and
+preview guide](docs/thanksgiving-advent.md) for choreography, scheduling,
+persistence compatibility, date controls, and Christmas scope.
+
 The Phantom Visitor uses `phantom-choreography.js` for continuous cover/drone paths and shared target orientation. Pip reaches the cloth with the existing two-joint arm rig; both live and miniature covers have connected, downward-flared skirts. The 68-second live story now finishes its exit after committing the final payoff. Its dream retains the original memory identity/year/outcome, brings miniature Pip into contact with the cover, fades the departing drone independently, and preserves the empty-cover joke. Preview it under **Story · Phantom Visitor** (beat/point or **Force / play**) and **Pip recharge & memory → Show Phantom dream** (whole-dream scrubber).
 
 A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a small retro-futuristic station above a procedural planet. Production launches contain no controls or input listeners.
@@ -68,7 +73,7 @@ Pip is a compact articulated robot with a teal body, cream head, luminous visor,
 
 Courier visits use a small teal dispatch canister with dark end caps and an amber marking. It starts inside a hull-mounted bay whose door slides sideways on guides. Pip retrieves it with the camera-facing hand, carries it along the station's exposed side, places it in the receiver, verifies delivery, and returns. Both hands and payload use one deterministic transfer path; insertion keeps the payload at full size until the receiver conceals it. The courier has a restrained teal hull, swept fins, small nacelles, and a dark cockpit.
 
-The freighter carries visible rectangular crates on matching permanent side racks from arrival onward. The same crates are unloaded one at a time; the empty racks stay attached during departure. Seasonal deliveries populate the racks with their actual manifest before arrival, and Pip approaches each slot individually, including the far side. Both courier and freight deliveries are performed from in front of the station hatch. The hatch jambs and separate light housing extend into the curved hull so they read as mounted equipment.
+The freighter carries visible rectangular crates on matching, single-height side racks from arrival onward. The same crates are unloaded one at a time. After Pip carries the last package away from a side, its upper and lower supports slowly fold inward on visible hinges; both bays remain folded during departure. A bay stays open while any of its packages remain. Seasonal deliveries populate the racks with their actual manifest before arrival, and Pip approaches each slot individually, including the far side. Both courier and freight deliveries are performed from in front of the station hatch. The hatch jambs and separate light housing extend into the curved hull so they read as mounted equipment.
 
 Visitor craft carry four axial RCS ports at both the fore and aft ends. Arrival uses the main engine while the craft crosses into view, then hands final braking and alignment to the forward RCS bank. Departure continues to back out on RCS, rotate clear, and engage the main engine only after the turn.
 

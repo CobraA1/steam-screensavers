@@ -38,6 +38,18 @@ function Box(group, size, position, material) {
   return mesh;
 }
 
+// Shared by assembly riggers and the returning Thanksgiving guest.
+export function BuildConstructionDrone(m, trim, darkTeal, workLight) {
+  const drone = new THREE.Group();
+  Box(drone, [0.32, 0.22, 0.28], [0, 0, 0], trim);
+  Box(drone, [0.18, 0.08, 0.3], [0, 0.13, 0], workLight);
+  for (const x of [-0.23, 0.23]) {
+    Box(drone, [0.09, 0.12, 0.39], [x, -0.02, 0], darkTeal);
+    Box(drone, [0.04, 0.045, 0.12], [x, -0.02, 0.22], m.window);
+  }
+  return drone;
+}
+
 // Clipped corners echo the station's faceted barrels. Extruded shapes keep the
 // silhouette simple without a CSG dependency or a dense bevel modifier.
 function ChamferedPrism(width, height, depth, corner) {
@@ -233,14 +245,8 @@ export class SeasonalServiceDeckVisual {
     this.workLight = new THREE.MeshStandardMaterial({ color: 0xffc267,
       emissive: 0xff981f, emissiveIntensity: 1, roughness: 0.4 });
     for (const z of [-0.8, 2.9]) {
-      const drone = new THREE.Group();
+      const drone = BuildConstructionDrone(m, trim, darkTeal, this.workLight);
       drone.position.set(-5.1, 0.65, z);
-      Box(drone, [0.32, 0.22, 0.28], [0, 0, 0], trim);
-      Box(drone, [0.18, 0.08, 0.3], [0, 0.13, 0], this.workLight);
-      for (const x of [-0.23, 0.23]) {
-        Box(drone, [0.09, 0.12, 0.39], [x, -0.02, 0], darkTeal);
-        Box(drone, [0.04, 0.045, 0.12], [x, -0.02, 0.22], m.window);
-      }
       // A small tool and work light are visible only during fastening shifts.
       const tool = Box(drone, [0.052, 0.22, 0.052], [0, -0.19, 0.15], m.metal);
       const toolTip = new THREE.Mesh(new THREE.SphereGeometry(0.075, 6, 4), this.workLight);

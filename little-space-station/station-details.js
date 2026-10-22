@@ -1,5 +1,5 @@
 import * as THREE from "./vendor/three.module.js";
-import { TransferPosition, CargoRackPosition } from './cargo-choreography.js';
+import { TransferPosition, CargoRackPosition, CargoBayFold } from './cargo-choreography.js';
 
 function Clamp01(value) { return Math.max(0, Math.min(1, Number(value) || 0)); }
 function Smooth(value) { const t = Clamp01(value); return t * t * (3 - 2 * t); }
@@ -173,6 +173,10 @@ export function UpdateStationDetails(scene, state) {
   const incoming = state.shipVisible && ['courier', 'freighter'].includes(state.visitorType) && ['approach', 'dock'].includes(state.phase);
   const cargoState = incoming ? 'ship' : state.cargoState || 'none';
   const stage = state.pipTaskStage, p = Clamp01(state.pipTaskProgress);
+  for (const bay of scene.shipCargoBays || []) {
+    const fold = CargoBayFold(state, bay.side);
+    for (const panel of bay.panels) panel.pivot.rotation.x = bay.side * panel.edge * Math.PI * 0.5 * fold;
+  }
   const manifest = state.cargoManifest || [null];
   const count = dispatch ? 0 : Math.min(4, incoming ? state.cargoPackageCount || 1 : state.cargoPackageCount || (cargoState === 'none' ? 0 : 1));
   const current = Math.min(count, state.cargoPackageIndex || 0);

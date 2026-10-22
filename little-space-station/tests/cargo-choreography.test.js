@@ -7,7 +7,7 @@ import { BuildStationDetails, UpdateStationDetails } from '../station-details.js
 import { UpdatePip } from '../pip-animation.js';
 import { ApplyPipPreviewOverride } from '../pip-behavior.js';
 import { SmoothStep } from '../simulation-world.js';
-import { CargoRackPosition, CargoHandContact } from '../cargo-choreography.js';
+import { CargoRackPosition, CargoHandContact, CargoBayFold } from '../cargo-choreography.js';
 
 export function Fixture() {
   const s = Object.create(LittleSpaceStationScene.prototype);
@@ -22,6 +22,39 @@ export function Fixture() {
   s.shipApproach = new THREE.Vector3(20, 3, 4);
   return s;
 }
+
+test('cargo bays wait for their final package and close continuously on either side', () => {
+  for (const count of [2,3,4]) for(const side of [-1,1]) {
+    const last = [...Array(count).keys()].filter(i => (i%2 ? -1 : 1)===side).at(-1);
+    const state={phase:'service',cargoPackageCount:count,cargoPackageIndex:last,pipTaskStage:'deliver-cargo',pipTaskProgress:0};
+    assert.equal(CargoBayFold(state,side),0);
+    assert.equal(CargoBayFold({...state,pipTaskProgress:.5},side),.5);
+    assert.equal(CargoBayFold({...state,pipTaskProgress:1},side),1);
+    if(last>=2) assert.equal(CargoBayFold({...state,cargoPackageIndex:last-2,pipTaskProgress:1},side),0);
+    assert.equal(CargoBayFold({...state,pipTaskStage:'retrieve-cargo',pipTaskProgress:1},side),0);
+    assert.equal(CargoBayFold({...state,phase:'departure'},side),1);
+  }
+});
+
+test('shorter bays clear the largest crate and hinges reconstruct after reverse seeks', () => {
+  const s=Fixture();
+  const state={phase:'service',visitorType:'freighter',shipVisible:true,cargoPackageCount:2,cargoPackageIndex:0,pipTaskStage:'deliver-cargo',pipTaskProgress:1,cargoState:'carried',pipTaskId:'cargo-transfer'};
+  s.UpdateShip(state); UpdatePip(s,state); UpdateStationDetails(s,state);
+  s.station.updateMatrixWorld(true);
+  for(const bay of s.shipCargoBays) {
+    const [bottom,top]=bay.panels;
+    assert.ok(top.pivot.position.y-bottom.pivot.position.y-.055 > .4*1.06);
+    if(bay.side>0) {
+      assert.equal(top.pivot.rotation.x,Math.PI/2);
+      assert.equal(bottom.pivot.rotation.x,-Math.PI/2);
+      // Folded rails remain outside the backplate's outer face.
+      assert.ok(new THREE.Box3().setFromObject(top.rail).min.z > s.ship.position.z+.49);
+    } else assert.equal(Math.abs(top.pivot.rotation.x),0);
+  }
+  UpdateStationDetails(s,{...state,phase:'departure'});
+  UpdateStationDetails(s,{...state,phase:'dock'});
+  for(const bay of s.shipCargoBays) for(const panel of bay.panels) assert.equal(Math.abs(panel.pivot.rotation.x),0);
+});
 
 test('dock and service meet in the same complete Pip pose', () => {
   for (const task of ['cargo-transfer', 'dispatch-exchange']) {

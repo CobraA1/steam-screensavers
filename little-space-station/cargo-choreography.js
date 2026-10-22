@@ -1,6 +1,21 @@
 import * as THREE from './vendor/three.module.js';
 
 const smooth = value => { const t = THREE.MathUtils.clamp(value, 0, 1); return t * t * (3 - 2 * t); };
+// Each side closes only after its final package has cleared the rack. Derive
+// the hinge pose from the visit state so reverse seeks reopen it correctly.
+export function CargoBayFold(state, side) {
+  if (state.phase === 'departure' || state.phase === 'afterglow') return 1;
+  const count = Math.max(1, state.cargoPackageCount || 1);
+  const parity = side > 0 ? 0 : 1;
+  const last = count - 1 - ((count - 1 - parity + 2) % 2);
+  if (last < 0) return 1;
+  if (state.phase === 'approach' || state.phase === 'dock') return 0;
+  const current = state.cargoPackageIndex || 0;
+  if (current < last) return 0;
+  if (current > last) return 1;
+  if (state.pipTaskStage === 'deliver-cargo') return smooth(((state.pipTaskProgress || 0) - 0.15) / 0.7);
+  return ['stow-cargo', 'package-confirm', 'verify', 'react-success', 'return'].includes(state.pipTaskStage) ? 1 : 0;
+}
 export function CargoHandContact(scene, dispatch, side, target) {
   if (dispatch) target.x -= side * 0.09;
   else {

@@ -12,6 +12,12 @@ Before changing the corresponding systems, read the applicable expectations:
 
 These supplement the original story briefs. Changes spanning live stories and their dream adaptations must be checked in both presentations.
 
+The [Thanksgiving and Advent implementation guide](little-space-station/docs/thanksgiving-advent.md)
+documents the reusable UTC holiday rules, 2026-only gathering, shared drone
+builders, checkpoint expiry, and preview controls. Preserve the distinction
+between calendar scenery and a genuinely completed story; Thanksgiving has no
+dream adaptation. Do not overwrite unfinished older seasonal incidents.
+
 ## Required structure
 
 - Put each screensaver in its own folder with `index.html` as the entry point.
