@@ -51,11 +51,11 @@ const POSES = Object.freeze({
   "inspect-antenna": Pose({ headYaw: 0.14, headPitch: -0.48, headRoll: 0.1, bodyPitch: -0.05, leftShoulderZ: -0.42, rightShoulderZ: 0.82, rightShoulderX: -0.22, rightElbowZ: 0.34 }),
   "inspect-stubborn-antenna": Pose({ headYaw: 0.18, headPitch: -0.52, headRoll: 0.15, bodyPitch: -0.09, leftShoulderZ: -0.55, rightShoulderZ: 0.95, rightShoulderX: -0.3, rightElbowZ: 0.4, eyeWidth: 1.14 }),
   "prepare-antenna-tool": Pose({ headPitch: -0.34, leftShoulderZ: -0.96, leftShoulderX: -0.5, leftElbowZ: -0.3, rightShoulderZ: 0.7, rightShoulderX: -0.3, tool: 1 }),
-  "adjust-antenna": Pose({ headPitch: -0.42, bodyPitch: -0.04, leftShoulderZ: -1.24, leftShoulderX: -0.48, leftElbowZ: -0.38, rightShoulderZ: 1.12, rightShoulderX: -0.42, rightElbowZ: 0.42, tool: 1 }),
-  "first-antenna-repair": Pose({ headPitch: -0.44, bodyPitch: -0.08, leftShoulderZ: -1.16, leftShoulderX: -0.52, leftElbowZ: -0.44, rightShoulderZ: 1.02, rightShoulderX: -0.36, rightElbowZ: 0.34, tool: 1 }),
+  "adjust-antenna": Pose({ headPitch: 0.25, bodyPitch: 0.02, leftShoulderZ: -1.24, leftShoulderX: -0.48, leftElbowZ: -0.38, rightShoulderZ: 0.24, rightShoulderX: -0.16, rightElbowZ: 0.1, tool: 1 }),
+  "first-antenna-repair": Pose({ headPitch: 0.25, bodyPitch: 0.02, leftShoulderZ: -1.16, leftShoulderX: -0.52, leftElbowZ: -0.44, rightShoulderZ: 0.24, rightShoulderX: -0.16, rightElbowZ: 0.1, tool: 1 }),
   "false-relief": Pose({ headYaw: -0.14, headPitch: 0.03, bodyPitch: -0.04, lift: 0.035, leftShoulderZ: -0.32, rightShoulderZ: 0.32, eyeWidth: 1.2 }),
   "startled-antenna": Pose({ headYaw: 0.2, headPitch: 0.32, bodyPitch: 0.28, bodyLean: -0.12, lift: -0.09, leftShoulderZ: -0.95, leftShoulderX: -0.38, rightShoulderZ: 0.95, rightShoulderX: -0.38, eyeWidth: 1.36, eyeHeight: 0.76 }),
-  "install-repair-plate": Pose({ headPitch: -0.5, bodyPitch: -0.09, leftShoulderZ: -1.28, leftShoulderX: -0.58, leftElbowZ: -0.48, rightShoulderZ: 1.2, rightShoulderX: -0.45, rightElbowZ: 0.46, tool: 1 }),
+  "install-repair-plate": Pose({ headPitch: 0.28, bodyPitch: 0.03, leftShoulderZ: -1.28, leftShoulderX: -0.58, leftElbowZ: -0.48, rightShoulderZ: 0.24, rightShoulderX: -0.16, rightElbowZ: 0.1, tool: 1 }),
   "verify-stubborn-antenna": Pose({ headYaw: -0.22, headPitch: -0.4, headRoll: -0.1, leftShoulderZ: -0.3, rightShoulderZ: 0.48, eyeWidth: 1.18 }),
   "story-satisfied": Pose({ headPitch: 0.06, bodyPitch: -0.04, lift: 0.045, leftShoulderZ: -0.42, rightShoulderZ: 0.42, eyeWidth: 1.2, eyeHeight: 1.12 }),
   "phantom-glimpse": Pose({ headYaw: 0.62, headPitch: -0.2, headRoll: 0.08, bodyLean: -0.05, leftShoulderZ: -0.42, rightShoulderZ: 0.42, eyeWidth: 1.24, eyeHeight: 1.2 }),
@@ -71,7 +71,7 @@ const POSES = Object.freeze({
   "remembrance-activate": Pose({ headPitch: -0.24, bodyPitch: 0.04, leftShoulderZ: -0.34, rightShoulderZ: 1.02, rightShoulderX: -0.48, rightElbowZ: 0.32, eyeWidth: 1.02, eyeHeight: 0.9 }),
   "remembrance-stillness": Pose({ headPitch: 0.18, bodyPitch: 0.05, lift: -0.018, leftShoulderZ: -0.16, leftShoulderX: -0.18, rightShoulderZ: 0.16, rightShoulderX: -0.18, eyeWidth: 0.86, eyeHeight: 0.54 }),
   "remembrance-return": Pose({ headPitch: 0.05, leftShoulderZ: -0.18, rightShoulderZ: 0.18, eyeWidth: 0.94, eyeHeight: 0.82 }),
-  "synchronize-array": Pose({ headYaw: 0.12, headPitch: -0.38, leftShoulderZ: -1.06, leftShoulderX: -0.42, leftElbowZ: -0.3, rightShoulderZ: 0.92, rightShoulderX: -0.3, rightElbowZ: 0.28, eyeWidth: 1.15, tool: 1 }),
+  "synchronize-array": Pose({ headYaw: 0.12, headPitch: 0.25, leftShoulderZ: -1.06, leftShoulderX: -0.42, leftElbowZ: -0.3, rightShoulderZ: 0.24, rightShoulderX: -0.16, rightElbowZ: 0.1, eyeWidth: 1.15, tool: 1 }),
   "inspect-cargo": Pose({ headPitch: 0.34, headRoll: -0.12, bodyPitch: 0.16, leftShoulderZ: -0.45, leftShoulderX: -0.42, rightShoulderZ: 0.45, rightShoulderX: -0.42, eyeWidth: 1.12 }),
   "grasp-cargo": Pose({ headPitch: 0.2, bodyPitch: 0.14, leftShoulderZ: -0.68, leftShoulderX: -0.86, leftElbowZ: 0.28, rightShoulderZ: 0.68, rightShoulderX: -0.86, rightElbowZ: -0.28 }),
   "carry-cargo": Pose({ headPitch: 0.1, bodyPitch: 0.05, leftShoulderZ: -0.5, leftShoulderX: -1.02, leftElbowZ: 0.38, rightShoulderZ: 0.5, rightShoulderX: -1.02, rightElbowZ: -0.38 }),
@@ -126,7 +126,7 @@ function SetRobotPosition(scene, taskId, stage, progress, state) {
       scene.robot.rotation.y = Mix(-0.16, 2.8, Smooth(progress));
     } else if (stage === "investigate-stubborn-antenna") {
       scene.robot.position.lerpVectors(scene.robotHome, worksite, Smooth(progress));
-      scene.robot.rotation.y = Mix(-0.16, 2.8, Smooth(progress));
+      scene.robot.rotation.y = 2.8;
       motion = true;
     } else if (stage === "runaway-spin") {
       const recoil = Smooth(Math.min(1, progress * 2.6));
@@ -419,26 +419,32 @@ function ReachPhantomCover(scene, stage, progress) {
 // This is a pose constraint, not another simulation; every seek starts fresh.
 function ReachServiceContact(scene, state) {
   const lamp = state.pipTaskId === 'repair-light';
-  if (!(lamp ? ['prepare-tool', 'repair', 'verify'] : ['retrieve-cargo', 'deliver-cargo', 'stow-cargo']).includes(state.pipTaskStage)) return;
+  const antenna = ['adjust-antenna', 'survey-sync', 'stubborn-antenna'].includes(state.pipTaskId);
+  if (!(antenna ? ['prepare-tool', 'adjust', 'synchronize', 'verify', 'first-antenna-repair', 'false-relief', 'install-repair-plate', 'verify-stubborn-antenna']
+    : lamp ? ['prepare-tool', 'repair', 'verify'] : ['retrieve-cargo', 'deliver-cargo', 'stow-cargo']).includes(state.pipTaskStage)) return;
   const p = Clamp01(state.pipTaskProgress);
-  const weight = lamp ? state.pipTaskStage === 'prepare-tool' ? Smooth(p) : state.pipTaskStage === 'verify' ? 1 - Smooth(p) : 1
+  const weight = antenna ? ['prepare-tool', 'first-antenna-repair'].includes(state.pipTaskStage) ? Smooth(p / 0.4)
+    : state.pipTaskStage === 'install-repair-plate' ? Smooth((p - 0.42) / 0.28)
+    : ['verify', 'false-relief', 'verify-stubborn-antenna'].includes(state.pipTaskStage) ? 1 - Smooth(p / 0.4) : 1
+    : lamp ? state.pipTaskStage === 'prepare-tool' ? Smooth(p) : state.pipTaskStage === 'verify' ? 1 - Smooth(p) : 1
     : state.pipTaskStage === 'retrieve-cargo' ? Smooth(p / 0.4)
       : state.pipTaskStage === 'stow-cargo' ? 1 - Smooth((p - 0.6) / 0.4) : 1;
   const s = scene.cargoReachScratch ||= { tip: new THREE.Vector3(), payload: new THREE.Vector3(), target: new THREE.Vector3(), direction: new THREE.Vector3(),
     bend: new THREE.Vector3(), upper: new THREE.Vector3(), lower: new THREE.Vector3(), base: new THREE.Vector3(),
     shoulder: new THREE.Quaternion(), elbow: new THREE.Quaternion(), inverse: new THREE.Quaternion() };
-  if (lamp) { scene.equipmentLight.getWorldPosition(s.payload); scene.station.worldToLocal(s.payload); }
+  if (antenna) s.payload.copy(scene.antennaServicePoint);
+  else if (lamp) { scene.equipmentLight.getWorldPosition(s.payload); scene.station.worldToLocal(s.payload); }
   else TransferPosition(scene, state, s.payload);
   const dispatch = state.pipTaskId === 'dispatch-exchange';
   for (const arm of scene.robotArms) {
-    if ((dispatch || lamp) && arm.side > 0) continue;
+    if ((dispatch || lamp || antenna) && arm.side > 0) continue;
     s.target.copy(s.payload);
-    if (!lamp) CargoHandContact(scene, dispatch, arm.side, s.target);
+    if (!lamp && !antenna) CargoHandContact(scene, dispatch, arm.side, s.target);
     scene.station.localToWorld(s.target);
     scene.robot.worldToLocal(s.target);
     s.target.sub(arm.shoulder.position);
     s.tip.copy(arm.hand.position);
-    if (lamp) s.tip.add(scene.robotToolGlow.position);
+    if (lamp || antenna) s.tip.add(scene.robotToolGlow.position);
     const a = arm.elbow.position.length(), b = s.tip.length();
     const distance = Math.min(a + b - 0.001, Math.max(0.01, s.target.length()));
     s.direction.copy(s.target).normalize();
@@ -537,7 +543,7 @@ export function UpdatePip(scene, state) {
     if (variant === 1) { bodyLean -= recoil * 0.1; lift += recoil * 0.04; }
     if (variant === 2) { bodyPitch += recoil * 0.13; headRoll += recoil * 0.12; }
   }
-  if (motion) bodyPitch += 0.035 * (['cargo-transfer', 'seasonal-cargo', 'dispatch-exchange'].includes(taskId) ? stageEnvelope : 1);
+  if (motion) bodyPitch += 0.035 * (['cargo-transfer', 'seasonal-cargo', 'dispatch-exchange', 'adjust-antenna', 'survey-sync', 'stubborn-antenna'].includes(taskId) ? stageEnvelope : 1);
 
   scene.robot.position.y += lift;
   scene.robot.rotation.x = bodyPitch;
@@ -564,7 +570,7 @@ export function UpdatePip(scene, state) {
   }
   ApplyArmPose(scene.robotArms[0], "left", from, to, blend, workingMotion);
   ApplyArmPose(scene.robotArms[1], "right", from, to, blend, -workingMotion);
-  if (['cargo-transfer', 'seasonal-cargo', 'dispatch-exchange', 'repair-light'].includes(taskId)) ReachServiceContact(scene, state);
+  if (['cargo-transfer', 'seasonal-cargo', 'dispatch-exchange', 'repair-light', 'adjust-antenna', 'survey-sync', 'stubborn-antenna'].includes(taskId)) ReachServiceContact(scene, state);
   if (taskId === "phantom-visitor" && ["phantom-reveal", "phantom-untangle", "phantom-wave"].includes(stage)) {
     ReachPhantomCover(scene, stage, progress);
   }

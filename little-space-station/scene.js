@@ -424,17 +424,7 @@ export class LittleSpaceStationScene {
     dockGuide.position.x = 2.305;
     this.station.add(dockGuide);
 
-    const observation = new THREE.Mesh(
-      new THREE.SphereGeometry(0.62, segments, 8, 0, Math.PI * 2, 0, Math.PI * 0.72),
-      m.warmWindow,
-    );
-    observation.position.set(-0.35, 0.95, 0);
-    observation.scale.set(1.25, 0.72, 0.9);
-    this.station.add(observation);
-    const observationBase = MakeBarrel(0.66, 0.35, m.orange, segments);
-    observationBase.rotation.set(0, 0, 0);
-    observationBase.position.set(-0.35, 0.7, 0);
-    this.station.add(observationBase);
+    this.BuildObservationDome();
 
     this.BuildWindows();
     this.BuildSolarPanels();
@@ -442,6 +432,41 @@ export class LittleSpaceStationScene {
     this.BuildTanks();
     this.BuildPipes();
     this.BuildBeacons();
+  }
+
+  BuildObservationDome() {
+    const m = this.materials;
+    const root = this.observationDome = new THREE.Group();
+    root.name = 'observation-dome';
+    root.position.set(-0.92, 0.93, -0.34);
+    this.station.add(root);
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.57, 0.61, 0.24, 16), m.ivory);
+    collar.position.y = -0.09;
+    root.add(collar);
+    const glass = new THREE.MeshStandardMaterial({ color: 0x326b76, emissive: 0x244b42,
+      emissiveIntensity: 0.35, roughness: 0.22, metalness: 0.35, flatShading: true });
+    // Opaque tinted panes keep the dome readable without transparency sorting.
+    const panes = new THREE.Mesh(new THREE.SphereGeometry(0.54, 16, 6, 0, Math.PI * 2, 0, Math.PI / 2), glass);
+    panes.scale.y = 0.72;
+    panes.position.y = 0.035;
+    root.add(panes);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.035, 6, 16), m.orange);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.y = 0.035;
+    root.add(rim);
+    for (let rib = 0; rib < 8; rib++) {
+      const angle = rib * Math.PI / 4;
+      const points = [];
+      for (let step = 0; step <= 6; step++) {
+        const t = step * Math.PI / 12;
+        points.push(new THREE.Vector3(Math.cos(angle) * Math.sin(t) * 0.55,
+          0.035 + Math.cos(t) * 0.4, Math.sin(angle) * Math.sin(t) * 0.55));
+      }
+      root.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 6, 0.018, 4, false), m.ivory));
+    }
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.035, 8), m.orange);
+    cap.position.y = 0.44;
+    root.add(cap);
   }
 
   BuildWindows() {
@@ -489,25 +514,39 @@ export class LittleSpaceStationScene {
 
   BuildDish() {
     const m = this.materials;
-    const mast = MakeRod(new THREE.Vector3(0.25, 1, 0), new THREE.Vector3(0.25, 1.72, 0), 0.07, m.metal);
+    // Keep the dish's entire tilted sweep above Pip, and the service face on +Z.
+    const mast = this.antennaMast = MakeRod(new THREE.Vector3(0.65, 0.93, -0.18), new THREE.Vector3(0.65, 2.47, -0.18), 0.065, m.metal);
     this.station.add(mast);
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.23, 0.18, 10), m.orange);
+    foot.position.set(0.65, 1, -0.18);
+    this.station.add(foot);
+    for (const side of [-1, 1]) {
+      this.station.add(MakeRod(new THREE.Vector3(0.65 + side * 0.28, 0.94, -0.18),
+        new THREE.Vector3(0.65, 1.42, -0.18), 0.028, m.dark, 6));
+    }
     this.dishPivot = new THREE.Group();
-    this.dishPivot.position.set(0.25, 1.75, 0);
+    this.dishPivot.position.set(0.65, 2.5, -0.18);
     this.station.add(this.dishPivot);
+    const bearing = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 6), m.orange);
+    this.dishPivot.add(bearing);
 
     // These parts sit on the fixed mast base, not the moving dish pivot. The
     // temporary preview story can therefore make the fault and its repair legible.
     this.antennaDriveIndicatorMaterial = new THREE.MeshStandardMaterial({
       color: 0x6ce5d5, emissive: 0x2dcab7, emissiveIntensity: 1.2, roughness: 0.24,
     });
-    const driveHousing = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.24), m.dark);
-    driveHousing.position.set(0.25, 1.48, 0.03);
+    const driveHousing = this.antennaDriveHousing = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.28, 0.48), m.dark);
+    driveHousing.position.set(0.65, 1.63, 0.04);
     this.station.add(driveHousing);
+    const serviceFace = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.21, 0.035), m.ivory);
+    serviceFace.position.set(0.65, 1.63, 0.295);
+    this.station.add(serviceFace);
+    this.antennaServicePoint = new THREE.Vector3(0.65, 1.63, 0.34);
     this.antennaDriveIndicator = new THREE.Mesh(new THREE.SphereGeometry(0.052, 8, 6), this.antennaDriveIndicatorMaterial);
-    this.antennaDriveIndicator.position.set(0.25, 1.5, 0.162);
+    this.antennaDriveIndicator.position.set(0.76, 1.7, 0.32);
     this.station.add(this.antennaDriveIndicator);
     this.antennaRepairPlate = new THREE.Group();
-    this.antennaRepairPlate.position.set(0.25, 1.46, 0.17);
+    this.antennaRepairPlate.position.set(0.65, 1.61, 0.33);
     const plateMaterial = new THREE.MeshStandardMaterial({ color: 0xe47d32, roughness: 0.46, metalness: 0.36, flatShading: true });
     const plate = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.27, 0.045), plateMaterial);
     this.antennaRepairPlate.add(plate);
@@ -523,7 +562,7 @@ export class LittleSpaceStationScene {
     this.station.add(this.antennaRepairPlate);
 
     const bowl = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.09, 0.58, 0.25, this.quality.radialSegments, 1, true),
+      new THREE.CylinderGeometry(0.09, 0.47, 0.21, this.quality.radialSegments, 1, true),
       new THREE.MeshStandardMaterial({
         color: IVORY,
         roughness: 0.58,
@@ -536,6 +575,15 @@ export class LittleSpaceStationScene {
     bowl.rotation.x = Math.PI;
     bowl.position.y = 0.12;
     this.dishPivot.add(bowl);
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(0.47, 0.025, 6, this.quality.radialSegments), m.orange);
+    lip.rotation.x = Math.PI / 2;
+    lip.position.y = 0.225;
+    this.dishPivot.add(lip);
+    for (let i = 0; i < 3; i++) {
+      const angle = i * Math.PI * 2 / 3;
+      this.dishPivot.add(MakeRod(new THREE.Vector3(Math.cos(angle) * 0.43, 0.22, Math.sin(angle) * 0.43),
+        new THREE.Vector3(0, 0.52, 0), 0.012, m.dark, 5));
+    }
     const receiver = MakeRod(new THREE.Vector3(0, 0.13, 0), new THREE.Vector3(0, 0.55, 0), 0.025, m.orange, 6);
     this.dishPivot.add(receiver);
     const tip = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 6), m.warmWindow);
@@ -799,7 +847,7 @@ export class LittleSpaceStationScene {
     this.robotCargoDrop = new THREE.Vector3(1.2, 0.15, 1.65);
     this.robotDispatchPickup = new THREE.Vector3(3.23, -0.27, 0.95);
     this.robotDispatchDrop = new THREE.Vector3(0.98, 0.15, 1.65);
-    this.robotAntennaSafe = new THREE.Vector3(-0.72, 1.18, 0.76);
+    this.robotAntennaSafe = new THREE.Vector3(-0.72, 1.18, 1.06);
     this.robotSeasonalInstall = new THREE.Vector3(...SERVICE_DECK_ANCHORS.pipSeasonalWork);
     this.robotPhantomWork = new THREE.Vector3(-2.22, 1.58, 1.48);
     this.robotPhantomSearch = new THREE.Vector3(-1.0, 1.72, 1.38);
@@ -807,15 +855,15 @@ export class LittleSpaceStationScene {
     this.robotTaskTargets = Object.freeze({
       // The light's service face points toward +Z; Pip works from that side.
       "repair-light": new THREE.Vector3(0.05, 0.3, 1.38),
-      "adjust-antenna": new THREE.Vector3(0.08, 1.38, 0.48),
+      "adjust-antenna": new THREE.Vector3(0.51, 1.16, 0.73),
       "cargo-transfer": this.robotWork,
       "seasonal-cargo": this.robotWork,
       "seasonal-install": this.robotSeasonalInstall,
       "phantom-visitor": this.robotPhantomWork,
       "lights-of-remembrance": this.robotRemembranceWork,
       "dispatch-exchange": this.robotDispatchPickup,
-      "survey-sync": new THREE.Vector3(0.08, 1.38, 0.48),
-      "stubborn-antenna": new THREE.Vector3(0.08, 1.38, 0.48),
+      "survey-sync": new THREE.Vector3(0.51, 1.16, 0.73),
+      "stubborn-antenna": new THREE.Vector3(0.51, 1.16, 0.73),
     });
 
     const chargingPad = new THREE.Mesh(
@@ -824,6 +872,22 @@ export class LittleSpaceStationScene {
     );
     chargingPad.position.set(this.robotHome.x, 0.86, this.robotHome.z);
     this.station.add(chargingPad);
+    this.chargingPad = chargingPad;
+    // A hull-mounted plinth and short struts make the pad feel supported.
+    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.29, 0.2, 12), m.ivory);
+    plinth.position.y = -0.12;
+    chargingPad.add(plinth);
+    for (const side of [-1, 1]) {
+      chargingPad.add(MakeRod(new THREE.Vector3(side * 0.25, -0.02, 0),
+        new THREE.Vector3(side * 0.25, -0.29, -0.2), 0.04, m.metal, 6));
+      const contact = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.018, 0.23), m.orange);
+      contact.position.set(side * 0.15, 0.043, 0.065);
+      contact.rotation.y = -0.16;
+      chargingPad.add(contact);
+    }
+    const socket = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.09, 0.08), m.teal);
+    socket.position.set(0, -0.035, 0.39);
+    chargingPad.add(socket);
     const chargingRing = new THREE.Mesh(
       new THREE.TorusGeometry(0.27, 0.025, 6, 14),
       m.warmWindow.clone(),

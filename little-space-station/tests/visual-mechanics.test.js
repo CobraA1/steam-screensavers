@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const sceneSource = readFileSync(new URL("../scene.js", import.meta.url), "utf8");
-const pipSource = readFileSync(new URL("../pip-animation.js", import.meta.url), "utf8");
 const detailsSource = readFileSync(new URL("../station-details.js", import.meta.url), "utf8");
 const serviceDeckSource = readFileSync(new URL("../seasonal-service-deck.js", import.meta.url), "utf8");
 
@@ -30,12 +29,6 @@ test("Pip services the light from its front and the cargo door has an edge pivot
 test("courier fittings and dispatch payload remain separate from heavy cargo", () => {
   assert.match(sceneSource, /this\.courierDispatchBay = new THREE\.Group\(\)/);
   assert.match(detailsSource, /function BuildDispatchCanister\(materials\)/);
-});
-
-test("Pip turns toward the antenna while adjusting or synchronizing", () => {
-  assert.match(sceneSource, /"adjust-antenna": new THREE\.Vector3\(0\.08, 1\.38, 0\.48\)/);
-  assert.match(sceneSource, /"survey-sync": new THREE\.Vector3\(0\.08, 1\.38, 0\.48\)/);
-  assert.match(pipSource, /taskId === "adjust-antenna" \|\| taskId === "survey-sync"\) return 2\.8/);
 });
 
 test("the seasonal service deck attaches aft and remains separate from the visitor corridor", () => {

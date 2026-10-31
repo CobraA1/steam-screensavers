@@ -74,6 +74,21 @@ Pip also follows a separate seeded recharge rhythm. It is deliberately independe
 
 Pip approaches the equipment light from its exposed face and turns toward it before beginning repairs. It likewise turns back toward the mast and dish during antenna adjustment and synchronization. The raised cargo hatch has a dark recessed opening and an edge-mounted hinge, so its door is readable and swings outward instead of rotating through its center. Its task light sits above and to one side, identifying the work area without blocking Pip or the docking corridor.
 
+The roof observation dome uses dark teal panes, cream framing, and a copper rim
+on a hull-mounted collar. It sits aft of the antenna and behind the charging
+stand, rather than sharing the mast's footprint. The antenna has a braced mast,
+raised dish, rim and feed supports, with a fixed service panel facing Pip's
+approach. Routine adjustments, survey synchronization, and the Stubborn Antenna
+story use the same reachable panel; Pip's tool eases into contact while the dish
+sweeps above and behind the work position. The recoil route stays clear of the
+dome. The charging stand has a supporting plinth, struts, paired foot contacts,
+and a front power socket while retaining its existing charging-light behavior.
+
+Roof-equipment regression tests sample all three antenna gesture variants,
+travel/recoil/return, tool contact, head/body clearance, beat boundaries, and
+reverse seeking. Review these together in **Camera experiment → View** using
+the overview and all three orthographic views after changing roof geometry.
+
 Pip is a compact articulated robot with a teal body, cream head, luminous visor, chest indicator, elbow joints, and a wrist-mounted maintenance tool. Its pose vocabulary distinguishes curiosity, fault recognition, tool preparation, light repair, antenna manipulation, cargo grasp/carry/stow, verification, and a short satisfied reaction. Infrequent idle looks and seeded task variations add personality without continuous motion. Cargo follows a grip point on Pip while carried rather than moving on an unrelated path.
 
 Courier visits use a small teal dispatch canister with dark end caps and an amber marking. It starts inside a hull-mounted bay whose door slides sideways on guides. Pip retrieves it with the camera-facing hand, carries it along the station's exposed side, places it in the receiver, verifies delivery, and returns. Both hands and payload use one deterministic transfer path; insertion keeps the payload at full size until the receiver conceals it. The courier has a restrained teal hull, swept fins, small nacelles, and a dark cockpit.
