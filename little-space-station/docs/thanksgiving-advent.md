@@ -14,8 +14,9 @@ The 120-second story is about hospitality, not a repair or mystery:
 | 74–94 s | All three turn toward the planet for a long, quiet shared view. |
 | 94–120 s | Pip turns to the construction drone and waves high with one hand before it leaves at 99 s, then turns and waves to the inspection drone before it leaves at 104 s. Pip returns home by 120 s. |
 
-The deck remains **4 × 3.1 units**. Its floor, supports, rails, cabin, attachments,
-assembly, dismantling, and docking corridor are unchanged. The table occupies
+The deck is now **4.6 × 3.1 units** following the [Advent tree Phase 1](advent-tree-phase1.md)
+aft extension. The gathering's table and actor anchors, cabin, attachments,
+assembly/dismantling timing, and docking corridor retain their positions. The table occupies
 the open front-left area, Pip stands behind it, and the guests hover on opposite
 sides. Pip uses the existing articulated model with bounded two-joint hand
 contact. Drone models are the actual shared assembly-rigger and Phantom Visitor
@@ -56,6 +57,11 @@ We use the Christmas Eve lighting convention, starting at December 24 UTC
 midnight. This affects only the candle; the Christmas seasonal handoff remains
 December 25.
 No Christmas visit/story or dream is implemented.
+
+The [Phase 1 tree and wrapped presents](advent-tree-phase1.md) now occupy the
+outer aft deck. Their calendar derives independently of story checkpoints;
+decorations finish by December 23 and gifts stay wrapped through January 5.
+This also adds tree-stage, gift-count, illumination and January cleanup previews.
 
 ## Scheduling, persistence, and compatibility
 

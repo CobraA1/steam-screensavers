@@ -17,6 +17,7 @@ export class HolidayRuntime {
   update(state,step,time,presentationSeconds,forced) {
     const r=this.runtime;
     state.holiday=HolidayCalendar(time);state.thanksgiving=null;
+    if(this.preview) state.holiday.treeFullLight=Boolean(r.treeFullIllumination);
     if(this.preview) {
       if(state.phase!=='quiet'||r.incidentPreview||r.phantomPreview||r.remembrancePreview||r.restPreview||r.pipOverride||r.seasonalPreview!=='natural')
         r.thanksgivingPreview=null;

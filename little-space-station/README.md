@@ -7,10 +7,13 @@ followed by the calculated four Sundays of Advent. See the [implementation and
 preview guide](docs/thanksgiving-advent.md) for choreography, scheduling,
 persistence compatibility, date controls, and Christmas scope.
 
-Advent and Christmas **future story ideas** (tree, weekly build-up, possible returning explorer,
-and Christmas Eve preparation deadline) are tracked in the [working Advent/Christmas
-planning notes](docs/advent-christmas-story-planning.md). These are not yet implemented
-or final decisions.
+Advent now adds a modular evergreen, gradual garland/lights and blue/gold/ivory
+ornaments, a gold star, and five identifiable wrapped presents. Everything is
+ready by December 23; gifts remain wrapped through Christmas in this phase.
+See the [Phase 1 guide](docs/advent-tree-phase1.md) for dates, placement and preview
+controls. Decorating choreography, an evening lighting ceremony, a possible
+returning visitor, and the Christmas gift-opening gathering remain future work
+in the [Advent/Christmas planning notes](docs/advent-christmas-story-planning.md).
 
 The Phantom Visitor uses `phantom-choreography.js` for continuous cover/drone paths and shared target orientation. Pip reaches the cloth with the existing two-joint arm rig; both live and miniature covers have connected, downward-flared skirts. The 68-second live story now finishes its exit after committing the final payoff. Its dream retains the original memory identity/year/outcome, brings miniature Pip into contact with the cover, fades the departing drone independently, and preserves the empty-cover joke. Preview it under **Story · Phantom Visitor** (beat/point or **Force / play**) and **Pip recharge & memory → Show Phantom dream** (whole-dream scrubber).
 
@@ -117,7 +120,7 @@ The seasonal system uses UTC calendar dates and the existing absolute world cloc
 
 Seasonal cargo reuses the deterministic traffic schedule and never adds a second ship or increases visit frequency. Selected cargo visits receive stable 2–4-package manifests. Packages move one at a time from the ship to Pip's grip and station storage, using separate fall, Halloween, and remembrance palettes and markings.
 
-The seasonal service deck attaches to the station's aft `-X` port through a short offset passage. Its 4 × 3.1-unit platform has about 2.3 times the first draft's footprint, with a clear central floor, narrow panel seams, clipped corners, and visible underfloor supports. A compact utility cabin occupies about 13% of the platform and has a Pip-sized pressure door, framed windows, a service locker, and a shallow roof cap. Waist-height rails and small shielded corner lamps keep the deck readable. The established `+X` visitor approach, docking, and departure corridor is unchanged. Gourds, lanterns, garlands, Halloween props, and the All Saints' fixture use shared deck anchors arranged around the perimeter; Pip's work positions align its boots with the floor.
+The seasonal service deck attaches to the station's aft `-X` port through a short offset passage. Its 4.6 × 3.1-unit platform includes a 0.6-unit aft extension for the Advent tree, with a clear central floor, narrow panel seams, clipped corners, and visible underfloor supports. A compact utility cabin occupies about 11% of the platform and has a Pip-sized pressure door, framed windows, a service locker, and a shallow roof cap. Waist-height rails and small shielded corner lamps keep the deck readable. The established `+X` visitor approach, docking, and departure corridor is unchanged. Gourds, lanterns, garlands, Halloween props, and the All Saints' fixture retain their shared anchors; Pip's work positions align its boots with the floor. Floor, beams, rails and corner lights all extend together within the original assembly/dismantling groups.
 
 Deck assembly is calendar-derived rather than persisted. **Installation occupies September 22, 2026, 00:00–September 23, 00:00 UTC; removal occupies January 6, 2027, 00:00–January 7, 00:00 UTC.** Each takes 24 hours by default, configurable with `serviceDeck.transitionHours` in `config.js` (1–48 hours). Installation starts when autumn begins and removal always ends at the story-year renewal boundary. Reopening or jumping dates reconstructs the correct phase without replaying missed animation frames or requiring a shutdown callback.
 
@@ -237,7 +240,7 @@ Manual browser checks to perform on the Deck:
 
 ## Known limitations and follow-up
 
-- Autumn, Halloween, Phantom Visitor, and Lights of Remembrance are intentionally 2026-specific. The service deck's January 7 removal is implemented as a deterministic first renewal consequence; Thanksgiving, Christmas, recurrence rules, and the full January refurbishment story are not implemented.
+- Autumn, Halloween, Phantom Visitor, Lights of Remembrance, and Thanksgiving stories are intentionally 2026-specific. Advent/Christmas scenery reconstructs from the calendar, with the tree and wrapped gifts clearing January 6 before the deck's January 7 removal. The Christmas gathering, gift opening, annual recurrence of the deck, and full January refurbishment story are not implemented.
 - Seasonal inventories are inferred from calendar and seed rather than modeled as a generalized stock system. This keeps missed days recoverable and avoids a second simulation.
 - The Phantom cover uses authored low-poly motion rather than cloth physics.
 - The station has one layout family. Pip intentionally uses a lightweight procedural joint rig rather than skeletal animation; final hand-to-equipment alignment still requires Deck-side visual tuning.

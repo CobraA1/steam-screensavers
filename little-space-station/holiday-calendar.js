@@ -1,3 +1,4 @@
+import { ChristmasTreeCalendar } from './christmas-tree.js';
 // UTC calendar arithmetic only; no browser clock or storage side effects.
 export const DAY = 86_400_000;
 export function Thanksgiving(year) {
@@ -17,11 +18,13 @@ export function HolidayCalendar(time) {
   // Christmas Day through January 5 (the twelve days of Christmas), UTC.
   // Do not confuse a fourth Advent Sunday on Dec 24 with Christmas itself.
   const christmasHandoff = time >= christmas || time < Date.UTC(year, 0, 6);
+  const treeYear = new Date(time).getUTCMonth() === 0 ? year - 1 : year;
   return { year, thanksgiving, advent, christmas, gathering,
     preparing: gathering && time < thanksgiving,
     eligible: year === 2026 && time >= thanksgiving && time < advent,
     adventWeek: awaiting ? Math.min(4, 1 + Math.floor((time - advent) / (7 * DAY))) : 0,
     christmasHandoff,
+    tree: ChristmasTreeCalendar(time, Advent(treeYear), Date.UTC(treeYear, 11, 25)),
     // Light the Christ candle on Christmas Eve without advancing the season.
     christCandleLit: time >= christmas - DAY || time < Date.UTC(year, 0, 6),
     // Clear harvest settings over the first morning. A scrub reconstructs it.

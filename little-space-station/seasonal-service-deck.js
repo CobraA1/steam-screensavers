@@ -5,7 +5,10 @@ import { DeckPartPose, DECK_STAGES } from "./service-deck-lifecycle.js";
 // the extra space extends aft and toward +Z, clear of the solar array roots.
 const FLOOR_Y = -0.43;
 const PIP_STANDING_Y = FLOOR_Y + 0.35 * 0.84;
-const DECK = Object.freeze({ x: -4.8, z: 1.1, width: 4, depth: 3.1 });
+// Extend only the aft edge by 0.6 for the tree's clear production silhouette.
+// The cabin, passage and existing seasonal/work anchors keep their positions.
+export const SERVICE_DECK_LAYOUT = Object.freeze({ x: -5.1, z: 1.1, width: 4.6, depth: 3.1 });
+const DECK = SERVICE_DECK_LAYOUT;
 
 export const SERVICE_DECK_ANCHORS = Object.freeze({
   pipSeasonalWork: Object.freeze([-4.68, PIP_STANDING_Y, 1.38]),
@@ -129,21 +132,22 @@ export class SeasonalServiceDeckVisual {
 
     // Large, almost continuous floor panels make usable area obvious. Narrow
     // seams and a restrained palette keep the floor from competing with Pip.
-    for (let column = 0; column < 5; column += 1) {
+    const columns = 6, columnPitch = (DECK.width - .3) / columns;
+    for (let column = 0; column < columns; column += 1) {
       for (let row = 0; row < 4; row += 1) {
-        Box(platform, [0.722, 0.014, 0.676],
-          [-6.28 + column * 0.74, FLOOR_Y - 0.007, 0.06 + row * 0.69],
+        Box(platform, [columnPitch - .018, 0.014, 0.676],
+          [DECK.x + (column - (columns - 1) / 2) * columnPitch, FLOOR_Y - 0.007, 0.06 + row * 0.69],
           (column + row) % 4 === 0 ? floorAlternate : floor);
       }
     }
     // Underfloor beams and diagonal braces give the larger slab a credible
     // load path back into the aft coupling.
     for (const z of [-0.08, 2.25]) {
-      Box(supports, [3.58, 0.13, 0.12], [-4.8, -0.71, z], darkTeal);
+      Box(supports, [DECK.width - .42, 0.13, 0.12], [DECK.x, -0.71, z], darkTeal);
       supports.add(Rod(new THREE.Vector3(-2.94, -0.32, 0.12),
-        new THREE.Vector3(-4.75, -0.72, z), 0.045, m.metal));
+        new THREE.Vector3(-5.05, -0.72, z), 0.045, m.metal));
     }
-    for (const x of [-6.42, -4.82, -3.16]) {
+    for (const x of [-7.02, -5.12, -3.16]) {
       Box(supports, [0.13, 0.13, 2.7], [x, -0.69, 1.1], darkTeal);
     }
 
@@ -203,7 +207,9 @@ export class SeasonalServiceDeckVisual {
 
     // Waist-height guard rails, regular stanchions and recessed corner lamps.
     // The lamp housings are smaller than Pip's head and share the rail height.
-    const corners = [[-6.59, -0.27], [-3.01, -0.27], [-3.01, 2.47], [-6.59, 2.47]];
+    const aft = DECK.x - DECK.width / 2 + .21;
+    const fore = DECK.x + DECK.width / 2 - .21;
+    const corners = [[aft, -0.27], [fore, -0.27], [fore, 2.47], [aft, 2.47]];
     const posts = [];
     for (let edge = 0; edge < 4; edge += 1) {
       const a = corners[edge];

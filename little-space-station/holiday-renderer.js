@@ -2,6 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import { BuildInspectionDrone } from './phantom-renderer.js';
 import { BuildConstructionDrone } from './seasonal-service-deck.js';
 import { ThanksgivingActors, Ease } from './thanksgiving.js';
+import { ChristmasTreeVisual } from './christmas-tree-renderer.js';
 
 const material=(color,emissive=0)=>new THREE.MeshStandardMaterial({color,emissive,
   emissiveIntensity:1,roughness:.7,metalness:.12,flatShading:true});
@@ -35,6 +36,7 @@ export class HolidayVisual {
   constructor(scene) {
     this.scene=scene;
     this.root=new THREE.Group(); this.root.name='thanksgiving-advent'; scene.station.add(this.root);
+    this.christmasTree = new ChristmasTreeVisual(this.root);
     const blue=material(0x305674),gold=material(0xc59b51),teal=material(0x28565a),cream=material(0xd5caa8);
     const glow=material(0xffd18a,0xe5993d);
     this.table=new THREE.Group(); this.table.position.set(-5.35,0,2.02); this.root.add(this.table);
@@ -88,6 +90,7 @@ export class HolidayVisual {
   }
   update(state) {
     const h=state.holiday,story=state.thanksgiving;
+    this.christmasTree.update(h?.tree, state.seasonal?.serviceDeck?.ready, story, h?.treeFullLight);
     this.root.visible=Boolean(h && state.seasonal?.serviceDeck?.ready && (h.gathering||h.adventWeek||h.christmasHandoff||story));
     if(!this.root.visible)return;
     this.construction.visible=this.inspection.visible=Boolean(story);

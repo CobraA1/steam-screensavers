@@ -73,6 +73,7 @@ const REMEMBRANCE_PACKAGE_STYLES = Object.freeze([
 ]);
 
 const PACKAGE_THEMES = Object.freeze({
+  advent: Object.freeze({ styles:REMEMBRANCE_PACKAGE_STYLES, labels:Object.freeze(['Artificial evergreen sections','Tree mounting fittings','Copper garland','Warm white light strings','Blue and gold ornaments','Wrapped holiday parcels']) }),
   thanksgiving: Object.freeze({ styles:FALL_PACKAGE_STYLES, labels:Object.freeze(['Gathering energy cells','Lantern fittings','Refreshment trays','Commons provisions']) }),
   fall: Object.freeze({ styles: FALL_PACKAGE_STYLES, labels: Object.freeze(["Garland fittings", "Harvest lights", "Gourd ornaments", "Copper leaf trim"]) }),
   halloween: Object.freeze({ styles: HALLOWEEN_PACKAGE_STYLES, labels: Object.freeze(["Jack-o'-lantern kit", "Purple light string", "Ghost pennant", "Moon-marked trim"]) }),
@@ -226,11 +227,11 @@ function ResolveHalloweenOddity(worldSeed, time, previewMode) {
 export function ResolveAutumn2026(worldSeed, worldTimeMs, { previewMode = "natural", deckConfig = {}, deckPreview = null } = {}) {
   const time = Number.isFinite(worldTimeMs) ? worldTimeMs : Date.now();
   let serviceDeck = ResolveServiceDeck(time, deckConfig, deckPreview);
-  if (previewMode !== "natural" && !deckPreview) {
+  if (previewMode !== "natural" && previewMode !== 'advent-cargo' && !deckPreview) {
     serviceDeck = Object.freeze({ ...serviceDeck, active: true, ready: true, assembly: 1,
       action: null, status: "preview-forced", stage: "installed" });
   }
-  const forcedDecor = previewMode !== "natural";
+  const forcedDecor = previewMode !== "natural" && previewMode !== 'advent-cargo';
   const fallDecorLevel = forcedDecor ? 1 : NaturalFallDecorLevel(time);
   const forcedHalloweenLevel = previewMode === "halloween-early" ? 0.46
     : previewMode === "halloween-cleanup" ? 0.62
@@ -272,7 +273,9 @@ export function ResolveAutumn2026(worldSeed, worldTimeMs, { previewMode = "natur
 }
 
 function SeasonalThemeFor(time) {
-  if (HolidayCalendar(time).gathering) return 'thanksgiving';
+  const holiday = HolidayCalendar(time);
+  if (holiday.gathering) return 'thanksgiving';
+  if (holiday.tree.active && time < Date.UTC(holiday.year,11,24)) return 'advent';
   if (time < AUTUMN_2026_DATES.autumnBegins || time >= AUTUMN_2026_DATES.cleanupComplete) return null;
   if (time >= AUTUMN_2026_DATES.remembranceSupplies && time < AUTUMN_2026_DATES.cleanupBegins) return "remembrance";
   if (time >= AUTUMN_2026_DATES.halloweenPreparations) return "halloween";
@@ -280,6 +283,7 @@ function SeasonalThemeFor(time) {
 }
 
 function ShipmentChance(theme, time) {
+  if (theme === 'advent') return .36;
   if (theme === 'thanksgiving') return .5;
   if (theme === "fall") {
     return time < AUTUMN_2026_DATES.fallDecorComplete ? 0.48 : 0.18;
@@ -302,9 +306,13 @@ export function CreateSeasonalManifest(worldSeed, visit, { forceTheme = null } =
   for (let index = 0; index < packageCount; index += 1) {
     const themeStyle = PACKAGE_THEMES[theme] || PACKAGE_THEMES.fall;
     const style = Pick(random, themeStyle.styles);
+    // Supplies ride existing freight visits. Scenery never waits for delivery.
+    const tree = theme === 'advent' ? HolidayCalendar(visitTime).tree : null;
+    const labels = tree ? tree.stage === 'evergreen-sections' ? themeStyle.labels.slice(0,2)
+      : tree.stage === 'garland-and-lights' ? themeStyle.labels.slice(2,4) : themeStyle.labels.slice(4) : themeStyle.labels;
     packages.push(Object.freeze({
       id: visitId + ":package-" + (index + 1),
-      label: themeStyle.labels[Math.floor(random() * themeStyle.labels.length)],
+      label: labels[Math.floor(random() * labels.length)],
       symbol: style.symbol,
       bodyColor: style.bodyColor,
       railColor: style.railColor,
@@ -438,7 +446,7 @@ export function ApplyAutumn2026State(state, seasonal, worldSeed) {
       visitId: state.visitId,
       approachStartMs: state.visitStartMs,
       worldTimeMs: state.worldTimeMs,
-    }, { forceTheme: seasonal.previewMode === "fall-cargo" ? "fall" : seasonal.previewMode === "halloween-cargo" ? "halloween" : seasonal.previewMode === "remembrance-cargo" ? "remembrance" : null });
+    }, { forceTheme: seasonal.previewMode === 'advent-cargo' ? 'advent' : seasonal.previewMode === "fall-cargo" ? "fall" : seasonal.previewMode === "halloween-cargo" ? "halloween" : seasonal.previewMode === "remembrance-cargo" ? "remembrance" : null });
     const freight = manifest || ORDINARY_FREIGHT;
     if (state.phase === 'service') {
       ApplySeasonalCargo(state, freight);

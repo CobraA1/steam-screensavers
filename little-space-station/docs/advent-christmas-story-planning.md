@@ -1,7 +1,7 @@
 # The Little Space Station — Advent 2026 and Christmas story planning
 
 **Status:** Working creative design, started October 22 and updated October 31, 2026. The tree and Christmas Day gift-gathering requirements below are agreed direction; the arriving visitor and full Christmas storyline remain undecided.
-This document separates existing production behavior, approved seasonal design, and tentative story ideas. The first proposed implementation phase is limited to tree/present scenery, calendar stages, and preview tools.
+This document separates existing production behavior, approved seasonal design, and tentative story ideas. **Phase 1 tree/present scenery, calendar stages and preview tools are now implemented**; see the [implementation guide](advent-tree-phase1.md). Character activities and the Christmas story remain future work.
 
 Related references:
 - [Thanksgiving and Advent implementation](thanksgiving-advent.md) — what is already coded, including preview controls and the existing wreath.
@@ -11,11 +11,12 @@ Related references:
 ## 1. Existing foundation (implemented on `main`)
 
 - Thanksgiving's **Room for One More** gathering and its transition to the Advent arrangement are already implemented.
-- The Commons Deck remains approximately **4 × 3.1 world units**; the Thanksgiving implementation did not enlarge it.
+- Phase 1 extends the Commons Deck's aft edge by 0.6 units to **4.6 × 3.1 world units** so the cabin does not hide the tree. The original Thanksgiving implementation did not enlarge it; its table and character anchors remain unchanged.
 - The calendar calculates Advent Sundays. Thanksgiving scenery changes into an evergreen wreath through a six-hour calendar-derived transition, without Pip performing an installation action.
 - The wreath has four outer candles (three blue and the third rose) and a taller central white Christ candle.
 - The four outer lights accumulate on the Sundays of Advent. The Christ candle currently lights at **00:00 UTC on December 24**, remaining with the other four through January 5; the display clears for the January 6–7 deck dismantling.
-- There is no Advent-specific Pip lighting ceremony, tree, multi-week story, or Christmas arrival yet.
+- The three-section evergreen and five wrapped gifts now reconstruct through gradual Advent stages, finish December 23, and clear January 6. They remain wrapped on Christmas Day pending the later story.
+- There is no Advent-specific Pip lighting/decorating choreography, multi-week narrative, Christmas arrival, or gift-opening gathering yet. Brighter tree illumination is preview-only.
 
 **Do not conflate these implemented features with the proposals below.** In particular, a future Christmas Eve evening tree-lighting presentation does not currently change the wreath's existing UTC candle schedule.
 
@@ -117,11 +118,13 @@ A viewer should be able to miss individual Sundays and still understand the scen
 
 ## 7. Practical implementation boundaries (for later)
 
-This is planning documentation only. **No code changes have been authorized in this task.**
+Phase 1 was subsequently authorized and implemented. The remaining phases below
+are planning only; the visitor, Christmas story and opening choreography still
+need their own assignments.
 
 When ready, prefer small, independently reviewable assignments rather than a single expensive Codex session:
 
-1. **Tree, wrapped gifts, and deck staging:** Evaluate space, build the agreed modular traditional low-poly tree and 3–6 wrapped gifts, derive their progressive Advent states, and add meaningful preview controls. Prototype *opened* visuals in preview only if inexpensive. Avoid the later Christmas group-opening story.
+1. **Tree, wrapped gifts, and deck staging — implemented:** Three modular evergreen sections, five stable wrapped gifts, gradual calendar decoration, supply cartons on existing freight visits, coherent aft deck extension, and date/lighting/cleanup previews. No opened prototypes or group-opening story were added. See [Phase 1](advent-tree-phase1.md).
 2. **Advent actions:** Add Pip's opening setup, brief weekly candle-lighting/decoration activities, and restrained seasonal color/light progression; preserve the existing wreath calendar.
 3. **Narrative foreshadowing:** Only after deciding who or what is approaching, implement subtle seeded light/signal beats and their opportunity windows.
 4. **Christmas Day gathering:** Implement the actual group-opening story with shared character choreography, personalized gifts, presentation checkpoints, opened aftermath, optional visitor/homecoming payoff, and graceful expiry. Handle the Christmas Eve evening illumination and January cleanup compatibly.
