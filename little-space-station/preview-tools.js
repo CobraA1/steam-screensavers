@@ -11,6 +11,7 @@ import { DeckDurationMs, DECK_STAGES } from "./service-deck-lifecycle.js";
 import { AdvancePhantomVisitorIncident, CreatePhantomVisitorIncident, CreatePhantomVisitorPreview, CreatePhantomVisitorResume, PHANTOM_VISITOR_BEATS, PHANTOM_VISITOR_TYPE, PHANTOM_VISITOR_VARIANTS } from "./phantom-visitor.js";
 import { AdvanceRemembranceIncident, CreateRemembranceIncident, CreateRemembrancePreview, CreateRemembranceResume, REMEMBRANCE_BEATS, REMEMBRANCE_TYPE, REMEMBRANCE_VARIANTS } from "./lights-of-remembrance.js";
 import { HolidayPreview } from './holiday-preview.js';
+import { BuildPreviewConsole } from './preview-console.js';
 
 function MakeElement(tagName, className, text) {
   const element = document.createElement(tagName);
@@ -495,7 +496,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
   });
   seedInput.addEventListener("change", () => { const url = new URL(window.location.href); url.searchParams.set("preview", "1"); url.searchParams.set("seed", seedInput.value.trim() || runtime.seed); window.location.assign(url); });
   worldTimeSelect.addEventListener("change", () => { if (worldTimeSelect.value === "actual") runtime.clock.useActualTime(); else runtime.clock.jumpWorld(worldTimeSelect.value); worldTimeSelect.value = "actual"; });
-  dateInput.addEventListener("change", () => { const time = new Date(dateInput.value).getTime(); if (Number.isFinite(time)) runtime.clock.setWorldTime(time); });
+  dateInput.addEventListener("change", () => { const time = new Date(dateInput.value + "Z").getTime(); if (Number.isFinite(time)) runtime.clock.setWorldTime(time); });
   framingSelect.addEventListener("change", () => scene.cameraFraming.setPreset(framingSelect.value));
   let previousStationCameraMode = "overview";
   cameraModeSelect.addEventListener("change", () => {
@@ -815,33 +816,35 @@ export function CreatePreviewTools({ director, runtime, scene }) {
     }
   });
   document.addEventListener("fullscreenchange", UpdateFullscreenButton);
-  collapseButton.addEventListener("click", () => { const collapsed = panel.classList.toggle("is-collapsed"); collapseButton.textContent = collapsed ? "Expand" : "Hide"; });
-  pauseButton.addEventListener("click", () => {
-    runtime.paused = !runtime.paused;
-    pauseButton.textContent = runtime.paused ? "Resume" : "Pause";
-    panel.classList.toggle("is-paused", runtime.paused);
-  });
-  restartButton.addEventListener("click", () => {
-    runtime.dismissed = false;
-    runtime.paused = false;
-    pauseButton.textContent = "Pause";
-    director.restart();
-  });
-  stepButton.addEventListener("click", () => {
-    runtime.stepSeconds += 1;
-  });
+  const consoleUI = BuildPreviewConsole({ panel, runtime, director, scene, controls: {
+    heading, titleWrap, fullscreenButton, pauseButton, collapseButton,
+    eventSelect, phaseSelect, jumpButton, speedSelect, seedInput, worldTimeSelect, dateInput,
+    cameraSection, framingSelect, cameraModeSelect, planetSection, expansionSection, expansionPreview, expansionVisibility,
+    environmentSection, illuminationSelect, seasonSelect, resetEnvironmentButton,
+    seasonalSection, seasonalMode, seasonalDates, deckActions, installDeck, removeDeck, stopDeck,
+    deckRate, deckProgress, deckPlay, deckStageSelect, deckWorkSelect, deckJumpWork, seasonalReadout,
+    pipSection, pipTaskSelect, pipStageSelect, pipProgressInput, pipVariantSelect,
+    incidentSection, incidentVariant, incidentBeat, incidentProgress, incidentActions, incidentStorageActions, forceIncident, resumeIncident,
+    phantomSection, phantomVariant, phantomBeat, phantomProgress, phantomActions, phantomStorageActions, forcePhantom, resumePhantom,
+    remembranceSection, remembranceVariant, remembranceBeat, remembranceProgress, remembranceActions, remembranceStorageActions, forceRemembrance, resumeRemembrance,
+    restSection, forceCharge, forceDream, forcePhantomDream, followRest, dreamPoint,
+    actions, restartButton, stepButton, commitButton, dismissButton, storageActions, clearButton, offlineButton,
+    progressTrack, readout,
+  }});
 
   return {
     update(state, snapshot = {}) {
+      consoleUI.update(state, snapshot);
+      if (!consoleUI.shouldUpdateDetails()) return;
       updateHolidayPreview();
       if (runtime.restPreview === "dream" && runtime.dreamPreview) {
         const dream = runtime.dreamPreview;
-        if (dream.playing) dreamPoint.value = String(dream.elapsed / dream.duration);
+        if (dream.playing && document.activeElement !== dreamPoint) dreamPoint.value = String(dream.elapsed / dream.duration);
         const beat = ResolveDreamTimeline(dream).beat;
         restReadout.textContent = (dream.example ? "Temporary example" : "Saved memory") + " · " +
           (dream.active ? beat.label : "Finished") + " · " + (dream.playing ? "playing" : "paused") + " · no writes";
       }
-      phaseSelect.value = state.phase;
+      if (document.activeElement !== phaseSelect) phaseSelect.value = state.phase;
       progressBar.style.transform = "scaleX(" + state.progress.toFixed(4) + ")";
       const environment = snapshot.environment || {};
       environmentValues.phase.textContent = (environment.illuminationPhase || "—") + " · " + Math.round((environment.illuminationProgress || 0) * 100) + "%";
@@ -850,7 +853,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
       const planetOverride = scene.getPlanetRotationPreview();
       const planetPhase = planetOverride === null ? (environment.planetRotationPhase || 0) : planetOverride;
       const planetMinutes = Math.max(0, Math.min(1440, Math.round(planetPhase * 288) * 5));
-      planetDaySlider.value = String(planetMinutes);
+      if (document.activeElement !== planetDaySlider) planetDaySlider.value = String(planetMinutes);
       const hours = String(Math.floor(planetMinutes / 60)).padStart(2, "0");
       const minutes = String(planetMinutes % 60).padStart(2, "0");
       planetRotationValue.textContent = hours + ":" + minutes + " · " +
@@ -871,7 +874,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
       }
       deckProgress.disabled = !runtime.deckPreview;
       deckPlay.disabled = !runtime.deckPreview;
-      if (runtime.deckPreview) deckProgress.value = String(runtime.deckPreview.progress);
+      if (runtime.deckPreview && document.activeElement !== deckProgress) deckProgress.value = String(runtime.deckPreview.progress);
       seasonalValues.shipment.textContent = state.seasonalCargo
         ? state.seasonalCargo.theme + " · package " + Math.min(state.cargoPackageCount, state.cargoPackageIndex + 1) + "/" + state.cargoPackageCount
         : (() => {

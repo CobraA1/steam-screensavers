@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import { CHRISTMAS_TREE_POSITION, CHRISTMAS_PRESENTS } from './christmas-tree.js';
+import { CHRISTMAS_TREE_POSITION, CHRISTMAS_PRESENTS, TREE_LAYERS, TreeOrnamentPosition } from './christmas-tree.js';
 
 const surface = (color, metalness = .15) => new THREE.MeshStandardMaterial({ color, metalness, roughness: .65, flatShading: true });
 function box(root, size, position, material) {
@@ -10,11 +10,7 @@ function cylinder(root, top, bottom, height, y, material, segments = 8) {
   const mesh = new THREE.Mesh(new THREE.CylinderGeometry(top, bottom, height, segments), material);
   mesh.position.y = y; root.add(mesh); return mesh;
 }
-const LAYERS = Object.freeze([
-  { radius: .49, height: .6, y: .54 },
-  { radius: .37, height: .55, y: .86 },
-  { radius: .25, height: .5, y: 1.12 },
-]);
+const LAYERS = TREE_LAYERS;
 function radiusAt(y) {
   let radius = 0;
   for (const layer of LAYERS) {
@@ -98,12 +94,12 @@ export class ChristmasTreeVisual {
     const ornaments = this.ornaments = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.046, 1), surface(0xffffff, .4), 26);
     const caps = this.ornamentCaps = new THREE.InstancedMesh(new THREE.CylinderGeometry(.012, .012, .025, 5), gold, 26);
     const palette = [0x3c6990, 0xd7b866, 0xe4dcc4, 0x36617f, 0xc6a159];
+    this.ornamentMatrices=[];this.capMatrices=[];
     for (let i = 0; i < 26; i++) {
-      const tier = i % 3, y = [.37, .7, 1.0][tier] + Math.sin(i * 2.1) * .025;
-      const angle = i * 2.39996, r = radiusAt(y) + .033;
-      matrix.makeTranslation(Math.cos(angle) * r, y, Math.sin(angle) * r);
+      matrix.makeTranslation(...TreeOrnamentPosition(i));
       ornaments.setMatrixAt(i, matrix); ornaments.setColorAt(i, new THREE.Color(palette[i % palette.length]));
-      matrix.elements[13] += .05; caps.setMatrixAt(i, matrix);
+      this.ornamentMatrices.push(matrix.clone());
+      matrix.elements[13] += .05; caps.setMatrixAt(i, matrix);this.capMatrices.push(matrix.clone());
     }
     // Cache bounds for the complete set before the calendar can reduce count
     // to zero; later stages must not inherit an empty frustum-culling sphere.
@@ -136,6 +132,17 @@ export class ChristmasTreeVisual {
   }
 
   update(calendar, ready, storyActive, fullLight = false) {
+    if(this.activityDirty) {
+      this.ornamentMatrices.forEach((m,i)=>this.ornaments.setMatrixAt(i,m));
+      this.capMatrices.forEach((m,i)=>this.ornamentCaps.setMatrixAt(i,m));
+      this.ornaments.instanceMatrix.needsUpdate=this.ornamentCaps.instanceMatrix.needsUpdate=true;
+      this.ornaments.frustumCulled=this.ornamentCaps.frustumCulled=true;
+      this.activityDirty=false;
+    }
+    this.garlands.forEach(g=>g.rotation.set(0,0,0));
+    this.sections.forEach(g=>g.position.set(0,0,0));
+    this.star.position.set(0,1.43,0);this.star.rotation.set(0,.7,0);
+    this.gifts.forEach((g,i)=>{g.position.fromArray(CHRISTMAS_PRESENTS[i].position);g.rotation.set(0,0,0);});
     const active = Boolean(calendar?.active && ready && !storyActive);
     this.root.visible = active;
     this.sections.forEach((section, i) => { section.visible = active && i < calendar.sections; });

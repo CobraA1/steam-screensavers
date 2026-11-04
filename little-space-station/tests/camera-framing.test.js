@@ -12,6 +12,7 @@ import {
   ScaledCameraDistance,
 } from "../camera-framing.js";
 import { EXPANSION_LAYOUTS } from "../expansion-preview.js";
+import { LittleSpaceStationScene } from "../scene.js";
 
 test("camera presets encode the requested apparent scales", () => {
   assert.deepEqual(
@@ -36,7 +37,7 @@ test("preview camera controls retain mode across presentation updates and reset 
 
   controller.reset();
   assert.deepEqual(controller.getDiagnostics(), { preset: "original", apparentScale: 1, mode: "overview" });
-  assert.deepEqual(CAMERA_VIEW_MODES.map((mode) => mode.id), ["overview", "activity", "planet", "top", "front", "side"]);
+  assert.deepEqual(CAMERA_VIEW_MODES.map((mode) => mode.id), ["overview", "activity", "planet", "top", "front", "side", "bottom", "back", "other-side"]);
 });
 
 test("production camera uses the approved close default and ignores experimental setters", () => {
@@ -80,6 +81,7 @@ test("preview orthographic views use station-local orthogonal axes", () => {
   station.getWorldQuaternion(q);
   const expectedAxes = {
     top: [0, 1, 0], front: [1, 0, 0], side: [0, 0, 1],
+    bottom: [0, -1, 0], back: [-1, 0, 0], "other-side": [0, 0, -1],
   };
   for (const [mode, axes] of Object.entries(expectedAxes)) {
     assert.equal(controller.setMode(mode), true);
@@ -90,6 +92,9 @@ test("preview orthographic views use station-local orthogonal axes", () => {
     const actual = ortho.position.clone().sub(center).normalize();
     const expected = new THREE.Vector3(...axes).applyQuaternion(q);
     assert.ok(actual.distanceTo(expected) < 1e-5, mode + " direction");
+    const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(ortho.quaternion);
+    const expectedUp = new THREE.Vector3(...(mode === "top" || mode === "bottom" ? [0, 0, -1] : [0, 1, 0])).applyQuaternion(q);
+    assert.ok(cameraUp.distanceTo(expectedUp) < 1e-5, mode + " up direction");
   }
   controller.setViewport(800, 1280);
   assert.ok(Math.abs(controller.getActiveCamera().right / controller.getActiveCamera().top - 0.625) < 1e-9);
@@ -134,6 +139,30 @@ test("production never constructs or accepts an orthographic review camera", () 
   assert.equal(controller.orthographicCamera, null);
   assert.equal(controller.planetCamera, null);
   assert.equal(controller.setMode("top"), false);
+  assert.equal(controller.setMode("bottom"), false);
+  assert.equal(controller.setMode("back"), false);
+  assert.equal(controller.setMode("other-side"), false);
   assert.equal(controller.setMode("planet"), false);
   assert.strictEqual(controller.getActiveCamera(), perspective);
+});
+
+test("the opposite side preview hides the foreground planet only during rendering", () => {
+  const planet = { visible: true };
+  const seen = [];
+  const fake = {
+    planet,
+    cameraFraming: { preview: true, mode: "other-side", getActiveCamera: () => ({}) },
+    dreamCompositor: { prepare: () => seen.push(planet.visible) },
+    renderer: { render: () => seen.push(planet.visible) },
+  };
+  LittleSpaceStationScene.prototype.render.call(fake);
+  assert.deepEqual(seen, [false, false]);
+  assert.equal(planet.visible, true);
+  fake.cameraFraming.mode = "overview";
+  LittleSpaceStationScene.prototype.render.call(fake);
+  assert.deepEqual(seen.slice(2), [true, true]);
+  fake.cameraFraming.mode = "other-side";
+  fake.renderer.render = () => { throw new Error("render error"); };
+  assert.throws(() => LittleSpaceStationScene.prototype.render.call(fake), /render error/);
+  assert.equal(planet.visible, true);
 });

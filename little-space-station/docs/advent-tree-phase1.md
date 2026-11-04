@@ -2,8 +2,11 @@
 
 Implemented October 31, 2026. This is calendar scenery, independent of stories,
 deliveries witnessed, saved checkpoints, or storage availability. It does not
-present a decorating activity, light candles through Pip, open gifts, or create
+itself present a decorating activity, light candles through Pip, open gifts, or create
 a Christmas visitor or gathering.
+
+[Phase 2A](advent-decorating-phase2a.md) subsequently adds optional decorating
+and wrapped-present activities without changing this calendar or arrangement.
 
 ## Design and location
 
@@ -74,12 +77,12 @@ records are created. Installed scenery does not depend on those cartons.
 
 ## Preview and verification
 
-Open **Thanksgiving & Advent → Christmas tree & wrapped presents · 2026**.
-Buttons cover sections, the first present, intermediate light strings and
+Open **Scenes → Seasonal Scenes → Thanksgiving and Advent calendar**.
+The date selector covers sections, the first present, intermediate light strings and
 ornaments, finishing, the star, the completed five-gift arrangement, Christmas
 Eve, an Advent supply delivery, January 5, January 6 cleanup, and January 7.
 **Tree · completed, full warm lights** temporarily previews brighter illumination;
-ordinary dates and **Natural calendar** clear it. It has no production setting
+ordinary dates and **World → Return to live simulation** clear it. It has no production setting
 or automatic evening trigger. Existing date/time controls allow other samples.
 January shortcuts use the real deck lifecycle rather than forcing a future-year
 deck installation over cleanup.
@@ -118,7 +121,8 @@ Review on October 31, 2026:
 
 ## Later phases
 
-Pip decorating or lighting candles, the Christmas Eve evening lighting ceremony,
+Pip's tree and wrapped-present activities are implemented in
+[Phase 2A](advent-decorating-phase2a.md). Lighting candles, the Christmas Eve evening lighting ceremony,
 the approaching visitor, the Christmas Day gathering, gift opening and its
 persistent aftermath remain future work. There are no opened gift variants or
 Christmas story records in this phase. See the [planning document](advent-christmas-story-planning.md).

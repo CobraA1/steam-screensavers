@@ -85,14 +85,14 @@ This also adds tree-stage, gift-count, illumination and January cleanup previews
 
 ## Preview
 
-Open **Thanksgiving & Advent** in the existing preview console:
+Choose these entries in the preview console's **Scenes** tab:
 
-- **Play gathering**, **Play farewells**, beat selection, and the 0–120-second scrubber.
+- **Stories → Thanksgiving gathering** or **Thanksgiving farewells**, with beat selection and the 0–120-second scrubber.
 - Preparations, gathering decorations, Advent transition, each Advent Sunday,
   Christmas Eve (five candles), Christmas Day (five), and the twelfth day.
 - 2026 (3-day gap) and 2028 (10-day gap) date buttons. Future-year tests temporarily
-  assemble the deck solely for previewing the reusable calendar rules.
-- **Natural calendar** clears these overrides and returns to actual world time.
+  assemble the deck solely for previewing the reusable calendar rules. Find these under **Seasonal Scenes → Thanksgiving and Advent calendar**.
+- **World → Return to live simulation** clears the overrides and returns to actual world time.
 
 These controls never write narrative checkpoints. Other story/cargo previews
 take precedence when selected. Production never imports this preview module or

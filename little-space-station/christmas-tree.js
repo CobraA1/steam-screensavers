@@ -1,6 +1,25 @@
 // Small, read-only scenery calendar. No inventory, story progress or storage.
 const DAY = 86_400_000;
 export const CHRISTMAS_TREE_POSITION = Object.freeze([-6.6, -0.43, 0.65]);
+export const TREE_LAYERS = Object.freeze([
+  { radius: .49, height: .6, y: .54 }, { radius: .37, height: .55, y: .86 }, { radius: .25, height: .5, y: 1.12 },
+]);
+export function TreeRadiusAt(y) {
+  let radius = 0;
+  for (const layer of TREE_LAYERS) {
+    const bottom=layer.y-layer.height/2,top=layer.y+layer.height/2;
+    if(y>=bottom&&y<=top)radius=Math.max(radius,layer.radius*(top-y)/layer.height);
+  }
+  return radius;
+}
+export function TreeOrnamentPosition(i) {
+  const y=[.37,.7,1][i%3]+Math.sin(i*2.1)*.025,angle=i*2.39996,r=TreeRadiusAt(y)+.033;
+  return [Math.cos(angle)*r,y,Math.sin(angle)*r];
+}
+export function TreeGarlandPoint(band, fraction=1) {
+  const f=(band+fraction)/3,y=.33+.93*f,angle=f*Math.PI*6+.3,r=TreeRadiusAt(y)+.025;
+  return [Math.cos(angle)*r,y,Math.sin(angle)*r];
+}
 export const CHRISTMAS_PRESENTS = Object.freeze([
   { id: 'blue-long-parcel', size: [.34, .19, .22], position: [-5.38, -.43, .73], color: 0x355c7c, ribbon: 0xd8b66c },
   { id: 'ivory-square-box', size: [.27, .25, .27], position: [-6.05, -.43, 1.38], color: 0xe3dcc1, ribbon: 0x426787 },

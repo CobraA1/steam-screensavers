@@ -18,13 +18,13 @@ For changes to **3D object placement, dimensions, orientation, geometry, attachm
 3. **Front orthographic** (station-local +X, facing the docking end): radial clearances around the dock, depth/width offsets, hand-to-prop reach, and hidden intersections.
 4. **Side orthographic** (station-local +Z, looking across the station's long axis): heights, deck contact, front/rear separation, docking approaches, attachments, and movement through structures.
 
-Switch among them with **Preview mode → Camera experiment → View**. An orbiting perspective view is not a substitute for a true orthographic projection. The three inspection cameras are preview-only: production perspective remains the visual/storytelling authority.
+Switch among them using **Perspective**, **Top**, **Front**, and **Side** in the preview console. If the station obscures the subject, also inspect **Bottom** (station-local −Y), **Back** (−X), or **Other side** (−Z), as needed to see the contact or clearance. These complementary views supplement the required defaults rather than replacing them. The planet is hidden in the Other side view because it would otherwise block the station. All six orthographic views are also under **World → Camera experiment**. An orbiting perspective view is not a substitute for a true orthographic projection. These inspection cameras are preview-only: production perspective remains the visual/storytelling authority.
 
 For animations, examine **setup, contact, transfer/release, reaction, and exit**, intermediate travel, and both sides of relevant beat boundaries at matching timestamps in all four views. For static objects, check the assembled placement and neighboring surfaces. Where practical, pair screenshot evidence with world-space anchor/distance assertions; one camera angle can conceal a geometry error.
 
 **Dream presentation exception:** The miniature memory scenes shown in Pip's thought bubbles, including their actor choreography and whole-bubble fades, are **exempt** from the top/front/side orthographic checks. These are intentionally camera-facing, composed presentations. Instead, review both dreams in their normal production perspective at their key beats, fade boundaries, and supported viewport sizes, with playback and deterministic forward/backward scrubbing. The **live-world** antenna and Phantom Visitor incidents, physical station objects, docking, and other 3D motion still require all four views.
 
-Report which views, states, and screenshots were actually inspected. If a required orthographic inspection could not be done, disclose the gap and residual risk rather than claiming complete verification. Purely 2D overlay, text-only, or documentation changes may omit the extra views with a brief justification.
+Report which views, states, and screenshots were actually inspected, including any additional angles used to resolve occlusion. If a required orthographic inspection could not be done, disclose the gap and residual risk rather than claiming complete verification. Purely 2D overlay, text-only, or documentation changes may omit the extra views with a brief justification.
 
 ## Shared miniature character quality
 

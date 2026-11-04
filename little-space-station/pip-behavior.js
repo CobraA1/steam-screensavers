@@ -3,6 +3,7 @@ function Clamp01(value) {
 }
 
 export const PIP_TASK_STAGES = Object.freeze({
+  'advent-decorating': Object.freeze(['notice','approach','collect','carry','attach','straighten','release','inspect','return']),
   standby: Object.freeze(["standby"]),
   charging: Object.freeze(["settle-charge", "charging"]),
   "dream-antenna": Object.freeze(["dream-antenna"]),

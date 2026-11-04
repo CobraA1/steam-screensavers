@@ -11,6 +11,7 @@ Before changing the corresponding systems, read the applicable expectations:
 - [Dream and memory expectations](little-space-station/docs/expectations/dream-expectations.md): faithful completed memories, readable miniature actors, bubble framing, identity retention, and isolation from live world state.
 
 These supplement the original story briefs. Changes spanning live stories and their dream adaptations must be checked in both presentations.
+Use the additional bottom, back, and other-side orthographic views when an object or action is obscured from the default inspection angles.
 
 The [Thanksgiving and Advent implementation guide](little-space-station/docs/thanksgiving-advent.md)
 documents the reusable UTC holiday rules, 2026-only gathering, shared drone

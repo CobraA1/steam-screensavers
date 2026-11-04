@@ -11,11 +11,15 @@ Advent now adds a modular evergreen, gradual garland/lights and blue/gold/ivory
 ornaments, a gold star, and five identifiable wrapped presents. Everything is
 ready by December 23; gifts remain wrapped through Christmas in this phase.
 See the [Phase 1 guide](docs/advent-tree-phase1.md) for dates, placement and preview
-controls. Decorating choreography, an evening lighting ceremony, a possible
-returning visitor, and the Christmas gift-opening gathering remain future work
+controls. [Phase 2A](docs/advent-decorating-phase2a.md) adds Pip's section checks,
+strand adjustments, ornament and star placement, wrapped-present carrying, and
+quiet final inspection. Preview every activity with playback, beat selection
+and scrubbing under **Scenes → Pip Activities → Advent decorating**. Candle-lighting choreography,
+an evening lighting ceremony, a possible returning visitor, and the Christmas
+gift-opening gathering remain future work
 in the [Advent/Christmas planning notes](docs/advent-christmas-story-planning.md).
 
-The Phantom Visitor uses `phantom-choreography.js` for continuous cover/drone paths and shared target orientation. Pip reaches the cloth with the existing two-joint arm rig; both live and miniature covers have connected, downward-flared skirts. The 68-second live story now finishes its exit after committing the final payoff. Its dream retains the original memory identity/year/outcome, brings miniature Pip into contact with the cover, fades the departing drone independently, and preserves the empty-cover joke. Preview it under **Story · Phantom Visitor** (beat/point or **Force / play**) and **Pip recharge & memory → Show Phantom dream** (whole-dream scrubber).
+The Phantom Visitor uses `phantom-choreography.js` for continuous cover/drone paths and shared target orientation. Pip reaches the cloth with the existing two-joint arm rig; both live and miniature covers have connected, downward-flared skirts. The 68-second live story now finishes its exit after committing the final payoff. Its dream retains the original memory identity/year/outcome, brings miniature Pip into contact with the cover, fades the departing drone independently, and preserves the empty-cover joke. Preview it under **Scenes → Stories → Phantom Visitor** and **Scenes → Dreams → Phantom Visitor dream**.
 
 A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a small retro-futuristic station above a procedural planet. Production launches contain no controls or input listeners.
 
@@ -29,7 +33,7 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `environment.js` derives illumination, rotation, and seasons; `environment-renderer.js` maps that state onto existing lights and materials.
 - `planet-geography.js` generates seeded, fixed continental silhouettes in planet-local coordinates; `scene.js` assigns per-face seasonal colors and integrates snow onto land.
 - `scene.js` builds the Three.js diorama and visualizes simulation state.
-- `camera-framing.js` owns the 140% production view and the preview framing comparison controls, including preview-only station-axis top (+Y), front (+X) and side (+Z) orthographic inspection.
+- `camera-framing.js` owns the 140% production view and preview-only station-axis orthographic inspection from all six directions.
 - `expansion-preview.js` builds lightweight wireframe layout studies; it is reachable only through the dynamically loaded preview tools.
 - `pip-behavior.js`, `pip-animation.js`, and `station-details.js` map deterministic task stages to Pip's poses, equipment work, and physically attached cargo handling.
 - `autumn-2026.js` derives the 2026 calendar, seasonal cargo manifests, decorations, installations, oddities, and cleanup without persisting routine state.
@@ -43,7 +47,7 @@ No network connection, package installation, or build step is required.
 
 ## Multi-view placement and animation review
 
-Before accepting a 3D placement, attachment, movement or manipulation change, use **Camera experiment → View** in preview to compare **Station overview** with **Top orthographic**, **Front orthographic** and **Side orthographic**. The station-local orthographic views expose hidden depth gaps, collisions, clearance problems and missed hand-to-prop contact. They are diagnostic only; production retains the original perspective. See the [mandatory multi-view review procedure](docs/expectations/animation-expectations.md#mandatory-multi-view-3d-inspection).
+Before accepting a 3D placement, attachment, movement or manipulation change, use the **Perspective**, **Top**, **Front**, and **Side** shortcuts in preview. When the station blocks an action, also use **Bottom**, **Back**, or **Other side** to inspect it from the opposite direction. The station-local orthographic views expose hidden depth gaps, collisions, clearance problems and missed hand-to-prop contact. They are diagnostic only; production retains the original perspective. See the [mandatory multi-view review procedure](docs/expectations/animation-expectations.md#mandatory-multi-view-3d-inspection).
 
 ## Project expectations
 
@@ -89,7 +93,7 @@ and a front power socket while retaining its existing charging-light behavior.
 
 Roof-equipment regression tests sample all three antenna gesture variants,
 travel/recoil/return, tool contact, head/body clearance, beat boundaries, and
-reverse seeking. Review these together in **Camera experiment → View** using
+reverse seeking. Review these together using the preview camera shortcuts for
 the overview and all three orthographic views after changing roof geometry.
 
 Pip is a compact articulated robot with a teal body, cream head, luminous visor, chest indicator, elbow joints, and a wrist-mounted maintenance tool. Its pose vocabulary distinguishes curiosity, fault recognition, tool preparation, light repair, antenna manipulation, cargo grasp/carry/stow, verification, and a short satisfied reaction. Infrequent idle looks and seeded task variations add personality without continuous motion. Cargo follows a grip point on Pip while carried rather than moving on an unrelated path.
@@ -126,7 +130,7 @@ Deck assembly is calendar-derived rather than persisted. **Installation occupies
 
 `service-deck-lifecycle.js` still divides each transition into six ordered stages: coupling, supports, floor, cabin, railings, and lighting. Each stage spans four hours at the 24-hour default. **The rigid part actually moves only during a short lift around 40% into its stage (about 2.4 minutes at real pace),** and is fully seated or entirely absent during intervening quiet periods. Survey drones visit beforehand, leave, return for a fastening shift during installation (or to unfasten a part before removal), then come back to inspect. Several hours of the day remain quiet; construction is not a continuous stream of flying parts. Removal uses the reverse order: lighting, railings, cabin, floor, supports, coupling. Existing lights power up last and down first. The completed module remains available for decoration only when the installation has ended. Individual part transforms, riggers, and work-shift selection are derived directly from the world timestamp.
 
-In preview, expand **Seasonal Events · 2026 Story Year** and choose **Install module** or **Remove module**. Playback defaults to 240× (six minutes for the full 24-hour sequence); choose real pace, 60× (24 minutes), or 1440× (one minute) using **Assembly preview speed**. Global simulation speed also multiplies preview playback. **Module sequence point** scrubs the entire day. **Module work stage**, **Work moment**, and **Jump to work stage** navigate directly to any part delivery, survey, fastening, inspection, or quiet period without waiting. **Play / pause module** resumes the playback; **Follow deck calendar** returns to natural world time. All preview overrides are read-only and never commit assembly state to storage.
+In preview, choose **Station Assembly → Install Commons Deck** or **Remove Commons Deck**. Playback defaults to 240× (six minutes for the full 24-hour sequence); choose real pace, 60× (24 minutes), or 1440× (one minute) using **Assembly preview speed**. Global simulation speed also multiplies preview playback. **Module sequence point** scrubs the entire day. **Module work stage**, **Work moment**, and **Jump to work stage** navigate directly to any part delivery, survey, fastening, inspection, or quiet period without waiting. The shared playback controls pause, resume, or stop the sequence. All preview overrides are read-only and never commit assembly state to storage.
 
 Halloween preparations include a marked crate, jack-o'-lantern, orange/purple lights, a tethered ghost pennant, and an occasional cap for Pip. Four rare deterministic ambient oddities can briefly appear without persistence: a distant light, crossing shadow, shifted decoration, or harmless equipment flicker. Halloween cleanup is derived from the date and cannot strand stale props after an absence.
 
@@ -148,23 +152,16 @@ From the screensavers directory, run:
 python3 screensaver-preview.py
 ```
 
-Select **The Little Space Station**. Both preview choices add `?preview=1`, which loads a development console in the upper-right corner. It can:
+Select **The Little Space Station**. Both preview choices add `?preview=1`, which opens the console in the upper-right corner.
 
-- Follow the natural schedule or immediately force a cargo, courier, survey, or ambient-only scenario.
-- Use **Full screen** in the preview-console header to enter or leave browser fullscreen while inspecting the scene. Header actions use a separate row so they remain readable in the compact collapsed console.
-- Jump to an event phase, set a seed or date, or jump the world clock by an hour, day, or week.
-- Pause, resume, restart, single-step, or run at 1×, 5×, 20×, or 100× speed.
-- Simulate interruption, unavailable storage, explicit commits, and clearing this screensaver's narrative record.
-- Show visit identity and purpose, next arrival, departure time, Pip task/stage, equipment state, last activity, checkpoint, storage, and frame rate.
-- Expand **Environment** to inspect illumination, rotation, and season or temporarily force daylight, sunset, shadow, sunrise, spring, summer, autumn, or winter.
-- Expand **Planet inspection** in `?preview=1` to switch to a planet-only camera and scrub **Rotation day** from 00:00 to 24:00 (one complete turn). The scrub changes only the globe’s visual rotation; it does not jump world time, alter traffic, move Pip, change season, or persist anything. **Follow world rotation** returns to the normal absolute-time planet angle, and **Return to station** restores the previous camera mode. The planet close-up is also available in **Camera experiment → View**. None of these controls or additional camera objects are created in production.
-- Expand **Pip animation** to force a task and stage, scrub within that stage, choose a seeded gesture style, and inspect the resolved pose and reaction. **Follow simulation** removes the temporary override.
-- Expand **Pip recharge & memory** and click **Show antenna dream** to play the complete memory. **Dream point** scrubs and holds any moment; the main Pause, Speed, and Step controls also work during playback. Preview uses a saved antenna memory when available, otherwise a clearly identified temporary example; neither writes story history. **Follow rhythm** removes the temporary preview and any projection.
-- Expand **Seasonal Events · 2026 Story Year** to force fall/Halloween/remembrance cargo, decoration stages, installation, oddities, or cleanup; jump to **Before**, September 22, October 24, October 31, November 1, November 4, January 6, or **Reset**; and inspect service-deck status, phase, holiday, shipments, package contents, installed props, and story records. January 6 shows the cleared module alone; Reset crosses the January 7 renewal boundary.
-- Expand **Story · Phantom Visitor** or **Story · Lights of Remembrance** to select a seeded gesture variant, scrub any beat, or play the full incident. Forced and scrubbed previews are temporary. The separately labeled checkpoint buttons are the only seasonal preview actions that write, resume, or clear saved story state.
-- **Pip recharge & memory** also has **Show Phantom dream**. It uses a completed saved Phantom memory when available or an explicitly temporary example, and remains read-only.
-- Expand **Camera experiment** to compare Original (100%), Slightly closer (115%), Closer (125%), and Very close (140%) framing, or switch manually between station overview and a smooth Pip-centered activity focus. **Reset original overview** restores the baseline without resetting the simulation.
-- Expand **Station expansion** to compare the current station with moderate (three additions) and developed (six additions) translucent wireframe studies, or hide the studies without changing the selected layout.
+- **Scenes** searches and plays visits, stories, Pip activities, seasonal scenes, dreams, and deck assembly. Choosing a scene starts it; beat selection and scrubbing pause it. Use the shared playback controls to resume, restart, stop, step, or change speed. Pip's pose inspector is a still pose rather than a timed scene.
+- **World** contains the UTC date and time, environment, planet, camera, and expansion controls. Planet rotation changes only the globe's appearance. **Return to live simulation** clears temporary overrides and restores the natural schedule and production framing.
+- **Inspect** contains live diagnostics, seed selection, simulated interruption, and saved-data controls. Commits and deletion ask for confirmation; ordinary previews do not save story progress.
+- Use the camera shortcuts above the tabs for the perspective and six orthographic views. Top/front/side are the default inspection angles; bottom/back/other side help when something is hidden. **Full screen** is available in the header. **Collapse** leaves a small playback strip without changing the scene or its framing.
+
+Dreams use an eligible saved memory when available, otherwise a temporary example. Calendar presets reconstruct their date directly. Deck installation and removal retain their separate assembly speed and work-stage controls.
+
+When adding a preview, register a scene and its supported playback adapter in `preview-console.js`, and place its controls in the scene's settings panel. Reuse the existing timeline and domain preview methods; do not add production input listeners or write narrative history from a temporary preview.
 
 The console and all of its input listeners are created only in preview mode. An ordinary Steam launch stays passive.
 
@@ -217,7 +214,7 @@ Manual browser checks to perform on the Deck:
 7. Launch without `?preview=1` and confirm there are no visible controls or production input listeners.
 8. Force full sunlight, sunset, deep shadow, and sunrise; confirm transitions are attractive, station geometry remains readable, and artificial lights do not overexpose.
 9. Force all four seasons and use month-scale date jumps; confirm tint, atmosphere, polar cap, and light angle change without disturbing ship or Pip state.
-10. At 1280×800, expand **Pip animation** and inspect standby, observe, notice, travel, inspect, prepare-tool, work, verify, react-success, and return. Confirm Pip's face and task remain readable from several feet away.
+10. At 1280×800, choose **Pip Activities → Pip pose inspector** and inspect standby, observe, notice, travel, inspect, prepare-tool, work, verify, react-success, and return. Confirm Pip's face and task remain readable from several feet away.
 11. Compare light repair, antenna adjustment, routine inspection, and cargo transfer. Confirm their arm/head poses are visibly different, the tool stays connected to the wrist, and Pip faces the relevant equipment.
 12. Scrub cargo through retrieve, deliver, and stow. Confirm the container moves into Pip's grip, follows Pip without sliding, reaches the hatch, and does not pass through the robot's torso.
 13. Test the **Clumsy / startled** gesture during a light-repair notice and all gesture styles during react-success; confirm reactions remain brief and contextual.
@@ -234,7 +231,7 @@ Manual browser checks to perform on the Deck:
 24. Complete a Phantom preview only through the explicit checkpoint control, then show its dream after Halloween cleanup. Confirm the miniature remains recognizable and neither traffic, equipment, nor completion records change during playback.
 25. Force the Lights of Remembrance in sunlight and deep shadow at both target resolutions. Confirm the blue/gold fixture, five lamps, Pip's activation, prolonged stillness, and quiet return remain visible without Halloween lighting competing for attention.
 26. Compare Local Storage before and after forced seasonal scenes, scrubbing, dates, and dreams. Confirm it remains byte-for-byte unchanged until an explicit commit or clear action is used.
-27. In **Seasonal Events · 2026 Story Year**, compare **Before**, September 22, January 6, and **Reset**. Use **Install module** and **Remove module** to play or scrub all six construction stages. Confirm assemblies lift clear of the cabin before departing, props wait until completion, backward seeks restore the correct parts, and returning to the calendar discards the preview. January 6 starts removal; Reset shows the module gone.
+27. In **Seasonal Scenes → Autumn scenery and activities**, compare **Before**, September 22, January 6, and **Reset**. Use **Station Assembly → Install Commons Deck** and **Remove Commons Deck** to play or scrub all six construction stages. Confirm assemblies lift clear of the cabin before departing, props wait until completion, backward seeks restore the correct parts, and returning to the calendar discards the preview. January 6 starts removal; Reset shows the module gone.
 28. At 1280×800 and 1920×1080, inspect the empty module, fall decorations, full Halloween, and the active Lights of Remembrance stillness beat. Confirm the cabin and deck are readable, props rest on deck/cabin anchors, Pip stands naturally on the platform, and railings do not obscure the memorial.
 29. Force every visitor while the module is present. Confirm the aft attachment and seasonal props never enter the existing front-dock approach, service, backing, rotation, or departure path.
 

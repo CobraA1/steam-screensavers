@@ -1278,8 +1278,17 @@ export class LittleSpaceStationScene {
       }
       return;
     }
-    this.dreamCompositor.prepare(this.renderer, this.cameraFraming.getActiveCamera(), this.dreamVisuals);
-    this.renderer.render(this.scene, this.cameraFraming.getActiveCamera());
+    // The globe is in front of the station from −Z. Hide it only during this
+    // diagnostic render, and restore its live state for every other view.
+    const hidePlanet = this.cameraFraming.preview && this.cameraFraming.mode === "other-side";
+    const planetVisible = this.planet.visible;
+    if (hidePlanet) this.planet.visible = false;
+    try {
+      this.dreamCompositor.prepare(this.renderer, this.cameraFraming.getActiveCamera(), this.dreamVisuals);
+      this.renderer.render(this.scene, this.cameraFraming.getActiveCamera());
+    } finally {
+      if (hidePlanet) this.planet.visible = planetVisible;
+    }
   }
 
   setPlanetRotationPreview(phase) {

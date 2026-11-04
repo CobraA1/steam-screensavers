@@ -1,5 +1,6 @@
 import USER_CONFIG from "./config.js";
 import { HolidayRuntime, ApplyThanksgiving } from './holiday-runtime.js';
+import { AdventActivityDirector, AdventActivityTimeline, ApplyAdventActivity, ADVENT_ACTIVITY_SECONDS } from './advent-activities.js';
 import { LittleSpaceStationScene } from "./scene.js";
 import { CreateWorldIdentity } from "./world.js";
 import { EventDirector } from "./simulation-world.js";
@@ -68,6 +69,7 @@ let phantomDirector;
 let remembranceDirector;
 let previewTools;
 let holidayRuntime;
+let adventDirector;
 let lastFrame;
 
 function Log(message) { if (IS_PREVIEW) { runtime.logs.unshift({ at: new Date().toISOString(), message }); runtime.logs.length = 32; } }
@@ -115,6 +117,7 @@ function RunFrame(currentTime) {
   eventState.storyIncident = null;
   eventState.phantomVisitor = null;
   eventState.remembrance = null;
+  eventState.adventActivity = null;
   if (IS_PREVIEW && runtime.deckPreview && runtime.deckPreview.playing) {
     runtime.deckPreview.progress = Math.min(1, runtime.deckPreview.progress + stepSeconds / runtime.deckPreview.durationSeconds);
     if (runtime.deckPreview.progress >= 1) runtime.deckPreview.playing = false;
@@ -282,6 +285,19 @@ function RunFrame(currentTime) {
     }
   }
   ApplyThanksgiving(eventState);
+  const adventBlocked=Boolean(thanksgivingActive||eventState.storyIncident||eventState.phantomVisitor||eventState.remembrance||
+    runtime.incidentPlayback||runtime.phantomPlayback||runtime.remembrancePlayback||runtime.dreamPlayback||
+    (!IS_PREVIEW&&(runtime.incidentRecord?.milestone<STUBBORN_ANTENNA_MILESTONES['repair-presented']||
+      runtime.phantomRecord?.milestone<PHANTOM_VISITOR_MILESTONES['story-complete']||
+      runtime.remembranceRecord?.milestone<REMEMBRANCE_MILESTONES['observance-complete'])));
+  if(IS_PREVIEW&&runtime.adventPreview) {
+    if(adventBlocked||runtime.pipOverride||runtime.restPreview||eventState.phase!=='quiet'||eventState.shipVisible||eventState.visitId||runtime.seasonalPreview!=='natural')runtime.adventPreview=null;
+    else {
+      const p=runtime.adventPreview;
+      if(p.playing){p.elapsed=Math.min(ADVENT_ACTIVITY_SECONDS,p.elapsed+stepSeconds);if(p.elapsed>=ADVENT_ACTIVITY_SECONDS)p.playing=false;}
+      ApplyAdventActivity(eventState,{...p,...AdventActivityTimeline(p.elapsed)});
+    }
+  } else if(!IS_PREVIEW)ApplyAdventActivity(eventState,adventDirector.update(eventState,clock.worldTimeMs,adventBlocked||director.isForcedScenario()));
   const recharge = ResolvePipRecharge(CONFIG.worldSeed, clock.worldTimeMs, CONFIG.pipRhythm);
   const incompleteIncident = thanksgivingActive || runtime.incidentPlayback || runtime.phantomPlayback || runtime.remembrancePlayback ||
     (runtime.incidentRecord && runtime.incidentRecord.milestone < STUBBORN_ANTENNA_MILESTONES["repair-presented"]) ||
@@ -373,6 +389,7 @@ function Init() {
     runtime.snapshot = Snapshot;
     runtime.seed = CONFIG.worldSeed;
     director = new EventDirector(CONFIG, { onTransition: ({ state }) => Log("checkpoint " + state.checkpoint + " / " + state.lifecycle) });
+    adventDirector = new AdventActivityDirector(CONFIG,director.scheduler);
     stationScene = new LittleSpaceStationScene(canvas, CONFIG, identity, { preview: IS_PREVIEW });
     if (CONFIG.debug || IS_PREVIEW) console.info("[Little Space Station] identity", identity);
     LoadPreviewTools();

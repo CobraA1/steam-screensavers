@@ -3,6 +3,7 @@ import { BuildInspectionDrone } from './phantom-renderer.js';
 import { BuildConstructionDrone } from './seasonal-service-deck.js';
 import { ThanksgivingActors, Ease } from './thanksgiving.js';
 import { ChristmasTreeVisual } from './christmas-tree-renderer.js';
+import { AdventActivityVisual } from './advent-activity-renderer.js';
 
 const material=(color,emissive=0)=>new THREE.MeshStandardMaterial({color,emissive,
   emissiveIntensity:1,roughness:.7,metalness:.12,flatShading:true});
@@ -16,20 +17,22 @@ function cylinder(root,radius,height,position,mat) {
 }
 
 // Fixed-length two-link reach, authored in station space. No physics state.
-export function HolidayReach(scene,arm,target,weight) {
+export function HolidayReach(scene,arm,target,weight,tool=false,elbowArc=0) {
   if(weight<=0)return;
   const s=scene.holidayReachScratch ||= {target:new THREE.Vector3(),direction:new THREE.Vector3(),bend:new THREE.Vector3(),
-    upper:new THREE.Vector3(),lower:new THREE.Vector3(),base:new THREE.Vector3(),q:new THREE.Quaternion(),e:new THREE.Quaternion(),inv:new THREE.Quaternion()};
+    upper:new THREE.Vector3(),lower:new THREE.Vector3(),base:new THREE.Vector3(),tip:new THREE.Vector3(),q:new THREE.Quaternion(),e:new THREE.Quaternion(),inv:new THREE.Quaternion()};
   s.target.fromArray(target);scene.station.localToWorld(s.target);scene.robot.worldToLocal(s.target);s.target.sub(arm.shoulder.position);
-  const a=arm.elbow.position.length(),b=arm.hand.position.length();
-  const distance=Math.max(.001,Math.min(a+b-.0001,s.target.length()));
+  s.tip.copy(arm.hand.position);if(tool)s.tip.add(scene.robotToolGlow.position);
+  const a=arm.elbow.position.length(),b=s.tip.length();
+  const distance=Math.max(tool?Math.abs(a-b)+.0001:.001,Math.min(a+b-.0001,s.target.length()));
   s.direction.copy(s.target).normalize();s.target.copy(s.direction).multiplyScalar(distance);
   const along=(a*a-b*b+distance*distance)/(2*distance);
   s.bend.set(0,-1,0).addScaledVector(s.direction,s.direction.y).normalize();
+  if(elbowArc)s.bend.applyAxisAngle(s.direction,elbowArc);
   s.upper.copy(s.direction).multiplyScalar(along).addScaledVector(s.bend,Math.sqrt(Math.max(0,a*a-along*along)));
   s.q.setFromUnitVectors(s.base.copy(arm.elbow.position).normalize(),s.lower.copy(s.upper).normalize());
   s.lower.copy(s.target).sub(s.upper).applyQuaternion(s.inv.copy(s.q).invert()).normalize();
-  s.e.setFromUnitVectors(s.base.copy(arm.hand.position).normalize(),s.lower);
+  s.e.setFromUnitVectors(s.base.copy(s.tip).normalize(),s.lower);
   arm.shoulder.quaternion.slerp(s.q,weight);arm.elbow.quaternion.slerp(s.e,weight);
 }
 export class HolidayVisual {
@@ -37,6 +40,7 @@ export class HolidayVisual {
     this.scene=scene;
     this.root=new THREE.Group(); this.root.name='thanksgiving-advent'; scene.station.add(this.root);
     this.christmasTree = new ChristmasTreeVisual(this.root);
+    this.decorating = new AdventActivityVisual(scene,this.christmasTree);
     const blue=material(0x305674),gold=material(0xc59b51),teal=material(0x28565a),cream=material(0xd5caa8);
     const glow=material(0xffd18a,0xe5993d);
     this.table=new THREE.Group(); this.table.position.set(-5.35,0,2.02); this.root.add(this.table);
@@ -91,6 +95,7 @@ export class HolidayVisual {
   update(state) {
     const h=state.holiday,story=state.thanksgiving;
     this.christmasTree.update(h?.tree, state.seasonal?.serviceDeck?.ready, story, h?.treeFullLight);
+    this.decorating.update(state,HolidayReach);
     this.root.visible=Boolean(h && state.seasonal?.serviceDeck?.ready && (h.gathering||h.adventWeek||h.christmasHandoff||story));
     if(!this.root.visible)return;
     this.construction.visible=this.inspection.visible=Boolean(story);

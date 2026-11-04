@@ -1,7 +1,7 @@
 # The Little Space Station — Advent 2026 and Christmas story planning
 
-**Status:** Working creative design, started October 22 and updated October 31, 2026. The tree and Christmas Day gift-gathering requirements below are agreed direction; the arriving visitor and full Christmas storyline remain undecided.
-This document separates existing production behavior, approved seasonal design, and tentative story ideas. **Phase 1 tree/present scenery, calendar stages and preview tools are now implemented**; see the [implementation guide](advent-tree-phase1.md). Character activities and the Christmas story remain future work.
+**Status:** Working creative design, started October 22 and updated November 3, 2026. The tree and Christmas Day gift-gathering requirements below are agreed direction; the arriving visitor and full Christmas storyline remain undecided.
+This document separates existing production behavior, approved seasonal design, and tentative story ideas. **Phase 1 tree/present scenery and Phase 2A tree-decorating/wrapped-present activities are implemented**; see the [scenery guide](advent-tree-phase1.md) and [activity guide](advent-decorating-phase2a.md). Candle-lighting choreography and the Christmas story remain future work.
 
 Related references:
 - [Thanksgiving and Advent implementation](thanksgiving-advent.md) — what is already coded, including preview controls and the existing wreath.
@@ -16,7 +16,8 @@ Related references:
 - The wreath has four outer candles (three blue and the third rose) and a taller central white Christ candle.
 - The four outer lights accumulate on the Sundays of Advent. The Christ candle currently lights at **00:00 UTC on December 24**, remaining with the other four through January 5; the display clears for the January 6–7 deck dismantling.
 - The three-section evergreen and five wrapped gifts now reconstruct through gradual Advent stages, finish December 23, and clear January 6. They remain wrapped on Christmas Day pending the later story.
-- There is no Advent-specific Pip lighting/decorating choreography, multi-week narrative, Christmas arrival, or gift-opening gathering yet. Brighter tree illumination is preview-only.
+- Phase 2A adds optional section checks, strand adjustments, two ornament installations, star placement using Pip's hover and wrist clamp, five parcel-placement opportunities, and a final inspection. Absolute safe windows preserve quiet periods; missed actions do not delay calendar scenery or fabricate completion records.
+- There is no candle-lighting choreography, multi-week narrative, Christmas arrival, or gift-opening gathering yet. Brighter tree illumination is preview-only.
 
 **Do not conflate these implemented features with the proposals below.** In particular, a future Christmas Eve evening tree-lighting presentation does not currently change the wreath's existing UTC candle schedule.
 
@@ -118,14 +119,14 @@ A viewer should be able to miss individual Sundays and still understand the scen
 
 ## 7. Practical implementation boundaries (for later)
 
-Phase 1 was subsequently authorized and implemented. The remaining phases below
-are planning only; the visitor, Christmas story and opening choreography still
+Phases 1 and 2A were subsequently authorized and implemented. The remaining phases below
+are planning only; candle activities, the visitor, Christmas story and opening choreography still
 need their own assignments.
 
 When ready, prefer small, independently reviewable assignments rather than a single expensive Codex session:
 
 1. **Tree, wrapped gifts, and deck staging — implemented:** Three modular evergreen sections, five stable wrapped gifts, gradual calendar decoration, supply cartons on existing freight visits, coherent aft deck extension, and date/lighting/cleanup previews. No opened prototypes or group-opening story were added. See [Phase 1](advent-tree-phase1.md).
-2. **Advent actions:** Add Pip's opening setup, brief weekly candle-lighting/decoration activities, and restrained seasonal color/light progression; preserve the existing wreath calendar.
+2. **Advent actions — partially implemented:** Phase 2A implements tree fitting/decorating, wrapped-present carrying and final inspection. See [Phase 2A](advent-decorating-phase2a.md). Weekly candle-lighting and the Christmas Eve evening lighting ceremony still need separate assignments; the existing wreath calendar is unchanged.
 3. **Narrative foreshadowing:** Only after deciding who or what is approaching, implement subtle seeded light/signal beats and their opportunity windows.
 4. **Christmas Day gathering:** Implement the actual group-opening story with shared character choreography, personalized gifts, presentation checkpoints, opened aftermath, optional visitor/homecoming payoff, and graceful expiry. Handle the Christmas Eve evening illumination and January cleanup compatibly.
 

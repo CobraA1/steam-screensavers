@@ -164,7 +164,7 @@ function ServiceTask(event, progress) {
   };
 }
 
-function MaintenanceState(worldSeed, worldTimeMs, settings = {}) {
+export function MaintenanceState(worldSeed, worldTimeMs, settings = {}) {
   const config = MixSettings(DEFAULT_MAINTENANCE, settings);
   const slotMs = config.slotMinutes * MINUTE_MS;
   const slot = Math.floor(worldTimeMs / slotMs);
