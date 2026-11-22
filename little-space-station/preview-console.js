@@ -2,6 +2,8 @@ import { CreatePreviewController } from './preview-controller.js';
 import { STUBBORN_ANTENNA_BEATS, STUBBORN_ANTENNA_TOTAL_SECONDS, ResolveStubbornAntennaTimeline, CreateStubbornAntennaPreview } from './stubborn-antenna.js';
 import { PHANTOM_VISITOR_BEATS, PHANTOM_VISITOR_TOTAL_SECONDS, ResolvePhantomVisitorTimeline, CreatePhantomVisitorPreview } from './phantom-visitor.js';
 import { REMEMBRANCE_BEATS, REMEMBRANCE_TOTAL_SECONDS, ResolveRemembranceTimeline, CreateRemembrancePreview } from './lights-of-remembrance.js';
+import { WREATH_BEATS, WREATH_SECONDS, WreathCeremonySpec, WreathTimeline, WreathBeatStart, WreathLampState } from './advent-wreath.js';
+import { HolidayCalendar } from './holiday-calendar.js';
 
 const element = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -231,6 +233,47 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
     }
   });
   for (const control of [aBeat, aScrub]) control.addEventListener(control === aBeat ? 'change' : 'input', () => controller.pause());
+
+  const wreathWeek = element('select', 'preview-tools__select');
+  wreathWeek.setAttribute('aria-label', 'Advent wreath Sunday');
+  for(let i=0;i<4;i++) {
+    const spec=WreathCeremonySpec(i),option=element('option','',`${spec.label} · ${new Date(spec.date).toISOString().slice(0,10)}`);
+    option.value=String(i);wreathWeek.append(option);
+  }
+  const wreathBeat=element('select','preview-tools__select');wreathBeat.setAttribute('aria-label','Wreath ceremony beat');
+  for(const beat of WREATH_BEATS){const option=element('option','',beat.id);option.value=beat.id;wreathBeat.append(option);}
+  const wreathScrub=element('input','preview-tools__select');
+  wreathScrub.type='range';wreathScrub.min='0';wreathScrub.max=String(WREATH_SECONDS);wreathScrub.step='.01';
+  wreathScrub.setAttribute('aria-label','Wreath ceremony seconds');
+  const wreathReadout=element('output','preview-tools__hint');wreathReadout.setAttribute('aria-label','Wreath ceremony state');
+  const wreathPane=wrapper(field('Advent Sunday',wreathWeek),field('Beat',wreathBeat),field('Timeline (seconds)',wreathScrub),wreathReadout,
+    element('p','preview-tools__hint','Tool contact at 18 seconds meets Sunday 00:00 UTC. Seek either side to inspect the actual calendar flame.'));
+  function seekWreath(seconds) {
+    const p=runtime.wreathPreview;
+    if(!p)return;
+    p.elapsed=WreathTimeline(seconds).elapsed;runtime.clock.setWorldTime(p.start+p.elapsed*1000);controller.pause();
+  }
+  const wreathAdapters=[];
+  for(let i=0;i<4;i++) {
+    const spec=WreathCeremonySpec(i);
+    wreathAdapters.push(register('Pip Activities',`wreath-${i+1}`,`Wreath: ${spec.label}`,wreathPane,()=>{
+      wreathWeek.value=String(i);runtime.wreathPreview={...spec,elapsed:0,playing:true};runtime.clock.setWorldTime(spec.start);
+    },{
+      playback:()=>runtime.wreathPreview,
+      step:()=>seekWreath((runtime.wreathPreview?.elapsed||0)+1),
+      refresh:()=>{
+        const p=runtime.wreathPreview;if(!p)return;
+        const timeline=WreathTimeline(p.elapsed);
+        if(document.activeElement!==wreathScrub)wreathScrub.value=String(p.elapsed);
+        if(document.activeElement!==wreathBeat)wreathBeat.value=timeline.beat;
+        const lit=WreathLampState(HolidayCalendar(runtime.clock.worldTimeMs),p.week,p).lit;
+        wreathReadout.textContent=`${p.label} · ${timeline.beat} · ${p.elapsed.toFixed(2)} / ${WREATH_SECONDS} s · candle ${lit?'lit':'unlit'} · temporary`;
+      },
+    }));
+  }
+  wreathWeek.addEventListener('change',()=>{const adapter=wreathAdapters[Number(wreathWeek.value)];controller.select(adapter);selectDisplay(adapter);});
+  wreathBeat.addEventListener('change',()=>seekWreath(WreathBeatStart(wreathBeat.value)));
+  wreathScrub.addEventListener('input',()=>seekWreath(wreathScrub.value));
 
   const dreamBeat = element('select', 'preview-tools__select');
   dreamBeat.setAttribute('aria-label', 'Dream beat');

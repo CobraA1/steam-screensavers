@@ -1,6 +1,7 @@
 import USER_CONFIG from "./config.js";
 import { HolidayRuntime, ApplyThanksgiving } from './holiday-runtime.js';
 import { AdventActivityDirector, AdventActivityTimeline, ApplyAdventActivity, ADVENT_ACTIVITY_SECONDS } from './advent-activities.js';
+import { AdventWreathDirector, ApplyWreathCeremony, WreathTimeline, WREATH_SECONDS } from './advent-wreath.js';
 import { LittleSpaceStationScene } from "./scene.js";
 import { CreateWorldIdentity } from "./world.js";
 import { EventDirector } from "./simulation-world.js";
@@ -58,6 +59,7 @@ const runtime = {
   remembrancePreview: null,
   remembrancePlayback: null,
   remembranceRecord: null,
+  wreathPreview: null,
 };
 let stationScene;
 let director;
@@ -70,6 +72,7 @@ let remembranceDirector;
 let previewTools;
 let holidayRuntime;
 let adventDirector;
+let wreathDirector;
 let lastFrame;
 
 function Log(message) { if (IS_PREVIEW) { runtime.logs.unshift({ at: new Date().toISOString(), message }); runtime.logs.length = 32; } }
@@ -111,13 +114,22 @@ function RunFrame(currentTime) {
   }
 
   clock.advance(wallStep, stepSeconds, stepSeconds);
+  // In a forced ceremony, seeking moves the actual preview calendar as well
+  // as Pip. Before/after ignition therefore uses the production candle rules.
+  if(IS_PREVIEW&&runtime.wreathPreview) {
+    const p=runtime.wreathPreview;
+    if(p.playing){p.elapsed=Math.min(WREATH_SECONDS,p.elapsed+stepSeconds);if(p.elapsed>=WREATH_SECONDS)p.playing=false;}
+    clock.setWorldTime(p.start+p.elapsed*1000);
+  }
   const eventState = director.update(stepSeconds, clock.worldTimeMs);
+  const wreathWasActive = Boolean(eventState.wreathCeremony);
   // EventDirector reuses this object; a finished dream must not linger.
   eventState.dream = null;
   eventState.storyIncident = null;
   eventState.phantomVisitor = null;
   eventState.remembrance = null;
   eventState.adventActivity = null;
+  eventState.wreathCeremony = null;
   if (IS_PREVIEW && runtime.deckPreview && runtime.deckPreview.playing) {
     runtime.deckPreview.progress = Math.min(1, runtime.deckPreview.progress + stepSeconds / runtime.deckPreview.durationSeconds);
     if (runtime.deckPreview.progress >= 1) runtime.deckPreview.playing = false;
@@ -128,11 +140,11 @@ function RunFrame(currentTime) {
     deckPreview: IS_PREVIEW ? runtime.deckPreview : null,
   });
   ApplyAutumn2026State(eventState, seasonalState, CONFIG.worldSeed);
-  const thanksgivingActive = holidayRuntime.update(eventState, stepSeconds, clock.worldTimeMs, clock.presentationSeconds, director.isForcedScenario());
+  const thanksgivingActive = holidayRuntime.update(eventState, stepSeconds, clock.worldTimeMs, clock.presentationSeconds, director.isForcedScenario() || wreathWasActive);
   const completedStories = runtime.persistedNarrative && runtime.persistedNarrative.record && runtime.persistedNarrative.record.completedStories || [];
   eventState.remembranceCompleted = completedStories.some((entry) => entry.type === REMEMBRANCE_TYPE && entry.storyYear === 2026);
   const antennaIncompleteBeforeSelection = runtime.incidentPlayback || (runtime.incidentRecord && runtime.incidentRecord.milestone < STUBBORN_ANTENNA_MILESTONES["repair-presented"]);
-  if (!IS_PREVIEW && !thanksgivingActive && !runtime.phantomPlayback && !runtime.remembrancePlayback && !antennaIncompleteBeforeSelection) {
+  if (!IS_PREVIEW && !wreathWasActive && !thanksgivingActive && !runtime.phantomPlayback && !runtime.remembrancePlayback && !antennaIncompleteBeforeSelection) {
     const selectedPhantom = phantomDirector.update({
       stepSeconds,
       presentationSeconds: clock.presentationSeconds,
@@ -153,7 +165,7 @@ function RunFrame(currentTime) {
       Log(result.ok ? "started Phantom Visitor" : "started in-memory Phantom Visitor");
     }
   }
-  if (!IS_PREVIEW && !thanksgivingActive && !runtime.remembrancePlayback && !runtime.phantomPlayback && !antennaIncompleteBeforeSelection) {
+  if (!IS_PREVIEW && !wreathWasActive && !thanksgivingActive && !runtime.remembrancePlayback && !runtime.phantomPlayback && !antennaIncompleteBeforeSelection) {
     const selectedRemembrance = remembranceDirector.update({
       stepSeconds,
       presentationSeconds: clock.presentationSeconds,
@@ -171,7 +183,7 @@ function RunFrame(currentTime) {
       Log(result.ok ? "started Lights of Remembrance" : "started in-memory Lights of Remembrance");
     }
   }
-  if (!IS_PREVIEW && !thanksgivingActive && !runtime.incidentPlayback && !runtime.incidentRecord && !runtime.phantomPlayback && !runtime.remembrancePlayback) {
+  if (!IS_PREVIEW && !wreathWasActive && !thanksgivingActive && !runtime.incidentPlayback && !runtime.incidentRecord && !runtime.phantomPlayback && !runtime.remembrancePlayback) {
     const selected = storyDirector.update({
       stepSeconds,
       presentationSeconds: clock.presentationSeconds,
@@ -298,6 +310,10 @@ function RunFrame(currentTime) {
       ApplyAdventActivity(eventState,{...p,...AdventActivityTimeline(p.elapsed)});
     }
   } else if(!IS_PREVIEW)ApplyAdventActivity(eventState,adventDirector.update(eventState,clock.worldTimeMs,adventBlocked||director.isForcedScenario()));
+  if(IS_PREVIEW&&runtime.wreathPreview) {
+    if(adventBlocked||runtime.adventPreview||runtime.pipOverride||runtime.restPreview||eventState.phase!=='quiet'||eventState.shipVisible||eventState.visitId||runtime.seasonalPreview!=='natural')runtime.wreathPreview=null;
+    else ApplyWreathCeremony(eventState,{...runtime.wreathPreview,...WreathTimeline(runtime.wreathPreview.elapsed)});
+  } else if(!IS_PREVIEW)ApplyWreathCeremony(eventState,wreathDirector.update(eventState,clock.worldTimeMs,adventBlocked||director.isForcedScenario()));
   const recharge = ResolvePipRecharge(CONFIG.worldSeed, clock.worldTimeMs, CONFIG.pipRhythm);
   const incompleteIncident = thanksgivingActive || runtime.incidentPlayback || runtime.phantomPlayback || runtime.remembrancePlayback ||
     (runtime.incidentRecord && runtime.incidentRecord.milestone < STUBBORN_ANTENNA_MILESTONES["repair-presented"]) ||
@@ -390,6 +406,7 @@ function Init() {
     runtime.seed = CONFIG.worldSeed;
     director = new EventDirector(CONFIG, { onTransition: ({ state }) => Log("checkpoint " + state.checkpoint + " / " + state.lifecycle) });
     adventDirector = new AdventActivityDirector(CONFIG,director.scheduler);
+    wreathDirector = new AdventWreathDirector(CONFIG,director.scheduler,adventDirector);
     stationScene = new LittleSpaceStationScene(canvas, CONFIG, identity, { preview: IS_PREVIEW });
     if (CONFIG.debug || IS_PREVIEW) console.info("[Little Space Station] identity", identity);
     LoadPreviewTools();

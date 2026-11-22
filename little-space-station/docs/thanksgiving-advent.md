@@ -40,7 +40,7 @@ story was ever presented. The reusable presentation window ends at Advent,
 not a fixed November date. The existing installed-deck lifecycle is still the
 inaugural 2026/January 2027 lifecycle, not a new annual construction system.
 
-On Advent's first morning the harvest tray retracts and the table is repurposed
+During the six hours before Advent's first midnight the harvest tray retracts and the table is repurposed
 for an evergreen Advent wreath with gold candle holders. This is a six-hour,
 calendar-reconstructed scenery transition, **not a second persisted story**.
 Pip does not perform a separate Advent installation task in this version.
@@ -56,7 +56,10 @@ described in [LCMS: Lutheran Advent Traditions](https://resources.lcms.org/histo
 We use the Christmas Eve lighting convention, starting at December 24 UTC
 midnight. This affects only the candle; the Christmas seasonal handoff remains
 December 25.
-No Christmas visit/story or dream is implemented.
+The [Phase 2B weekly ceremonies](advent-wreath-phase2b.md) now bring Pip to each
+outer wick at its Sunday midnight, when safe. Preparing the wreath before the
+first boundary lets all four witnessed ignitions agree with the calendar.
+No Christmas Eve Christ-candle choreography, Christmas visit/story or dream is implemented.
 
 The [Phase 1 tree and wrapped presents](advent-tree-phase1.md) now occupy the
 outer aft deck. Their calendar derives independently of story checkpoints;

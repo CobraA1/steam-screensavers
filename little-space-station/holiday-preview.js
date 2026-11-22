@@ -8,7 +8,7 @@ export function HolidayPreview(panel,runtime,director) {
   const summary=document.createElement('summary');summary.textContent='Thanksgiving & Advent';section.append(summary);
   const make=(tag,label)=>{const el=document.createElement(tag);el.className='preview-tools__'+(tag==='button'?'button':'select');
     el.setAttribute('aria-label',label);section.append(el);return el;};
-  function clear(){for(const key of ['pipOverride','restPreview','dreamPreview','incidentPreview','phantomPreview','remembrancePreview','deckPreview','thanksgivingPreview','adventPreview'])runtime[key]=null;
+  function clear(){for(const key of ['pipOverride','restPreview','dreamPreview','incidentPreview','phantomPreview','remembrancePreview','deckPreview','thanksgivingPreview','adventPreview','wreathPreview'])runtime[key]=null;
     runtime.treeFullIllumination=false;
     runtime.seasonalPreview='natural';}
   const beat=make('select','Thanksgiving beat');

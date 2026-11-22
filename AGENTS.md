@@ -18,6 +18,9 @@ documents the reusable UTC holiday rules, 2026-only gathering, shared drone
 builders, checkpoint expiry, and preview controls. Preserve the distinction
 between calendar scenery and a genuinely completed story; Thanksgiving has no
 dream adaptation. Do not overwrite unfinished older seasonal incidents.
+The [Phase 2B wreath guide](little-space-station/docs/advent-wreath-phase2b.md)
+documents the four optional midnight ceremonies, pre-Advent wreath preparation,
+calendar-owned flames, and priority for existing Phase 2A decorating windows.
 
 ## Required structure
 

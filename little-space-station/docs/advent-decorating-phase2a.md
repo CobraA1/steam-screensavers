@@ -132,7 +132,8 @@ compatibility or dismissal behavior; those remain device-host checks.
 
 ## Deliberately deferred
 
-No candle-lighting choreography, approaching visitor, Christmas Eve evening
-lighting ceremony, Christmas gathering, gift opening, new Christmas persistence,
-or dream sequences. Ordinary Advent lights stay subdued; the completed bright
+The four weekly candle ceremonies were subsequently added in [Phase 2B](advent-wreath-phase2b.md).
+They yield to the existing decorating windows when their fixed midnight opportunities overlap.
+No approaching visitor, Christmas Eve candle/tree-lighting ceremony, Christmas gathering,
+gift opening, new Christmas persistence, or dream sequences are implemented. Ordinary Advent lights stay subdued; the completed bright
 lighting option remains preview-only.

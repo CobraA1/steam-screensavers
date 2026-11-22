@@ -4,6 +4,8 @@ import { BuildConstructionDrone } from './seasonal-service-deck.js';
 import { ThanksgivingActors, Ease } from './thanksgiving.js';
 import { ChristmasTreeVisual } from './christmas-tree-renderer.js';
 import { AdventActivityVisual } from './advent-activity-renderer.js';
+import { AdventWreathVisual } from './advent-wreath-renderer.js';
+import { WREATH_TABLE, WREATH_CANDLES, WreathLampState } from './advent-wreath.js';
 
 const material=(color,emissive=0)=>new THREE.MeshStandardMaterial({color,emissive,
   emissiveIntensity:1,roughness:.7,metalness:.12,flatShading:true});
@@ -41,9 +43,10 @@ export class HolidayVisual {
     this.root=new THREE.Group(); this.root.name='thanksgiving-advent'; scene.station.add(this.root);
     this.christmasTree = new ChristmasTreeVisual(this.root);
     this.decorating = new AdventActivityVisual(scene,this.christmasTree);
+    this.wreathCeremony = new AdventWreathVisual(scene);
     const blue=material(0x305674),gold=material(0xc59b51),teal=material(0x28565a),cream=material(0xd5caa8);
     const glow=material(0xffd18a,0xe5993d);
-    this.table=new THREE.Group(); this.table.position.set(-5.35,0,2.02); this.root.add(this.table);
+    this.table=new THREE.Group(); this.table.position.fromArray(WREATH_TABLE); this.root.add(this.table);
     box(this.table,[1.05,.08,.62],[0,.12,0],gold);
     box(this.table,[.92,.025,.52],[0,.175,0],teal);
     for(const x of [-.4,.4]) for(const z of [-.22,.22]) box(this.table,[.06,.51,.06],[x,-.175,z],teal);
@@ -68,21 +71,21 @@ export class HolidayVisual {
     const ring=new THREE.Mesh(new THREE.TorusGeometry(.225,.047,5,20),evergreen);
     ring.rotation.x=Math.PI/2;ring.position.y=.25;this.advent.add(ring);
     const sprigGeometry=new THREE.IcosahedronGeometry(1,0);
+    this.wreathSprigs=[];
     for(let i=0;i<20;i++) {
       const angle=i*Math.PI/10;
       const sprig=new THREE.Mesh(sprigGeometry,i%2?evergreen:tips);
       sprig.position.set(.225*Math.cos(angle),.26,.225*Math.sin(angle));
       sprig.scale.set(.085,.032,.04);sprig.rotation.y=-angle+Math.PI/2;
-      this.advent.add(sprig);
+      this.advent.add(sprig);this.wreathSprigs.push(sprig);
     }
     this.lamps=[];this.candles=[];
     const rose=material(0xc5788c),white=material(0xf3ead6),wick=material(0x302a25);
-    for(let i=0;i<5;i++) {
-      const center=i===4,angle=i*Math.PI/2+Math.PI/4;
-      const x=center?0:.205*Math.cos(angle),z=center?0:.205*Math.sin(angle);
-      const height=center?.43:.3,radius=center?.05:.035,base=.27;
+    for(const descriptor of WREATH_CANDLES) {
+      const {index:i,x,z,height,radius}=descriptor,center=i===4,base=.27;
       cylinder(this.advent,radius+.018,.03,[x,base-.015,z],gold);
       this.candles.push(cylinder(this.advent,radius,height,[x,base+height/2,z],center?white:i===2?rose:blue));
+      this.candles.at(-1).userData.candleId=descriptor.id;
       cylinder(this.advent,.005,.018,[x,base+height+.009,z],wick);
       const flame=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),material(0xffd795,0xffb34d));
       flame.position.set(x,base+height+.045,z);flame.scale.set(.018,.045,.018);
@@ -96,10 +99,11 @@ export class HolidayVisual {
     const h=state.holiday,story=state.thanksgiving;
     this.christmasTree.update(h?.tree, state.seasonal?.serviceDeck?.ready, story, h?.treeFullLight);
     this.decorating.update(state,HolidayReach);
+    for(let i=0;i<this.wreathSprigs.length;i++)this.wreathSprigs[i].rotation.y=-i*Math.PI/10+Math.PI/2;
     this.root.visible=Boolean(h && state.seasonal?.serviceDeck?.ready && (h.gathering||h.adventWeek||h.christmasHandoff||story));
-    if(!this.root.visible)return;
+    if(!this.root.visible){for(const lamp of this.lamps)lamp.visible=false;return;}
     this.construction.visible=this.inspection.visible=Boolean(story);
-    const advent=!story && (h.adventWeek>0||h.christmasHandoff);
+    const advent=!story && (h.wreathPreparing||h.adventWeek>0||h.christmasHandoff);
     this.harvest.visible=!advent || h.transition<1;
     // Harvest tray retracts below the tabletop; the evergreen wreath rises in
     // its place. Calendar-derived, so missed mornings never replay a story.
@@ -108,10 +112,15 @@ export class HolidayVisual {
     this.advent.visible=advent;
     this.advent.position.y=advent?-.3*(1-Ease(h.transition)):0;
     this.lamps.forEach((lamp,i)=>{
-      const lit=i===4 ? Boolean(h.christCandleLit) : Boolean(i<h.adventWeek||h.christmasHandoff);
+      const {lit,intensity,height}=WreathLampState(h,i,state.wreathCeremony);
       lamp.visible=lit;
-      lamp.material.emissiveIntensity=lit?1.1:0;
+      lamp.material.emissiveIntensity=intensity;
+      lamp.scale.set(.018,height,.018);
     });
+    if(advent&&state.wreathCeremony){
+      this.wreathCeremony.update(state,HolidayReach);
+      this.wreathSprigs[15].rotation.y+=this.wreathCeremony.actors.sprigTurn;
+    }
     this.tray.position.x=h.preparing?0:.38;
     this.lantern.position.z=0;
     if(!story)return;

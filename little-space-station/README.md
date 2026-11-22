@@ -14,8 +14,13 @@ See the [Phase 1 guide](docs/advent-tree-phase1.md) for dates, placement and pre
 controls. [Phase 2A](docs/advent-decorating-phase2a.md) adds Pip's section checks,
 strand adjustments, ornament and star placement, wrapped-present carrying, and
 quiet final inspection. Preview every activity with playback, beat selection
-and scrubbing under **Scenes → Pip Activities → Advent decorating**. Candle-lighting choreography,
-an evening lighting ceremony, a possible returning visitor, and the Christmas
+and scrubbing under **Scenes → Pip Activities → Advent decorating**.
+[Phase 2B](docs/advent-wreath-phase2b.md) adds four peaceful weekly wreath
+ceremonies. The unlit wreath is prepared before the first Sunday, and Pip's
+tool reaches each wick at its existing UTC midnight ignition. Calendar flames
+remain correct if an activity is missed; existing decorating and other busy
+windows take priority. Preview any Sunday under **Pip Activities → Wreath**.
+Christmas Eve's Christ-candle and tree-lighting ceremonies, a possible returning visitor, and the Christmas
 gift-opening gathering remain future work
 in the [Advent/Christmas planning notes](docs/advent-christmas-story-planning.md).
 

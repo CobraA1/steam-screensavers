@@ -27,7 +27,9 @@ export function HolidayCalendar(time) {
     tree: ChristmasTreeCalendar(time, Advent(treeYear), Date.UTC(treeYear, 11, 25)),
     // Light the Christ candle on Christmas Eve without advancing the season.
     christCandleLit: time >= christmas - DAY || time < Date.UTC(year, 0, 6),
-    // Clear harvest settings over the first morning. A scrub reconstructs it.
-    transition: christmasHandoff ? 1 : Math.max(0, Math.min(1, (time - advent) / (6 * 3_600_000))),
+    // Prepare the unlit wreath during the six hours BEFORE Advent. Candle
+    // counts still change only on the original Sunday UTC boundaries.
+    wreathPreparing: gathering && time >= advent - 6 * 3_600_000,
+    transition: christmasHandoff ? 1 : Math.max(0, Math.min(1, (time - advent + 6 * 3_600_000) / (6 * 3_600_000))),
   };
 }
