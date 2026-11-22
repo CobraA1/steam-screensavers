@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "../vendor/three.module.js";
@@ -52,10 +53,10 @@ test("All Saints presentation is independent from Halloween and preserves live w
 });
 
 test("remembrance has a November 1–3 grace period, waits for quiet, and runs once", () => {
-  const start = Date.UTC(2026, 10, 1, 12);
+  const start = LocalDate(2026, 10, 1, 12);
   assert.equal(IsRemembranceWindow(start), true);
-  assert.equal(IsRemembranceWindow(Date.UTC(2026, 10, 3, 23, 59)), true);
-  assert.equal(IsRemembranceWindow(Date.UTC(2026, 10, 4)), false);
+  assert.equal(IsRemembranceWindow(LocalDate(2026, 10, 3, 23, 59)), true);
+  assert.equal(IsRemembranceWindow(LocalDate(2026, 10, 4)), false);
   const quiet = { phase: "quiet", visitId: "", shipVisible: false, worldTimeMs: start, nextArrivalMs: start + 90_000, pipTaskId: "standby" };
   assert.equal(IsRemembranceWindowSafe(quiet), true);
   assert.equal(IsRemembranceWindowSafe({ ...quiet, pipTaskId: "seasonal-cleanup" }), false);

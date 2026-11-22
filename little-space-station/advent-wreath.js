@@ -1,4 +1,5 @@
 import { Advent, DAY } from './holiday-calendar.js';
+import { AddLocalDays, LocalDate } from './local-calendar.js';
 import { AdventWindowSafe, Smooth } from './advent-activities.js';
 
 export const WREATH_TABLE = Object.freeze([-5.35, 0, 2.02]);
@@ -34,7 +35,7 @@ export function WreathTimeline(seconds) {
 }
 export function WreathCeremonySpec(week = 0) {
   const index = Math.max(0, Math.min(3, Math.floor(Number(week) || 0)));
-  const date = Advent(2026) + index * 7 * DAY;
+  const date = AddLocalDays(Advent(2026), index * 7);
   const start = date - WREATH_CONTACT_SECONDS * 1000;
   return { id: `2026:advent-wreath:${index + 1}`, week: index, candleId: WREATH_CANDLES[index].id,
     label: `Advent ${index + 1} · ${index === 2 ? 'rose' : 'blue'} candle`, date, start,
@@ -56,7 +57,7 @@ export class AdventWreathDirector {
     return this.windows;
   }
   at(time) {
-    if (time < Advent(2026) - WREATH_CONTACT_SECONDS * 1000 || time >= Date.UTC(2026, 11, 21)) return null;
+    if (time < Advent(2026) - WREATH_CONTACT_SECONDS * 1000 || time >= LocalDate(2026, 11, 21)) return null;
     const window = this.plan().find(spec => time >= spec.start && time < spec.end);
     return window ? { ...window, ...WreathTimeline((time - window.start) / 1000) } : null;
   }

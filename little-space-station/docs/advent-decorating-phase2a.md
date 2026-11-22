@@ -3,7 +3,7 @@
 Implemented November 3, 2026.
 
 Pip now tends the existing tree and carries the existing wrapped gifts. These
-are optional ordinary activities, not a new Christmas incident or inventory.
+are shared-scheduler activities, not a new Christmas incident or inventory.
 The [Phase 1 calendar](advent-tree-phase1.md) remains authoritative: missing
 every animation still leaves a finished tree and five wrapped gifts by December
 23. Neither calendar reconstruction nor these activities creates a completed
@@ -40,7 +40,7 @@ keeps small ornaments readable. The locker is absent during Thanksgiving and
 clears with the January tree removal. No floor, rail or cabin enlargement was
 needed in this phase.
 
-## Opportunities, UTC, inaugural 2026 season
+## Opportunities and catch-up, local 2026 season
 
 Each activity lasts 82 seconds: notice 4, approach 14, collect 6, carry 14,
 attach 10, straighten 8, release 4, inspect 8, return 14. Inspection uses those
@@ -55,21 +55,21 @@ same seek markers but has its own direct viewing route and no prop collection.
 | Five wrapped parcels | Existing November 30, December 7, 13, 20 and 23 boundaries |
 | Completed-tree inspection | December 23, one seeded safe daytime slot |
 
-Major placements begin **48 seconds before** their existing midnight scenery
-boundary. Attachment finishes exactly at that boundary. Thus reopening later
-never pretends that an already-installed star or parcel is still waiting for
-its first installation. Daytime adjustments select one safe 15-minute slot
-between 06:00 and 15:45 UTC. These are absolute opportunities, not session timers:
-reopening inside one reconstructs its current pose, not its beginning.
+Preferred placements begin **48 seconds before local midnight**, with a shared
+quiet lead-in. Daytime adjustments prefer a seeded slot between 06:00 and 15:45
+local time. These are preferred times, not disposable windows.
 
-Traffic, ordinary maintenance and recharge are checked across the whole window,
-with traffic margins. Higher-priority stories, a pending unfinished story,
-spacecraft visits and forced scenarios take precedence. An unsafe/missed window
-is omitted rather than queued; an interrupted window cannot restart later in
-that session. No new saved record, schema or completion write is needed.
-The default seed currently has 12 safe opportunities out of 13: the final gold
-parcel's midnight window is busy, so its calendar placement occurs without an
-animation. This is intentional graceful fallback, not an unfinished present.
+The [shared scheduler](event-scheduling.md) retains due activities through
+conflicts and absences, reserves future routine arrivals offscreen, and lets
+admitted visits, maintenance and recharge finish. Significant activities have
+a 90-second ambient/routine break. A missed synchronized approach waits for
+its calendar prop to be installed. Late ornaments are adjusted in place;
+the installed star is checked from above. Placed gifts use the quiet
+inspection route without another pickup. No installed prop is duplicated.
+
+Occurrence status/checkpoints are saved separately from narrative memories.
+Preview stays read-only. January removal explicitly retires unpresented work
+without manufacturing a completed story.
 
 These optional activities are inaugural **2026** choreography, matching the
 existing deck/story year. Scenery retains its reusable year calculations; this
@@ -78,7 +78,8 @@ does not add annual deck construction or a recurring Christmas narrative.
 ## Preview
 
 Under **Scenes → Pip Activities → Advent decorating** select an activity,
-gift, or strand/ornament variation. Use the shared playback controls, beat
+gift, or strand/ornament variation. **Presentation** switches between its
+scheduled installation and catch-up tending/inspection. Use the shared playback controls, beat
 selector, and seconds slider. Starting or seeking
 reconstructs a temporary date and complete pose; preview never writes story
 history. Other forced stories/events cancel decorating. **Stop** restores calendar
@@ -133,7 +134,7 @@ compatibility or dismissal behavior; those remain device-host checks.
 ## Deliberately deferred
 
 The four weekly candle ceremonies were subsequently added in [Phase 2B](advent-wreath-phase2b.md).
-They yield to the existing decorating windows when their fixed midnight opportunities overlap.
+Both kinds share chronological arbitration and persistent catch-up; neither is discarded when their preferred times overlap.
 No approaching visitor, Christmas Eve candle/tree-lighting ceremony, Christmas gathering,
 gift opening, new Christmas persistence, or dream sequences are implemented. Ordinary Advent lights stay subdued; the completed bright
 lighting option remains preview-only.

@@ -1,5 +1,5 @@
 // Small, read-only scenery calendar. No inventory, story progress or storage.
-const DAY = 86_400_000;
+import { AddLocalDays as days } from './local-calendar.js';
 export const CHRISTMAS_TREE_POSITION = Object.freeze([-6.6, -0.43, 0.65]);
 export const TREE_LAYERS = Object.freeze([
   { radius: .49, height: .6, y: .54 }, { radius: .37, height: .55, y: .86 }, { radius: .25, height: .5, y: 1.12 },
@@ -31,16 +31,16 @@ export const CHRISTMAS_PRESENTS = Object.freeze([
 // Advent's calculated Sundays remain authoritative; finish by Dec 23 even
 // in a year whose fourth Advent Sunday would otherwise be as late as Dec 24.
 export function ChristmasTreeCalendar(time, advent, christmas) {
-  const second = advent + 7 * DAY, third = advent + 14 * DAY;
-  const final = Math.min(advent + 21 * DAY, christmas - 5 * DAY);
-  const complete = christmas - 2 * DAY;
-  const active = time >= advent && time < christmas + 12 * DAY;
-  const garlandBands = active && time >= second ? 1 + Number(time >= second + 2 * DAY) + Number(time >= second + 4 * DAY) : 0;
-  const ornamentCount = !active ? 0 : time >= complete ? 26 : time >= final + 2 * DAY ? 24 : time >= final ? 22
-    : time >= third + 4 * DAY ? 18 : time >= third + 2 * DAY ? 12 : time >= third ? 6 : 0;
-  const presentCount = active ? Number(time >= advent + DAY) + Number(time >= second + DAY) + Number(time >= third)
+  const second = days(advent, 7), third = days(advent, 14);
+  const final = Math.min(days(advent, 21), days(christmas, -5));
+  const complete = days(christmas, -2);
+  const active = time >= advent && time < days(christmas, 12);
+  const garlandBands = active && time >= second ? 1 + Number(time >= days(second, 2)) + Number(time >= days(second, 4)) : 0;
+  const ornamentCount = !active ? 0 : time >= complete ? 26 : time >= days(final, 2) ? 24 : time >= final ? 22
+    : time >= days(third, 4) ? 18 : time >= days(third, 2) ? 12 : time >= third ? 6 : 0;
+  const presentCount = active ? Number(time >= days(advent, 1)) + Number(time >= days(second, 1)) + Number(time >= third)
     + Number(time >= final) + Number(time >= complete) : 0;
-  const star = active && time >= Math.min(final + 2 * DAY, complete);
+  const star = active && time >= Math.min(days(final, 2), complete);
   return { active, sections: active ? 3 : 0, garlandBands, ornamentCount, presentCount, star,
     complete: active && time >= complete,
     stage: !active ? 'absent' : time >= complete ? 'complete' : time >= final ? 'finishing'

@@ -14,13 +14,13 @@ Related references:
 - Phase 1 extends the Commons Deck's aft edge by 0.6 units to **4.6 × 3.1 world units** so the cabin does not hide the tree. The original Thanksgiving implementation did not enlarge it; its table and character anchors remain unchanged.
 - The calendar calculates Advent Sundays. Thanksgiving scenery changes into an unlit evergreen wreath during the six hours before the first Advent midnight, without Pip performing an installation action. This earlier preparation was approved in Phase 2B so the first wick is ready for midnight lighting.
 - The wreath has four outer candles (three blue and the third rose) and a taller central white Christ candle.
-- The four outer lights accumulate on the Sundays of Advent. The Christ candle currently lights at **00:00 UTC on December 24**, remaining with the other four through January 5; the display clears for the January 6–7 deck dismantling.
+- The four outer lights accumulate on the Sundays of Advent. The Christ candle currently lights at **00:00 local time on December 24**, remaining with the other four through January 5; the display clears for the January 6–7 deck dismantling.
 - The three-section evergreen and five wrapped gifts now reconstruct through gradual Advent stages, finish December 23, and clear January 6. They remain wrapped on Christmas Day pending the later story.
-- Phase 2A adds optional section checks, strand adjustments, two ornament installations, star placement using Pip's hover and wrist clamp, five parcel-placement opportunities, and a final inspection. Absolute safe windows preserve quiet periods; missed actions do not delay calendar scenery or fabricate completion records.
-- Phase 2B adds one shared 32-second candle ceremony with four weekly variations. Tool contact meets each original Sunday midnight; missed or unsafe activities never delay the calendar flame. Existing decorating windows take priority, with no new records or catch-up queue.
+- Phase 2A adds optional section checks, strand adjustments, two ornament installations, star placement using Pip's hover and wrist clamp, five parcel-placement opportunities, and a final inspection. The shared scheduler retains pending work and reserves spaced catch-up; late activities tend installed props without delaying scenery or inventing memories.
+- Phase 2B adds one shared 32-second candle ceremony with four weekly variations. Tool contact meets each original Sunday midnight; missed or unsafe activities never delay the calendar flame. A shared persistent occurrence queue defers conflicts and offers late observances of already-lit candles.
 - There is no Christmas Eve candle/tree choreography, multi-week narrative, Christmas arrival, or gift-opening gathering yet. Brighter tree illumination is preview-only.
 
-**Do not conflate these implemented features with the proposals below.** In particular, a future Christmas Eve evening tree-lighting presentation does not currently change the wreath's existing UTC candle schedule.
+**Do not conflate these implemented features with the proposals below.** In particular, a future Christmas Eve evening tree-lighting presentation does not currently change the wreath's existing local candle schedule.
 
 ## 2. Creative direction
 
@@ -69,7 +69,7 @@ A working progression (timings and details subject to visual review):
 | **Dec 26–Jan 5** | Christmas atmosphere can remain without constantly repeating the main event. | The finished tree remains. Opened boxes, ribbons, or keepsakes may provide a modest aftermath once the gift-opening story has actually completed, without replaying the event. |
 | **Jan 6–7, 2027** | Existing seasonal deck clearance/dismantling and story-year renewal boundary. | Tree and holiday props are cleared compatibly with the existing lifecycle. |
 
-**Clock decision still open:** Existing holiday scheduling uses UTC calendar boundaries. If a future presentation promises *Christmas Eve afternoon/evening*, explicitly choose how that maps onto the world clock and viewing time rather than treating UTC midnight as local evening or assuming the user's time zone. The requirement to have the tree ready by the evening must hold even if the screensaver has been closed.
+**Clock policy:** Human dates now use the device/browser local calendar through `local-calendar.js`; traffic and the fictional planet retain absolute time. Future evening presentations must choose a local wall-time rule. Scenery remains ready after an absence. See [event scheduling](event-scheduling.md).
 
 ## 4. Christmas presents and the group gathering (agreed direction)
 
@@ -140,7 +140,7 @@ Keep production offline/passive, avoid increasing routine ship frequency, protec
 - Does the explorer arrive **Christmas Eve evening or Christmas Day**, and what exact action provides the emotional payoff?
 - Is the explorer a recurring visitor after Christmas? Does it bring anything incidental, or arrive empty-handed?
 - What exact coordinates, tree height, and deck clearances work best when visually tested? Does the Commons Deck need an expansion? (The *traditional modular artificial tree* and general ornament palette are chosen.)
-- Should the tree have a distinct lights-on ceremony, and how should Christmas Eve **evening** be defined relative to the project's UTC calendar?
+- Should the tree have a distinct lights-on ceremony, and how should Christmas Eve **evening** be defined in the device's local calendar?
 - What personalized gifts will each returning character receive, and what gift-opening gestures or aftermath should survive completion?
 - How much Advent animation should be one-off narrative versus quiet, repeatable Pip routines, without competing with traffic or previous story milestones?
 

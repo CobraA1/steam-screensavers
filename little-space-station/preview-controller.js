@@ -2,7 +2,7 @@
 export const TEMPORARY_PREVIEWS = Object.freeze([
   "pipOverride", "restPreview", "dreamPreview", "incidentPreview",
   "phantomPreview", "remembrancePreview", "deckPreview",
-  "thanksgivingPreview", "adventPreview", "wreathPreview",
+  "thanksgivingPreview", "adventPreview", "wreathPreview", "schedulerPreview",
 ]);
 
 export function ClearTemporaryPreviews(runtime) {

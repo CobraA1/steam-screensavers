@@ -30,7 +30,7 @@ rail corners/stanchions, and their lamp/support assemblies follow the extension.
 All six existing rigid assembly groups retain their lifecycle and travel paths;
 the +X spacecraft corridor and solar array attachments are unchanged.
 
-## 2026 calendar, UTC
+## 2026 calendar, device local time
 
 | Date | Scenery |
 | --- | --- |
@@ -43,7 +43,7 @@ the +X spacecraft corridor and solar array attachments are unchanged.
 | December 22 | 24 ornaments and the star topper. |
 | December 23 | All 26 ornaments and all five wrapped presents. Tree completely decorated. |
 | December 24–January 5 | Finished tree and wrapped gifts remain. No automatic opening or evening light-up ceremony. |
-| January 6 | Tree and presents clear at 00:00 UTC; deck dismantling proceeds on its existing schedule. |
+| January 6 | Tree and presents clear at 00:00 local time; deck dismantling proceeds on its existing schedule. |
 | January 7 | Deck removed at the existing renewal boundary. |
 
 The calculated Advent Sundays drive the early stages. Later Advent starts in
@@ -90,7 +90,7 @@ deck installation over cleanup.
 `christmas-tree.js` owns the small calendar and stable gift descriptors;
 `christmas-tree-renderer.js` builds bounded props once. They join the existing
 holiday calendar, renderer and preview, without changing persistence schemas.
-`tests/christmas-tree.test.js` checks UTC boundaries, decoration counts, gift
+`tests/christmas-tree.test.js` checks local boundaries, decoration counts, gift
 identities, Christmas/New Year wrapping, January removal, reverse date/lighting
 seeks, actual mesh clearances, and read-only scenery behavior. Existing seasonal
 and lifecycle tests continue to cover Thanksgiving, Halloween, remembrance,

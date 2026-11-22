@@ -1,6 +1,7 @@
 import { CreateRandom, DeriveSeed, Pick } from "./random.js";
 import { ResolveServiceDeck } from "./service-deck-lifecycle.js";
 import { HolidayCalendar, Advent, DAY } from './holiday-calendar.js';
+import { LocalDate } from './local-calendar.js';
 
 const SECOND_MS = 1000;
 const MINUTE_MS = 60 * SECOND_MS;
@@ -8,17 +9,17 @@ const DAY_MS = 24 * 60 * MINUTE_MS;
 const ORDINARY_FREIGHT = Object.freeze({ theme: 'freight', packageCount: 2, packages: Object.freeze([null, null]) });
 
 export const AUTUMN_2026_DATES = Object.freeze({
-  autumnBegins: Date.UTC(2026, 8, 22),
-  fallDecorComplete: Date.UTC(2026, 9, 1),
-  halloweenPreparations: Date.UTC(2026, 9, 23),
-  halloweenFinalPreparations: Date.UTC(2026, 9, 28),
-  remembranceSupplies: Date.UTC(2026, 9, 30, 12),
-  halloween: Date.UTC(2026, 9, 31),
-  allSaints: Date.UTC(2026, 10, 1),
-  cleanupBegins: Date.UTC(2026, 10, 2),
-  cleanupComplete: Date.UTC(2026, 10, 4),
-  autumnEnds: Date.UTC(2026, 11, 21),
-  annualRenewal: Date.UTC(2027, 0, 7),
+  get autumnBegins() { return LocalDate(2026, 8, 22); },
+  get fallDecorComplete() { return LocalDate(2026, 9, 1); },
+  get halloweenPreparations() { return LocalDate(2026, 9, 23); },
+  get halloweenFinalPreparations() { return LocalDate(2026, 9, 28); },
+  get remembranceSupplies() { return LocalDate(2026, 9, 30, 12); },
+  get halloween() { return LocalDate(2026, 9, 31); },
+  get allSaints() { return LocalDate(2026, 10, 1); },
+  get cleanupBegins() { return LocalDate(2026, 10, 2); },
+  get cleanupComplete() { return LocalDate(2026, 10, 4); },
+  get autumnEnds() { return LocalDate(2026, 11, 21); },
+  get annualRenewal() { return LocalDate(2027, 0, 7); },
 });
 
 export const AUTUMN_PREVIEW_MODES = Object.freeze([
@@ -275,7 +276,7 @@ export function ResolveAutumn2026(worldSeed, worldTimeMs, { previewMode = "natur
 function SeasonalThemeFor(time) {
   const holiday = HolidayCalendar(time);
   if (holiday.gathering) return 'thanksgiving';
-  if (holiday.tree.active && time < Date.UTC(holiday.year,11,24)) return 'advent';
+  if (holiday.tree.active && time < LocalDate(holiday.year,11,24)) return 'advent';
   if (time < AUTUMN_2026_DATES.autumnBegins || time >= AUTUMN_2026_DATES.cleanupComplete) return null;
   if (time >= AUTUMN_2026_DATES.remembranceSupplies && time < AUTUMN_2026_DATES.cleanupBegins) return "remembrance";
   if (time >= AUTUMN_2026_DATES.halloweenPreparations) return "halloween";
@@ -295,7 +296,7 @@ function ShipmentChance(theme, time) {
 
 export function CreateSeasonalManifest(worldSeed, visit, { forceTheme = null } = {}) {
   if (!visit || visit.eventId !== "cargo-run" && visit.id !== "cargo-run") return null;
-  const visitTime = Number.isFinite(visit.approachStartMs) ? visit.approachStartMs : visit.worldTimeMs;
+  const visitTime = visit.originalApproachStartMs ?? (Number.isFinite(visit.approachStartMs) ? visit.approachStartMs : visit.worldTimeMs);
   const theme = forceTheme || SeasonalThemeFor(visitTime);
   if (!theme) return null;
   const visitId = visit.visitId || "preview-cargo";
@@ -445,6 +446,7 @@ export function ApplyAutumn2026State(state, seasonal, worldSeed) {
       eventId: state.eventId,
       visitId: state.visitId,
       approachStartMs: state.visitStartMs,
+      originalApproachStartMs: state.originalVisitStartMs,
       worldTimeMs: state.worldTimeMs,
     }, { forceTheme: seasonal.previewMode === 'advent-cargo' ? 'advent' : seasonal.previewMode === "fall-cargo" ? "fall" : seasonal.previewMode === "halloween-cargo" ? "halloween" : seasonal.previewMode === "remembrance-cargo" ? "remembrance" : null });
     const freight = manifest || ORDINARY_FREIGHT;
@@ -463,8 +465,10 @@ export function ApplyAutumn2026State(state, seasonal, worldSeed) {
       state.cargoPackageCount = freight.packageCount;
     }
   }
-  ApplyInstallation(state, seasonal.installation);
-  ApplyOddity(state, seasonal.ambientOddity, seasonal.installation);
+  if (!state.specialReservation || state.allowReservedBackground) {
+    ApplyInstallation(state, seasonal.installation);
+    ApplyOddity(state, seasonal.ambientOddity, seasonal.installation);
+  }
   return state;
 }
 

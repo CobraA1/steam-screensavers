@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DeckDurationMs, DeckPartPose, DeckWorkAt, DeckLiftFraction, DECK_INSTALL_START, DECK_REMOVE_END, ResolveServiceDeck } from "../service-deck-lifecycle.js";
@@ -28,7 +29,7 @@ test("preview endpoints, duration limits, and decoration safety", () => {
   assert.equal(DeckDurationMs({ transitionHours: -5 }), 3600000);
   assert.equal(DeckDurationMs({ transitionHours: Infinity }), 24 * 3600000);
   assert.equal(DeckDurationMs({ transitionHours: 100 }), 48 * 3600000);
-  const time = Date.UTC(2026, 9, 25);
+  const time = LocalDate(2026, 9, 25);
   for (const action of ["install", "remove"]) {
     const partial = ResolveAutumn2026("deck-test", time, { deckPreview: { action, progress: 0.6 } });
     assert.deepEqual(partial.installedDecorations, []);

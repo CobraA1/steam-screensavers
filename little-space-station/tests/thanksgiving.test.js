@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Thanksgiving, Advent, HolidayCalendar, DAY } from '../holiday-calendar.js';
@@ -5,26 +6,26 @@ import { ThanksgivingActors, ThanksgivingIncident, ThanksgivingCheckpoint, Thank
 import { HolidayRuntime } from '../holiday-runtime.js';
 import { CreateNarrativeStore } from '../persistence.js';
 function storage(){const map=new Map();return {getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)};}
-test('UTC holiday relationships hold across 100 years, including Christmas Eve fourth Sunday',()=>{
+test('Local holiday relationships hold across 100 years, including Christmas Eve fourth Sunday',()=>{
   let eve=false;
   for(let y=2026;y<=2125;y++){
     const t=new Date(Thanksgiving(y)),a=new Date(Advent(y));
-    assert.equal(t.getUTCDay(),4);assert.ok(t.getUTCDate()>=22&&t.getUTCDate()<=28);
-    assert.equal(a.getUTCDay(),0);assert.ok([3,10].includes((Advent(y)-Thanksgiving(y))/DAY));
-    assert.ok(a.getUTCMonth()===10?a.getUTCDate()>=27:a.getUTCDate()<=3);
-    eve ||= new Date(Advent(y)+21*DAY).getUTCDate()===24;
+    assert.equal(t.getDay(),4);assert.ok(t.getDate()>=22&&t.getDate()<=28);
+    assert.equal(a.getDay(),0);assert.ok([3,10].includes((Advent(y)-Thanksgiving(y))/DAY));
+    assert.ok(a.getMonth()===10?a.getDate()>=27:a.getDate()<=3);
+    eve ||= new Date(Advent(y)+21*DAY).getDate()===24;
     for(let w=0;w<4;w++)assert.equal(HolidayCalendar(Advent(y)+w*7*DAY).adventWeek,w+1);
-    assert.equal(HolidayCalendar(Date.UTC(y,11,25)).adventWeek,0);
+    assert.equal(HolidayCalendar(LocalDate(y,11,25)).adventWeek,0);
   }
-  assert.ok(eve);assert.equal(Thanksgiving(2026),Date.UTC(2026,10,26));assert.equal(Advent(2026),Date.UTC(2026,10,29));
+  assert.ok(eve);assert.equal(Thanksgiving(2026),LocalDate(2026,10,26));assert.equal(Advent(2026),LocalDate(2026,10,29));
   assert.equal((Advent(2028)-Thanksgiving(2028))/DAY,10);
 });
 test('calendar reconstructs preparation, grace, Advent and Christmas after reverse jumps',()=>{
-  for(const time of [Date.UTC(2026,10,21),Date.UTC(2026,10,28),Advent(2026),Date.UTC(2026,11,25)]){
+  for(const time of [LocalDate(2026,10,21),LocalDate(2026,10,28),Advent(2026),LocalDate(2026,11,25)]){
     const first=HolidayCalendar(time);HolidayCalendar(time+50*DAY);assert.deepEqual(HolidayCalendar(time),first);
   }
-  assert.ok(HolidayCalendar(Date.UTC(2026,10,21)).preparing);
-  assert.ok(HolidayCalendar(Date.UTC(2026,10,28)).eligible);
+  assert.ok(HolidayCalendar(LocalDate(2026,10,21)).preparing);
+  assert.ok(HolidayCalendar(LocalDate(2026,10,28)).eligible);
   assert.equal(HolidayCalendar(Advent(2026)).eligible,false);
 });
 test('all actor channels remain continuous at every beat boundary and deterministic in reverse',()=>{
@@ -68,16 +69,16 @@ test('safe scheduling, storage failure, completion across midnight and preview r
 });
 test('Christ candle lights on Christmas Eve and remains lit through the twelve days, across years',()=>{
  for(let year=2026;year<=2125;year++){
-  assert.equal(HolidayCalendar(Date.UTC(year,11,23,23,59,59,999)).christCandleLit,false);
-  assert.equal(HolidayCalendar(Date.UTC(year,11,24)).christCandleLit,true);
-  assert.equal(HolidayCalendar(Date.UTC(year,11,24)).christmasHandoff,false);
-  assert.equal(HolidayCalendar(Date.UTC(year,11,25)).christCandleLit,true);
-  assert.equal(HolidayCalendar(Date.UTC(year+1,0,5,23,59,59,999)).christCandleLit,true);
-  assert.equal(HolidayCalendar(Date.UTC(year+1,0,6)).christCandleLit,false);
-  assert.equal(HolidayCalendar(Date.UTC(year+1,0,1)).transition,1);
+  assert.equal(HolidayCalendar(LocalDate(year,11,23,23,59,59,999)).christCandleLit,false);
+  assert.equal(HolidayCalendar(LocalDate(year,11,24)).christCandleLit,true);
+  assert.equal(HolidayCalendar(LocalDate(year,11,24)).christmasHandoff,false);
+  assert.equal(HolidayCalendar(LocalDate(year,11,25)).christCandleLit,true);
+  assert.equal(HolidayCalendar(LocalDate(year+1,0,5,23,59,59,999)).christCandleLit,true);
+  assert.equal(HolidayCalendar(LocalDate(year+1,0,6)).christCandleLit,false);
+  assert.equal(HolidayCalendar(LocalDate(year+1,0,1)).transition,1);
  }
- assert.equal(HolidayCalendar(Date.UTC(2028,11,24,12)).adventWeek,4);
- assert.equal(HolidayCalendar(Date.UTC(2028,11,24,12)).christCandleLit,true);
+ assert.equal(HolidayCalendar(LocalDate(2028,11,24,12)).adventWeek,4);
+ assert.equal(HolidayCalendar(LocalDate(2028,11,24,12)).christCandleLit,true);
 });
 test('unfinished stories, dreams, forced events and short quiet windows exclude Thanksgiving',()=>{
  const time=Thanksgiving(2026)+DAY;

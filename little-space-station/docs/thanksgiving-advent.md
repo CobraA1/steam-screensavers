@@ -30,7 +30,7 @@ window, without changing traffic frequency or requiring delivery completion.
 
 ## Calendar
 
-`holiday-calendar.js` supplies pure UTC calculations: fourth Thursday of
+`holiday-calendar.js` supplies pure local-calendar calculations: fourth Thursday of
 November, and the fourth Sunday before Christmas. Tests cover 2026–2125,
 including both 3-day and 10-day gaps and a fourth Sunday on Christmas Eve.
 
@@ -48,12 +48,12 @@ Fall details diminish over the first week. Lights increase on each calculated
 Sunday: November 29, December 6, 13, and 20 in 2026. Three outer candles are
 blue; the third Sunday's candle is rose. A taller central white Christ candle
 lights on Christmas Eve. All five remain lit through January 5, the twelfth day of Christmas; they
-clear on January 6. UTC midnight is the project's calendar boundary. The existing
+clear on January 6. Local midnight is the human calendar boundary. The existing
 January deck dismantling still takes precedence over decorations.
 
 This follows the evergreen ring, blue/rose candles and Christmas Christ candle
 described in [LCMS: Lutheran Advent Traditions](https://resources.lcms.org/history/lutheran-advent-traditions/).
-We use the Christmas Eve lighting convention, starting at December 24 UTC
+We use the Christmas Eve lighting convention, starting at December 24 local
 midnight. This affects only the candle; the Christmas seasonal handoff remains
 December 25.
 The [Phase 2B weekly ceremonies](advent-wreath-phase2b.md) now bring Pip to each
@@ -68,23 +68,19 @@ This also adds tree-stage, gift-count, illumination and January cleanup previews
 
 ## Scheduling, persistence, and compatibility
 
-- Production needs 12 seconds of safe quiet, an assembled deck, more than 135
-  seconds before traffic, no forced scenario, no dream, and no unfinished
-  antenna/Halloween/All Saints' story.
-- The existing v5 seasonal slot gains one recognized type and a Thanksgiving-only
-  `expired` lifecycle. This is an additive extension, not a new record shape or
-  storage key. Existing v2–v4 migration remains in place and is regression-tested.
-  Unfinished older incidents cannot be overwritten; completed memories survive.
-- Checkpoints are preparations, invitation, together, and final return. Resume
-  waits for a safe quiet window and starts the saved chapter, not an arbitrary
-  frame. Completion is monotonic and idempotent, and archives a non-dream-eligible
-  memory in the existing bounded 12-entry list.
-- A running gathering finishes across the Advent boundary. A subsequent launch
-  after that boundary retires an interrupted Thanksgiving as `expired`, without
-  replay or a fabricated memory. Earlier clock jumps do not expire it.
-- Storage failure falls back to in-memory progress and never stops rendering.
-  As with other stories, once-per-year cannot be guaranteed across restarts when
-  storage is unavailable or evicted.
+The [shared scheduler](event-scheduling.md) owns significant-event priorities,
+catch-up and interruption. Thanksgiving stays pending while the harvest table
+is available: November 26 through November 28 at 18:00 local time in 2026.
+Current visits/work finish, while future routine visits can wait offscreen.
+Significant events have a quiet lead-in and a 90-second ambient/routine break.
+The table's Advent repurposing explicitly retires an unpresented gathering;
+retirement creates no memory. Admission reserves the whole visible exit.
+
+Existing chapter checkpoints, memories and v2–v5 migration stay intact. New
+occurrence records use a separate bounded companion, not the single legacy
+seasonal slot. Older unfinished incidents are never overwritten. Completion
+follows the rendered payoff and exits finish. Storage failure remains nonfatal;
+normal preview playback never writes history.
 
 ## Preview
 

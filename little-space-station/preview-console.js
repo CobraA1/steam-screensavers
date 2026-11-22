@@ -1,9 +1,11 @@
+import { LocalDate, AddLocalDays, LocalInputValue, LocalZone } from './local-calendar.js';
 import { CreatePreviewController } from './preview-controller.js';
 import { STUBBORN_ANTENNA_BEATS, STUBBORN_ANTENNA_TOTAL_SECONDS, ResolveStubbornAntennaTimeline, CreateStubbornAntennaPreview } from './stubborn-antenna.js';
 import { PHANTOM_VISITOR_BEATS, PHANTOM_VISITOR_TOTAL_SECONDS, ResolvePhantomVisitorTimeline, CreatePhantomVisitorPreview } from './phantom-visitor.js';
 import { REMEMBRANCE_BEATS, REMEMBRANCE_TOTAL_SECONDS, ResolveRemembranceTimeline, CreateRemembrancePreview } from './lights-of-remembrance.js';
 import { WREATH_BEATS, WREATH_SECONDS, WreathCeremonySpec, WreathTimeline, WreathBeatStart, WreathLampState } from './advent-wreath.js';
 import { HolidayCalendar } from './holiday-calendar.js';
+import { CreateSchedulerPreview, SCHEDULER_SCENARIOS } from './scheduler-preview.js';
 
 const element = (tag, className, text) => {
   const node = document.createElement(tag);
@@ -37,6 +39,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
   const hScrub = holidayInput('Thanksgiving seconds');
   const hReadout = holidayInput('Thanksgiving state');
   const aKind = holidayInput('Advent activity');
+  const aPresentation = holidayInput('Advent activity presentation');
   const aGift = holidayInput('Advent gift');
   const aVariation = holidayInput('Advent decoration variation');
   const aBeat = holidayInput('Advent activity beat');
@@ -168,7 +171,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
     let adapter;
     variant.addEventListener('change', () => { if (controller.selected === adapter) controller.select(adapter); });
     adapter = register('Stories', id, label, settings, () => {
-      if (id === 'phantom') runtime.clock.setWorldTime(Date.UTC(2026, 9, 31, 18));
+      if (id === 'phantom') runtime.clock.setWorldTime(LocalDate(2026, 9, 31, 18));
       force.click();
     }, {
       playback: () => runtime[key],
@@ -214,7 +217,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
       c.pipTaskSelect.value = value; change(c.pipTaskSelect); runtime.paused = true;
     }, { static: true });
   }
-  const activityPane = wrapper(field('Activity', aKind), field('Present', aGift), field('Decoration variation', aVariation), field('Beat', aBeat), field('Timeline (seconds)', aScrub), aReadout);
+  const activityPane = wrapper(field('Activity', aKind), field('Presentation', aPresentation), field('Present', aGift), field('Decoration variation', aVariation), field('Beat', aBeat), field('Timeline (seconds)', aScrub), aReadout);
   const activity = register('Pip Activities', 'advent', 'Advent decorating', activityPane, click(holidayButton('Play Advent activity')), {
     playback: () => runtime.adventPreview,
     step: () => { if (runtime.adventPreview) { aScrub.value = String(Number(runtime.adventPreview.elapsed) + 1); aScrub.dispatchEvent(new Event('input')); } },
@@ -226,7 +229,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
       holidayButton('Play Advent activity').click();
     }, { playback: activity.playback, step: activity.step });
   }
-  for (const control of [aKind, aGift, aVariation]) control.addEventListener('change', () => {
+  for (const control of [aKind, aPresentation, aGift, aVariation]) control.addEventListener('change', () => {
     if (controller.selected?.id === 'advent' || controller.selected?.id.startsWith('advent-')) {
       const next = controller.selected.id === 'advent' ? activity : adapters.find(item => item.id === `advent-${aKind.value}`);
       controller.select(next); selectDisplay(next);
@@ -237,7 +240,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
   const wreathWeek = element('select', 'preview-tools__select');
   wreathWeek.setAttribute('aria-label', 'Advent wreath Sunday');
   for(let i=0;i<4;i++) {
-    const spec=WreathCeremonySpec(i),option=element('option','',`${spec.label} · ${new Date(spec.date).toISOString().slice(0,10)}`);
+    const spec=WreathCeremonySpec(i),option=element('option','',`${spec.label} · ${LocalInputValue(spec.date).slice(0,10)}`);
     option.value=String(i);wreathWeek.append(option);
   }
   const wreathBeat=element('select','preview-tools__select');wreathBeat.setAttribute('aria-label','Wreath ceremony beat');
@@ -247,7 +250,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
   wreathScrub.setAttribute('aria-label','Wreath ceremony seconds');
   const wreathReadout=element('output','preview-tools__hint');wreathReadout.setAttribute('aria-label','Wreath ceremony state');
   const wreathPane=wrapper(field('Advent Sunday',wreathWeek),field('Beat',wreathBeat),field('Timeline (seconds)',wreathScrub),wreathReadout,
-    element('p','preview-tools__hint','Tool contact at 18 seconds meets Sunday 00:00 UTC. Seek either side to inspect the actual calendar flame.'));
+    element('p','preview-tools__hint','Tool contact at 18 seconds meets local Sunday midnight. Delayed launches observe the already-lit candle.'));
   function seekWreath(seconds) {
     const p=runtime.wreathPreview;
     if(!p)return;
@@ -338,7 +341,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
 
   const world = panes.world;
   world.append(fieldOf(c.worldTimeSelect), fieldOf(c.dateInput));
-  fieldOf(c.dateInput).querySelector('.preview-tools__label').textContent = 'Set date / time (UTC)';
+  fieldOf(c.dateInput).querySelector('.preview-tools__label').textContent = 'Set date / time (local)';
   for (const section of [c.cameraSection, c.planetSection, c.expansionSection, c.environmentSection]) { section.open = true; world.append(section); }
   const live = button('Return to live simulation', () => {
     controller.stop(); director.forceEvent('auto'); runtime.clock.useActualTime(); runtime.speed = 1; c.speedSelect.value = '1';
@@ -352,13 +355,38 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
 
   const inspect = panes.inspect;
   inspect.append(fieldOf(c.seedInput), c.readout, c.seasonalReadout);
+  const schedulerSection = element('details', 'preview-tools__environment');
+  schedulerSection.open = true;
+  schedulerSection.append(element('summary', '', 'Shared event scheduler'));
+  const schedulerReadout = element('pre', 'preview-tools__hint');
+  schedulerReadout.style.whiteSpace = 'pre-wrap';
+  schedulerReadout.setAttribute('aria-label', 'Scheduler diagnostics');
+  const schedulerScenario = element('select', 'preview-tools__select');
+  schedulerScenario.setAttribute('aria-label', 'Scheduler scenario');
+  for (const [id, label] of SCHEDULER_SCENARIOS) addChoice(schedulerScenario, label, id);
+  function runScheduler(restart = false) {
+    const old = runtime.schedulerPreview;
+    const options = restart && old ? { time: runtime.clock.worldTimeMs, records: [...old.events.scheduler.records.values()] } : {};
+    controller.stop(); selectDisplay(null);
+    runtime.schedulerPreview = CreateSchedulerPreview(runtime.config, schedulerScenario.value, options);
+    runtime.clock.setWorldTime(runtime.schedulerPreview.time); director.forceEvent('auto');
+    runtime.rechargeActive = false;
+  }
+  schedulerSection.append(schedulerReadout, field('Read-only scenario', schedulerScenario),
+    button('Run scheduler scenario', () => runScheduler()), button('Simulate scheduler restart', () => runScheduler(true)),
+    element('p', 'preview-tools__hint', 'Scenarios use isolated in-memory records. Restart retains only their checkpoints. Stop or any scene selection clears the experiment. Dates are local; absolute timestamps remain below.'));
+  inspect.append(schedulerSection);
   const saved = element('details', 'preview-tools__environment');
   saved.append(element('summary', 'preview-tools__environment-summary', 'Saved data and failure testing'));
   saved.append(element('p', 'preview-tools__hint', 'These actions affect saved Little Space Station records. Preview playback is temporary.'));
   for (const [name, node] of [['Stubborn Antenna', c.incidentStorageActions], ['Phantom Visitor', c.phantomStorageActions], ['Lights of Remembrance', c.remembranceStorageActions]]) {
     saved.append(element('strong', 'preview-console__subheading', name), node);
   }
-  saved.append(c.actions, c.storageActions);
+  saved.append(c.actions, c.storageActions, button('Clear scheduler occurrence records', () => {
+    const result = runtime.scheduledEvents.storage.clear({ explicit: true });
+    if (result.ok) runtime.scheduledEvents.scheduler.records.clear();
+    runtime.logs.unshift({ at: new Date().toISOString(), message: result.ok ? 'cleared scheduler occurrence records; narrative memories unchanged' : result.status });
+  }));
   // These operations are explicit and scoped to the existing store.
   for (const b of [c.commitButton, c.clearButton, ...saved.querySelectorAll('button')].filter((b, i, a) => a.indexOf(b) === i && /^(Commit|Clear)/.test(b.textContent))) {
     b.addEventListener('click', event => {
@@ -368,8 +396,8 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
   for (const [resume, id] of [[c.resumeIncident, 'antenna'], [c.resumePhantom, 'phantom'], [c.resumeRemembrance, 'remembrance']]) {
     resume.addEventListener('click', () => {
       controller.stop();
-      if (id === 'phantom') { runtime.clock.setWorldTime(Date.UTC(2026, 9, 31, 18)); runtime.seasonalPreview = 'halloween-full'; }
-      if (id === 'remembrance') runtime.clock.setWorldTime(Date.UTC(2026, 10, 1, 18));
+      if (id === 'phantom') { runtime.clock.setWorldTime(LocalDate(2026, 9, 31, 18)); runtime.seasonalPreview = 'halloween-full'; }
+      if (id === 'remembrance') runtime.clock.setWorldTime(LocalDate(2026, 10, 1, 18));
     }, true);
     resume.addEventListener('click', () => {
       const adapter = adapters.find(item => item.id === id);
@@ -429,7 +457,21 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
       controller.selected?.refresh?.();
       const camera = snapshot.camera || scene.getCameraDiagnostics();
       const env = snapshot.environment || {};
-      context.textContent = `${new Date(state.worldTimeMs).toISOString().replace('T', ' ').slice(0, 16)} UTC · ${camera.preset || 'very-close'} / ${camera.mode || 'overview'} · light ${c.illuminationSelect.value} · season ${c.seasonSelect.value}`;
+      if (runtime.schedulerPreview) activeTitle.textContent = runtime.schedulerPreview.events.scheduler.active?.event.label || 'Scheduler scenario';
+      context.textContent = `${LocalInputValue(state.worldTimeMs).replace('T', ' ')} ${LocalZone()} · ${camera.preset || 'very-close'} / ${camera.mode || 'overview'} · light ${c.illuminationSelect.value} · season ${c.seasonSelect.value}`;
+      if (tab === 'inspect' && schedulerSection.open) {
+        const d = snapshot.scheduler || {};
+        schedulerReadout.textContent = [
+          `Active: ${d.active ? d.active.id + ' · priority ' + d.active.priority + ' · ' + d.active.elapsed.toFixed(1) + 's' : 'none'}`,
+          `Waiting: ${d.waiting || 'ready'}`,
+          `Earliest opportunity: ${d.nextOpportunity ? new Date(d.nextOpportunity).toLocaleString() : '—'} (estimate; admitted work may finish later)`,
+          `Zone: ${d.zone} · records: ${d.storage}`,
+          'Pending:', ...(d.pending || []).map(e => `  P${e.priority} ${e.id}${e.deferred ? ' · deferred' : ''}\n    ${e.waiting || 'ready'}`),
+          'Completed / retired:', ...(d.records || []).filter(e => ['completed','expired','superseded'].includes(e.status)).map(e => `  ${e.id}: ${e.status}${e.reason ? ' · '+e.reason : ''}`),
+          'Traffic admission:', ...(d.traffic || []).map(e => `  ${e.id}: ${e.action}`),
+          `Absolute: ${state.worldTimeMs} · ${new Date(state.worldTimeMs).toISOString()}`,
+        ].join('\n');
+      }
       for (const b of cameraBar.children) b.setAttribute('aria-pressed', String(b.dataset.camera === camera.mode));
     },
   };

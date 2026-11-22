@@ -3,8 +3,9 @@
 // hours. The remaining time is staging, fastening, inspection, or quiet.
 // No save record, missed-frame replay, or persistent per-frame animation.
 const HOUR_MS = 3_600_000;
-export const DECK_INSTALL_START = Date.UTC(2026, 8, 22);
-export const DECK_REMOVE_END = Date.UTC(2027, 0, 7);
+import { LocalDate } from './local-calendar.js';
+export const DECK_INSTALL_START = LocalDate(2026, 8, 22);
+export const DECK_REMOVE_END = LocalDate(2027, 0, 7);
 export const DECK_STAGES = Object.freeze([
   "coupling", "supports", "floor", "cabin", "railings", "lighting",
 ]);
@@ -55,15 +56,16 @@ export function DeckLiftFraction(stageProgress) {
 
 export function ResolveServiceDeck(time, config = {}, preview = null) {
   const durationMs = DeckDurationMs(config);
+  const installStart = LocalDate(2026, 8, 22), removeEnd = LocalDate(2027, 0, 7);
   let action = null;
   let progress = 0;
-  let status = time < DECK_INSTALL_START ? "not-installed" : time >= DECK_REMOVE_END ? "renewed-away" : "installed";
-  if (time >= DECK_INSTALL_START && time < DECK_INSTALL_START + durationMs) {
+  let status = time < installStart ? "not-installed" : time >= removeEnd ? "renewed-away" : "installed";
+  if (time >= installStart && time < installStart + durationMs) {
     action = "install";
-    progress = (time - DECK_INSTALL_START) / durationMs;
-  } else if (time >= DECK_REMOVE_END - durationMs && time < DECK_REMOVE_END) {
+    progress = (time - installStart) / durationMs;
+  } else if (time >= removeEnd - durationMs && time < removeEnd) {
     action = "remove";
-    progress = (time - (DECK_REMOVE_END - durationMs)) / durationMs;
+    progress = (time - (removeEnd - durationMs)) / durationMs;
   }
   if (preview && ["install", "remove"].includes(preview.action)) {
     action = preview.action;

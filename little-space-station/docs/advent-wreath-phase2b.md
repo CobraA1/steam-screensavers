@@ -2,36 +2,34 @@
 
 Implemented November 21, 2026. Four optional, peaceful 32-second activities use
 the existing wreath, five candles, Pip model and fixed-length wrist-tool reach.
-They create no story record, inventory, dream or new simulation.
+They create no narrative memory, inventory, dream or new simulation. The shared
+scheduler now stores occurrence status separately.
 
 ## Calendar and witnessed ignition
 
 The calendar remains authoritative. The original Sunday dates and Christmas Eve
 Christ-candle rule are unchanged. As agreed for this phase, wreath preparation
 now takes place during the six hours **before** the first Advent Sunday, rather
-than the six hours afterwards: November 28, 18:00–24:00 UTC in 2026. The harvest
+than the six hours afterwards: November 28, 18:00–24:00 local time in 2026. The harvest
 settings retract and the existing unlit wreath rises in the same table position.
 An active Thanksgiving story retains its harvest setting until its exit.
 
-| Sunday, 00:00 UTC | Candle | Weekly character |
+| Sunday, 00:00 local time | Candle | Weekly character |
 | --- | --- | --- |
 | November 29 | First blue | Careful examination of the newly prepared wreath, then quiet admiration |
 | December 6 | Second blue | Straighten a front evergreen sprig before approaching the wick |
 | December 13 | Rose | A small pleased nod and head tilt |
 | December 20 | Final blue | Watch all four flames in a long, peaceful pause |
 
-Every ceremony starts 18 seconds before midnight and ends 14 seconds afterwards.
-The wrist tool reaches the wick by second 17 and holds through second 19.
-At **second 18 / Sunday 00:00 UTC**, the real `HolidayCalendar` count increases;
-the renderer shows the flame immediately. A small, warm settling pulse follows
-contact. Earlier candles remain lit, and the white central candle is untouched.
+The preferred ceremony starts 18 seconds before local midnight and ends 14
+seconds afterwards. Tool contact holds through seconds 17–19 while the real
+calendar changes at second 18. Missing that approach defers the ceremony until
+after midnight, as an observance of an already-lit candle. It never extinguishes
+or relights a calendar flame and never changes the Christ candle.
 
-There is no visual override that turns a calendar-lit candle off. Missing every
-ceremony, reopening afterwards, interrupting one, or jumping dates still gives
-the correct accumulated flames. A restart within the 32-second window starts at
-its absolute current pose; after midnight it shows observation/withdrawal rather
-than a second ignition. Preview seeks deliberately move the preview calendar
-alongside the pose, so before/after samples exercise the same flame rules.
+Forced preview places the clock around the selected local midnight for exact
+before/after inspection. The scheduler's delayed-launch scenario instead shows
+actual catch-up with the current calendar state.
 
 ## Choreography and access
 
@@ -47,26 +45,16 @@ All body, arm, head, eye, sprig and flame transforms reconstruct on each update.
 The arm links retain their original lengths. No table, wreath location, deck,
 tree, gift or traffic-path geometry is enlarged or moved.
 
-## Safe opportunities, priority and limits
+## Shared scheduling and limits
 
-The inaugural activities are **2026-only**, matching the existing seasonal deck
-and Phase 2A activities. The wreath calendar remains reusable across years.
-An absolute window must be free of traffic (including margins), ordinary
-maintenance and recharge throughout. An absent/not-ready deck, forced scenario,
-dream, active or unfinished story, or Phase 2A decorating activity excludes it.
-Existing Phase 2A windows take priority on overlap. Unsafe or missed ceremonies
-are omitted; they are never queued later and never delay the candle calendar.
-
-The director retains only a bounded set of at most four interrupted IDs in
-memory. A cancelled opportunity cannot restart later in that session. Already
-active stories take priority; selection of a new discretionary story waits for
-an ongoing ceremony's short exit. No storage availability is required.
-
-For the default `little-station-001` seed, the first two windows are available;
-the rose and fourth-candle windows overlap existing present placements and are
-omitted. Their flames still light at midnight. Other seeds may also lose a
-window to traffic, maintenance, recharge or a higher-priority story. All four
-complete ceremonies are always available through explicit preview.
+The [shared scheduler](event-scheduling.md) replaces disposable windows. All
+four inaugural 2026 ceremonies stay pending, including the default seed's third
+and fourth Sundays. Current visits/work finish; future arrivals yield to a
+reserved opportunity. Decorating and ceremonies share chronological ordering
+and quiet breaks. Interrupted observances restart around already-lit candles.
+Completion follows the full visible return. January scenery/deck removal
+explicitly retires unpresented occurrences, without creating story memories.
+Calendar candles remain independent of storage. Preview is read-only.
 
 ## Preview and verification
 

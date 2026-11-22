@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../vendor/three.module.js';
@@ -39,7 +40,7 @@ test('all four correct Advent candles ignite at calendar midnight, accumulating 
     }
   }
   // An activity cannot put out a flame or affect the central Christ candle.
-  const christmas=HolidayCalendar(Date.UTC(2026,11,24));
+  const christmas=HolidayCalendar(LocalDate(2026,11,24));
   for(let week=0;week<4;week++)for(const elapsed of [0,18,32]) {
     const ceremony={...WreathCeremonySpec(week),elapsed};
     for(let i=0;i<5;i++)assert.equal(WreathLampState(christmas,i,ceremony).lit,true);
@@ -51,7 +52,7 @@ test('the unlit wreath is prepared before the first midnight; missed ceremonies 
   assert.equal(HolidayCalendar(date-6*3600000-1).wreathPreparing,false);
   assert.equal(HolidayCalendar(date-3*3600000).transition,.5);
   assert.equal(HolidayCalendar(date).transition,1);
-  for(const time of [date-6*3600000,date-1000,date,...[1,2,3].map(i=>date+i*7*DAY),Date.UTC(2026,11,24),Date.UTC(2027,0,6)]) {
+  for(const time of [date-6*3600000,date-1000,date,...[1,2,3].map(i=>date+i*7*DAY),LocalDate(2026,11,24),LocalDate(2027,0,6)]) {
     const state={holiday:HolidayCalendar(time),seasonal:{serviceDeck:{ready:true}}};s.holiday.update(state);
     assert.equal(s.holiday.lamps.filter(l=>l.visible).length,state.holiday.adventWeek+(state.holiday.christCandleLit?1:0));
   }
@@ -130,7 +131,7 @@ test('absolute ceremony windows yield to traffic, maintenance, recharge, decorat
   const config={worldSeed:'wreath-safe',maintenance:{activeChance:0},pipRhythm:{enabled:false}};
   const idle={At:()=>({current:null,next:null})},decorating={plan:()=>[]};
   const create=()=>new AdventWreathDirector(config,idle,decorating);
-  const d=create();assert.equal(d.at(Date.UTC(2026,9,1)),null);assert.equal(d.windows,null);
+  const d=create();assert.equal(d.at(LocalDate(2026,9,1)),null);assert.equal(d.windows,null);
   assert.equal(d.plan().length,4);
   const state=()=>({phase:'quiet',visitId:'',shipVisible:false,pipTaskId:'standby',seasonal:{serviceDeck:{ready:true}}});
   for(const spec of d.plan()) {
@@ -147,6 +148,6 @@ test('absolute ceremony windows yield to traffic, maintenance, recharge, decorat
   const sleeping=new AdventWreathDirector({...config,worldSeed:sleepingSeed,pipRhythm:{enabled:true}},idle,decorating);
   assert.ok(!sleeping.plan().some(w=>w.week===0),'recharge excludes the whole opportunity');
   assert.equal(new AdventWreathDirector(config,idle,{plan:()=>d.plan()}).plan().length,0);
-  assert.equal(d.at(Date.UTC(2026,11,24)),null);assert.equal(d.at(Date.UTC(2027,0,6)),null);
+  assert.equal(d.at(LocalDate(2026,11,24)),null);assert.equal(d.at(LocalDate(2027,0,6)),null);
   assert.equal(WREATH_SECONDS,32);
 });

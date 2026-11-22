@@ -15,11 +15,14 @@ controls. [Phase 2A](docs/advent-decorating-phase2a.md) adds Pip's section check
 strand adjustments, ornament and star placement, wrapped-present carrying, and
 quiet final inspection. Preview every activity with playback, beat selection
 and scrubbing under **Scenes → Pip Activities → Advent decorating**.
+Its **Presentation** selector compares the scheduled installation with catch-up
+tending/inspection of a prop already installed by the calendar.
 [Phase 2B](docs/advent-wreath-phase2b.md) adds four peaceful weekly wreath
 ceremonies. The unlit wreath is prepared before the first Sunday, and Pip's
-tool reaches each wick at its existing UTC midnight ignition. Calendar flames
-remain correct if an activity is missed; existing decorating and other busy
-windows take priority. Preview any Sunday under **Pip Activities → Wreath**.
+tool can meet each wick at local midnight. Missed ceremonies stay pending and
+later observe the already-lit candle; decorating and traffic defer them rather
+than discard them. See the [shared scheduler contract](docs/event-scheduling.md).
+Preview any Sunday under **Pip Activities → Wreath**.
 Christmas Eve's Christ-candle and tree-lighting ceremonies, a possible returning visitor, and the Christmas
 gift-opening gathering remain future work
 in the [Advent/Christmas planning notes](docs/advent-christmas-story-planning.md).
@@ -111,7 +114,7 @@ Visitor craft carry four axial RCS ports at both the fore and aft ends. Arrival 
 
 ## Autumn 2026 seasonal story
 
-The seasonal system uses UTC calendar dates and the existing absolute world clock. Ordinary state is reconstructed directly after a date jump or long absence; viewers never need to watch historical deliveries before decorations appear.
+The seasonal system uses device-local calendar dates and the existing absolute world clock. Ordinary state is reconstructed directly after a date jump or long absence; viewers never need to watch historical deliveries before decorations appear. Significant activities remain pending separately from scenery, until presented or explicitly retired when their physical setting is removed.
 
 | Window | World state |
 | --- | --- |
@@ -125,13 +128,13 @@ The seasonal system uses UTC calendar dates and the existing absolute world cloc
 | November 2–3 | Pip may remove Halloween props; missed or interrupted remembrance presentations retain a short grace period. |
 | November 4–December 20 | Halloween and temporary memorial props are gone; general fall decorations remain. |
 | December 21–January 6 | Ordinary fall props are gone, but the cleared service deck remains as story-year infrastructure. |
-| January 6, 00:00–January 7, 00:00 UTC | The temporary service deck dismantles in six distinct work stages with quiet periods; the last coupling departs by the annual-renewal boundary. |
+| January 6, 00:00–January 7, 00:00 local time | The temporary service deck dismantles in six distinct work stages with quiet periods; the last coupling departs by the annual-renewal boundary. |
 
 Seasonal cargo reuses the deterministic traffic schedule and never adds a second ship or increases visit frequency. Selected cargo visits receive stable 2–4-package manifests. Packages move one at a time from the ship to Pip's grip and station storage, using separate fall, Halloween, and remembrance palettes and markings.
 
 The seasonal service deck attaches to the station's aft `-X` port through a short offset passage. Its 4.6 × 3.1-unit platform includes a 0.6-unit aft extension for the Advent tree, with a clear central floor, narrow panel seams, clipped corners, and visible underfloor supports. A compact utility cabin occupies about 11% of the platform and has a Pip-sized pressure door, framed windows, a service locker, and a shallow roof cap. Waist-height rails and small shielded corner lamps keep the deck readable. The established `+X` visitor approach, docking, and departure corridor is unchanged. Gourds, lanterns, garlands, Halloween props, and the All Saints' fixture retain their shared anchors; Pip's work positions align its boots with the floor. Floor, beams, rails and corner lights all extend together within the original assembly/dismantling groups.
 
-Deck assembly is calendar-derived rather than persisted. **Installation occupies September 22, 2026, 00:00–September 23, 00:00 UTC; removal occupies January 6, 2027, 00:00–January 7, 00:00 UTC.** Each takes 24 hours by default, configurable with `serviceDeck.transitionHours` in `config.js` (1–48 hours). Installation starts when autumn begins and removal always ends at the story-year renewal boundary. Reopening or jumping dates reconstructs the correct phase without replaying missed animation frames or requiring a shutdown callback.
+Deck assembly is calendar-derived rather than persisted. **Installation occupies September 22, 2026, 00:00–September 23, 00:00 local time; removal occupies January 6, 2027, 00:00–January 7, 00:00 local time.** Each takes 24 hours by default, configurable with `serviceDeck.transitionHours` in `config.js` (1–48 hours). Installation starts when autumn begins and removal always ends at the story-year renewal boundary. Reopening or jumping dates reconstructs the correct phase without replaying missed animation frames or requiring a shutdown callback.
 
 `service-deck-lifecycle.js` still divides each transition into six ordered stages: coupling, supports, floor, cabin, railings, and lighting. Each stage spans four hours at the 24-hour default. **The rigid part actually moves only during a short lift around 40% into its stage (about 2.4 minutes at real pace),** and is fully seated or entirely absent during intervening quiet periods. Survey drones visit beforehand, leave, return for a fastening shift during installation (or to unfasten a part before removal), then come back to inspect. Several hours of the day remain quiet; construction is not a continuous stream of flying parts. Removal uses the reverse order: lighting, railings, cabin, floor, supports, coupling. Existing lights power up last and down first. The completed module remains available for decoration only when the installation has ended. Individual part transforms, riggers, and work-shift selection are derived directly from the world timestamp.
 
@@ -160,8 +163,8 @@ python3 screensaver-preview.py
 Select **The Little Space Station**. Both preview choices add `?preview=1`, which opens the console in the upper-right corner.
 
 - **Scenes** searches and plays visits, stories, Pip activities, seasonal scenes, dreams, and deck assembly. Choosing a scene starts it; beat selection and scrubbing pause it. Use the shared playback controls to resume, restart, stop, step, or change speed. Pip's pose inspector is a still pose rather than a timed scene.
-- **World** contains the UTC date and time, environment, planet, camera, and expansion controls. Planet rotation changes only the globe's appearance. **Return to live simulation** clears temporary overrides and restores the natural schedule and production framing.
-- **Inspect** contains live diagnostics, seed selection, simulated interruption, and saved-data controls. Commits and deletion ask for confirmation; ordinary previews do not save story progress.
+- **World** contains the local date and time, environment, planet, camera, and expansion controls. Planet rotation changes only the globe's appearance. **Return to live simulation** clears temporary overrides and restores the natural schedule and production framing.
+- **Inspect** contains live diagnostics, shared scheduler priorities and waiting reasons, read-only conflict/catch-up/restart scenarios, seed selection, simulated interruption, and saved-data controls. Commits and deletion ask for confirmation; ordinary previews do not save story progress. Scheduler diagnostics also show exact absolute timestamps.
 - Use the camera shortcuts above the tabs for the perspective and six orthographic views. Top/front/side are the default inspection angles; bottom/back/other side help when something is hidden. **Full screen** is available in the header. **Collapse** leaves a small playback strip without changing the scene or its framing.
 
 Dreams use an eligible saved memory when available, otherwise a temporary example. Calendar presets reconstruct their date directly. Deck installation and removal retain their separate assembly speed and work-stage controls.
@@ -187,14 +190,14 @@ Edit `config.js` and relaunch:
 - `traffic` controls quiet-gap odds/ranges, per-visit service ranges, and approach, docking, departure, and afterglow durations.
 - `maintenance` controls Pip's deterministic task-slot length and active-task probability.
 - `pipRhythm` controls Pip's separate seeded recharge interval, duration, memory duration/chance, and the minimum visible session before it can begin.
-- `story.minimumSessionSeconds` controls the initial quiet-session requirement shared by the narrative directors. The antenna story also uses the remaining `story` opportunity fields; Phantom Visitor uses safe defaults for optional `phantomOpportunityWindowMinutes` and `phantomOpportunityChance` values when absent.
-- Autumn/Halloween/All Saints' dates are intentionally fixed to UTC 2026 in `autumn-2026.js`; there is no production seasonal configuration screen.
-- The inaugural service deck uses the same UTC story calendar and the explicit January 7, 2027 renewal boundary. It has no stored toggle or production controls.
+- `story.minimumSessionSeconds` controls the shared quiet lead-in (default 12 seconds, minimum 4). Old random opportunity fields no longer govern production selection; significant events remain pending instead of depending on lucky windows.
+- Autumn/Halloween/All Saints' dates belong to the local 2026 calendar in `autumn-2026.js`; there is no production seasonal configuration screen.
+- The inaugural service deck uses the same local story calendar and the explicit January 7, 2027 renewal boundary. It has no stored toggle or production controls.
 - `testScenario` can be `auto`, `cargo-run`, `courier-stop`, `survey-call`, or `ambient`.
 
 ## Persistence
 
-Procedural state is reconstructed from seed and absolute time rather than written continuously. The small versioned Local Storage v5 record is reserved for presentation checkpoints and a bounded archive (12 entries) of completed narrative memories. It preserves older v2–v4 visit, antenna, consequence, and memory records during migration. The single seasonal incident slot holds an incomplete Phantom Visitor or Lights of Remembrance presentation; completing the latter does not remove the former's archived memory. Checkpoints are monotonic and completion records are deduplicated.
+Procedural state is reconstructed from seed and absolute time rather than written continuously. The small versioned Local Storage v5 record retains presentation checkpoints and a bounded archive (12 entries) of completed narrative memories, including v2–v4 migration. A separate bounded `event-schedule:v1` companion stores pending, interrupted and completed occurrences with individual checkpoints. The old seasonal slot is not a global queue: completing another event never overwrites an older unfinished checkpoint. Checkpoints stay monotonic and completion is deduplicated. See [migration and scheduling](docs/event-scheduling.md).
 
 Preview forcing, beat scrubbing, date jumps, and dream playback never silently write history. Only explicitly labeled commit/clear actions do so. Storage remains best effort, and a real write/read-back probe is used; failure never stops rendering.
 
@@ -204,6 +207,9 @@ The pure environment, scheduler, maintenance, Pip pose/preview mapping, camera-f
 
 ```sh
 npm test
+TZ=UTC npm test
+TZ=America/Chicago npm test
+TZ=Pacific/Auckland npm test
 ```
 
 No packages need to be installed. The Steam Deck screensaver runtime itself does not use Node or `package.json`.

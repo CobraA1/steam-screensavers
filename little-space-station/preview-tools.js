@@ -1,3 +1,4 @@
+import { LocalDate, AddLocalDays, LocalInputValue, LocalZone } from './local-calendar.js';
 import { EVENT_CATALOG, PHASE_NAMES } from "./simulation-world.js";
 import { ILLUMINATION_OVERRIDES, SEASON_OVERRIDES } from "./environment.js";
 import { PIP_PREVIEW_TASKS, PIP_TASK_STAGES } from "./pip-behavior.js";
@@ -496,7 +497,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
   });
   seedInput.addEventListener("change", () => { const url = new URL(window.location.href); url.searchParams.set("preview", "1"); url.searchParams.set("seed", seedInput.value.trim() || runtime.seed); window.location.assign(url); });
   worldTimeSelect.addEventListener("change", () => { if (worldTimeSelect.value === "actual") runtime.clock.useActualTime(); else runtime.clock.jumpWorld(worldTimeSelect.value); worldTimeSelect.value = "actual"; });
-  dateInput.addEventListener("change", () => { const time = new Date(dateInput.value + "Z").getTime(); if (Number.isFinite(time)) runtime.clock.setWorldTime(time); });
+  dateInput.addEventListener("change", () => { const time = new Date(dateInput.value).getTime(); if (Number.isFinite(time)) runtime.clock.setWorldTime(time); });
   framingSelect.addEventListener("change", () => scene.cameraFraming.setPreset(framingSelect.value));
   let previousStationCameraMode = "overview";
   cameraModeSelect.addEventListener("change", () => {
@@ -543,7 +544,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
     runtime.deckPreview = null;
     runtime.seasonalPreview = "natural";
     seasonalMode.value = "natural";
-    runtime.clock.setWorldTime(new Date(button.dataset.date).getTime());
+    runtime.clock.setWorldTime(new Date(button.dataset.date.replace(/Z$/, '')).getTime());
     runtime.logs.unshift({ at: new Date().toISOString(), message: "jumped to seasonal date " + button.textContent + " (no writes)" });
   });
   const deckDuration = () => DeckDurationMs(CONFIG.serviceDeck) / 1000 / Number(deckRate.value);
@@ -681,7 +682,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
     runtime.dreamPreview = null;
     runtime.incidentPreview = null;
     runtime.phantomPreview = null;
-    runtime.clock.setWorldTime(Date.UTC(2026, 10, 1, 18));
+    runtime.clock.setWorldTime(LocalDate(2026, 10, 1, 18));
     runtime.remembrancePreview = CreateRemembrancePreview({
       variant: Number(remembranceVariant.value),
       beatId: remembranceBeat.value,
@@ -700,7 +701,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
     runtime.phantomPreview = null;
     runtime.remembrancePreview = CreateRemembrancePreview({ variant: Number(remembranceVariant.value), playing: true, elapsed: 0 });
     runtime.remembrancePreview.preview = true;
-    runtime.clock.setWorldTime(Date.UTC(2026, 10, 1, 18));
+    runtime.clock.setWorldTime(LocalDate(2026, 10, 1, 18));
     director.forceEvent("ambient");
     eventSelect.value = "ambient";
     runtime.logs.unshift({ at: new Date().toISOString(), message: "forced Lights of Remembrance preview (temporary)" });
@@ -782,7 +783,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
     const saved = record && record.completedStories && record.completedStories.find((memory) => memory.type === type && memory.eligibleForDream);
     // This fixture lives only in this preview module. It never becomes history.
     const memory = saved || { type, instanceId: "preview-" + type + "-example",
-      storyYear: new Date(runtime.clock.worldTimeMs).getUTCFullYear(), variant: 1,
+      storyYear: new Date(runtime.clock.worldTimeMs).getFullYear(), variant: 1,
       outcome: type === PHANTOM_VISITOR_TYPE ? "inspection-drone-freed" : "repaired-with-plate", eligibleForDream: true };
     const dream = CreateStoryDream(memory);
     runtime.restPreview = "dream";

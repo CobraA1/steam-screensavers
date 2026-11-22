@@ -1,20 +1,21 @@
 import USER_CONFIG from "./config.js";
 import { HolidayRuntime, ApplyThanksgiving } from './holiday-runtime.js';
-import { AdventActivityDirector, AdventActivityTimeline, ApplyAdventActivity, ADVENT_ACTIVITY_SECONDS } from './advent-activities.js';
-import { AdventWreathDirector, ApplyWreathCeremony, WreathTimeline, WREATH_SECONDS } from './advent-wreath.js';
+import { AdventActivityTimeline, ApplyAdventActivity, ADVENT_ACTIVITY_SECONDS } from './advent-activities.js';
+import { ApplyWreathCeremony, WreathTimeline, WREATH_SECONDS } from './advent-wreath.js';
 import { LittleSpaceStationScene } from "./scene.js";
 import { CreateWorldIdentity } from "./world.js";
 import { EventDirector } from "./simulation-world.js";
 import { SimulationClock } from "./simulation-clock.js";
 import { CreateNarrativeStore } from "./persistence.js";
 import { EnvironmentSystem } from "./environment.js";
-import { IncidentDirector } from "./incident-director.js";
+import { ScheduledEvents } from './scheduled-events.js';
+import { HolidayCalendar } from './holiday-calendar.js';
 import { ApplyPipPreviewOverride } from "./pip-behavior.js";
 import { AdvanceDream, ApplyPipRechargeState, CanStartPipRecharge, CreateStoryDream, ResolvePipRecharge, SelectDreamMemory } from "./pip-rhythm.js";
-import { AdvanceStubbornAntennaIncident, ApplyStubbornAntennaConsequence, ApplyStubbornAntennaPreview, CreateStubbornAntennaPreview, CreateStubbornAntennaResume, ResolveStubbornAntennaTimeline, STUBBORN_ANTENNA_MILESTONES, STUBBORN_ANTENNA_TOTAL_SECONDS } from "./stubborn-antenna.js";
+import { ApplyStubbornAntennaConsequence, ApplyStubbornAntennaPreview, CreateStubbornAntennaPreview, ResolveStubbornAntennaTimeline, STUBBORN_ANTENNA_MILESTONES, STUBBORN_ANTENNA_TOTAL_SECONDS } from "./stubborn-antenna.js";
 import { ApplyAutumn2026State, ResolveAutumn2026 } from "./autumn-2026.js";
-import { AdvancePhantomVisitorIncident, ApplyPhantomVisitor, CreatePhantomVisitorPreview, CreatePhantomVisitorResume, PhantomVisitorDirector, PHANTOM_VISITOR_MILESTONES, PHANTOM_VISITOR_TOTAL_SECONDS, PHANTOM_VISITOR_TYPE, ResolvePhantomVisitorTimeline } from "./phantom-visitor.js";
-import { AdvanceRemembranceIncident, ApplyRemembrance, CreateRemembrancePreview, CreateRemembranceResume, RemembranceDirector, REMEMBRANCE_MILESTONES, REMEMBRANCE_TOTAL_SECONDS, REMEMBRANCE_TYPE, ResolveRemembranceTimeline } from "./lights-of-remembrance.js";
+import { ApplyPhantomVisitor, CreatePhantomVisitorPreview, PHANTOM_VISITOR_MILESTONES, PHANTOM_VISITOR_TOTAL_SECONDS, PHANTOM_VISITOR_TYPE, ResolvePhantomVisitorTimeline } from "./phantom-visitor.js";
+import { ApplyRemembrance, CreateRemembrancePreview, REMEMBRANCE_MILESTONES, REMEMBRANCE_TOTAL_SECONDS, REMEMBRANCE_TYPE, ResolveRemembranceTimeline } from "./lights-of-remembrance.js";
 
 const DEFAULT_CONFIG = Object.freeze({
   worldSeed: "little-station-001",
@@ -66,18 +67,14 @@ let director;
 let clock;
 let environment;
 let store;
-let storyDirector;
-let phantomDirector;
-let remembranceDirector;
+let scheduledEvents;
 let previewTools;
 let holidayRuntime;
-let adventDirector;
-let wreathDirector;
 let lastFrame;
 
 function Log(message) { if (IS_PREVIEW) { runtime.logs.unshift({ at: new Date().toISOString(), message }); runtime.logs.length = 32; } }
 
-function Snapshot() { return { clocks: clock ? clock.snapshot() : {}, state: director ? director.state : {}, environment: environment ? { ...environment.state } : {}, storage: store ? store.status() : {}, runtime: { ...runtime, logs: [...runtime.logs] }, render: stationScene && stationScene.getDiagnostics ? stationScene.getDiagnostics() : {}, pip: stationScene && stationScene.getPipDiagnostics ? stationScene.getPipDiagnostics() : {}, camera: stationScene && stationScene.getCameraDiagnostics ? stationScene.getCameraDiagnostics() : {} }; }
+function Snapshot() { return { clocks: clock ? clock.snapshot() : {}, state: director ? director.state : {}, scheduler: (runtime.schedulerPreview?.events || scheduledEvents)?.diagnostics(clock.worldTimeMs) || {}, environment: environment ? { ...environment.state } : {}, storage: store ? store.status() : {}, runtime: { ...runtime, logs: [...runtime.logs] }, render: stationScene && stationScene.getDiagnostics ? stationScene.getDiagnostics() : {}, pip: stationScene && stationScene.getPipDiagnostics ? stationScene.getPipDiagnostics() : {}, camera: stationScene && stationScene.getCameraDiagnostics ? stationScene.getCameraDiagnostics() : {} }; }
 
 function ResolutionChanged() {
   viewport.width = Math.max(1, window.innerWidth);
@@ -121,8 +118,10 @@ function RunFrame(currentTime) {
     if(p.playing){p.elapsed=Math.min(WREATH_SECONDS,p.elapsed+stepSeconds);if(p.elapsed>=WREATH_SECONDS)p.playing=false;}
     clock.setWorldTime(p.start+p.elapsed*1000);
   }
-  const eventState = director.update(stepSeconds, clock.worldTimeMs);
-  const wreathWasActive = Boolean(eventState.wreathCeremony);
+  // Reserve resources before committing any lower-priority work to presentation.
+  const scheduler = IS_PREVIEW ? runtime.schedulerPreview?.events : scheduledEvents;
+  const admission = scheduler ? scheduler.prepare(clock.worldTimeMs, { forced: director.isForcedScenario() }) : null;
+  const eventState = director.update(stepSeconds, clock.worldTimeMs, admission);
   // EventDirector reuses this object; a finished dream must not linger.
   eventState.dream = null;
   eventState.storyIncident = null;
@@ -139,68 +138,21 @@ function RunFrame(currentTime) {
     deckConfig: CONFIG.serviceDeck,
     deckPreview: IS_PREVIEW ? runtime.deckPreview : null,
   });
+  const background = seasonalState.installation || seasonalState.ambientOddity?.id === 'pip-flicker';
+  runtime.backgroundActive = Boolean(background && (!admission?.reserve || runtime.backgroundActive));
+  eventState.allowReservedBackground = runtime.backgroundActive;
   ApplyAutumn2026State(eventState, seasonalState, CONFIG.worldSeed);
-  const thanksgivingActive = holidayRuntime.update(eventState, stepSeconds, clock.worldTimeMs, clock.presentationSeconds, director.isForcedScenario() || wreathWasActive);
-  const completedStories = runtime.persistedNarrative && runtime.persistedNarrative.record && runtime.persistedNarrative.record.completedStories || [];
-  eventState.remembranceCompleted = completedStories.some((entry) => entry.type === REMEMBRANCE_TYPE && entry.storyYear === 2026);
-  const antennaIncompleteBeforeSelection = runtime.incidentPlayback || (runtime.incidentRecord && runtime.incidentRecord.milestone < STUBBORN_ANTENNA_MILESTONES["repair-presented"]);
-  if (!IS_PREVIEW && !wreathWasActive && !thanksgivingActive && !runtime.phantomPlayback && !runtime.remembrancePlayback && !antennaIncompleteBeforeSelection) {
-    const selectedPhantom = phantomDirector.update({
-      stepSeconds,
-      presentationSeconds: clock.presentationSeconds,
-      eventState,
-      worldTimeMs: clock.worldTimeMs,
-      completedStories,
-      hasIncompleteIncident: Boolean(
-        runtime.phantomRecord && runtime.phantomRecord.milestone < PHANTOM_VISITOR_MILESTONES["story-complete"] ||
-        runtime.remembranceRecord && runtime.remembranceRecord.milestone < REMEMBRANCE_MILESTONES["observance-complete"],
-      ),
-      forcedScenario: director.isForcedScenario(),
-    });
-    if (selectedPhantom) {
-      const result = store.commitSeasonalIncident(CONFIG.worldSeed, selectedPhantom);
-      runtime.phantomRecord = result.ok ? result.record.seasonalIncident : selectedPhantom;
-      runtime.persistedNarrative = result.ok ? { record: result.record, status: result.status } : runtime.persistedNarrative;
-      runtime.phantomPlayback = CreatePhantomVisitorResume(runtime.phantomRecord);
-      Log(result.ok ? "started Phantom Visitor" : "started in-memory Phantom Visitor");
-    }
+  if (IS_PREVIEW) holidayRuntime.update(eventState, stepSeconds, clock.worldTimeMs, clock.presentationSeconds, director.isForcedScenario());
+  if (scheduler) {
+    eventState.holiday = HolidayCalendar(clock.worldTimeMs);
+    eventState.thanksgiving = null;
+    scheduler.update(eventState, clock.worldTimeMs, stepSeconds, { forced: director.isForcedScenario(), recharge: Boolean(runtime.rechargeActive) });
   }
-  if (!IS_PREVIEW && !wreathWasActive && !thanksgivingActive && !runtime.remembrancePlayback && !runtime.phantomPlayback && !antennaIncompleteBeforeSelection) {
-    const selectedRemembrance = remembranceDirector.update({
-      stepSeconds,
-      presentationSeconds: clock.presentationSeconds,
-      eventState,
-      worldTimeMs: clock.worldTimeMs,
-      completedStories,
-      hasIncompleteIncident: Boolean(runtime.remembranceRecord && runtime.remembranceRecord.milestone < REMEMBRANCE_MILESTONES["observance-complete"]),
-      forcedScenario: director.isForcedScenario(),
-    });
-    if (selectedRemembrance) {
-      const result = store.commitSeasonalIncident(CONFIG.worldSeed, selectedRemembrance);
-      runtime.remembranceRecord = result.ok ? result.record.seasonalIncident : selectedRemembrance;
-      runtime.persistedNarrative = result.ok ? { record: result.record, status: result.status } : runtime.persistedNarrative;
-      runtime.remembrancePlayback = CreateRemembranceResume(runtime.remembranceRecord);
-      Log(result.ok ? "started Lights of Remembrance" : "started in-memory Lights of Remembrance");
-    }
-  }
-  if (!IS_PREVIEW && !wreathWasActive && !thanksgivingActive && !runtime.incidentPlayback && !runtime.incidentRecord && !runtime.phantomPlayback && !runtime.remembrancePlayback) {
-    const selected = storyDirector.update({
-      stepSeconds,
-      presentationSeconds: clock.presentationSeconds,
-      eventState,
-      worldTimeMs: clock.worldTimeMs,
-      forcedScenario: director.isForcedScenario(),
-    });
-    if (selected) {
-      const result = store.commitIncident(CONFIG.worldSeed, selected);
-      runtime.incidentRecord = result.ok ? result.record.incident : selected;
-      runtime.persistedNarrative = result.ok ? { record: result.record, status: result.status } : runtime.persistedNarrative;
-      runtime.incidentPlayback = CreateStubbornAntennaResume(runtime.incidentRecord);
-      Log(result.ok ? "started natural antenna incident" : "started in-memory antenna incident");
-    }
-  }
+  const completedStories = runtime.persistedNarrative?.record?.completedStories || [];
+  eventState.remembranceCompleted = completedStories.some(entry => entry.type === REMEMBRANCE_TYPE && entry.storyYear === 2026);
+  const thanksgivingActive = Boolean(eventState.thanksgiving);
   if (IS_PREVIEW && runtime.pipOverride) ApplyPipPreviewOverride(eventState, runtime.pipOverride);
-  const incidentPlayback = IS_PREVIEW ? runtime.incidentPreview : runtime.incidentPlayback;
+  const incidentPlayback = IS_PREVIEW ? runtime.incidentPreview : null;
   if (incidentPlayback) {
     if (incidentPlayback.playing && active) {
       incidentPlayback.elapsed = Math.min(STUBBORN_ANTENNA_TOTAL_SECONDS, incidentPlayback.elapsed + stepSeconds);
@@ -216,24 +168,12 @@ function RunFrame(currentTime) {
       if (IS_PREVIEW) runtime.incidentPreview = nextPlayback;
       else runtime.incidentPlayback = nextPlayback;
     }
-    const currentPlayback = IS_PREVIEW ? runtime.incidentPreview : runtime.incidentPlayback;
+    const currentPlayback = IS_PREVIEW ? runtime.incidentPreview : null;
     ApplyStubbornAntennaPreview(eventState, currentPlayback);
-    if (!IS_PREVIEW && runtime.incidentRecord) {
-      const nextIncident = AdvanceStubbornAntennaIncident(runtime.incidentRecord, currentPlayback.beatId, currentPlayback.progress);
-      if (nextIncident.milestone > runtime.incidentRecord.milestone) {
-        const result = store.commitIncident(CONFIG.worldSeed, nextIncident);
-        if (result.ok) {
-          runtime.incidentRecord = result.record.incident;
-          runtime.persistedNarrative = { record: result.record, status: result.status };
-          Log("committed antenna " + nextIncident.checkpoint);
-        }
-      }
-      if (runtime.incidentRecord.milestone >= STUBBORN_ANTENNA_MILESTONES["repair-presented"]) runtime.incidentPlayback = null;
-    }
-  } else if (runtime.incidentRecord) {
+  } else if (runtime.incidentRecord && !eventState.storyIncident) {
     ApplyStubbornAntennaConsequence(eventState, runtime.incidentRecord);
   }
-  const phantomPlayback = IS_PREVIEW ? runtime.phantomPreview : runtime.phantomPlayback;
+  const phantomPlayback = IS_PREVIEW ? runtime.phantomPreview : null;
   if (phantomPlayback) {
     if (phantomPlayback.playing && active) {
       phantomPlayback.elapsed = Math.min(PHANTOM_VISITOR_TOTAL_SECONDS, phantomPlayback.elapsed + stepSeconds);
@@ -249,23 +189,10 @@ function RunFrame(currentTime) {
       if (IS_PREVIEW) runtime.phantomPreview = nextPlayback;
       else runtime.phantomPlayback = nextPlayback;
     }
-    const currentPhantom = IS_PREVIEW ? runtime.phantomPreview : runtime.phantomPlayback;
+    const currentPhantom = IS_PREVIEW ? runtime.phantomPreview : null;
     ApplyPhantomVisitor(eventState, currentPhantom);
-    if (!IS_PREVIEW && runtime.phantomRecord) {
-      const nextIncident = AdvancePhantomVisitorIncident(runtime.phantomRecord, currentPhantom.beatId, currentPhantom.progress);
-      if (nextIncident.milestone > runtime.phantomRecord.milestone) {
-        const result = store.commitSeasonalIncident(CONFIG.worldSeed, nextIncident);
-        if (result.ok) {
-          runtime.phantomRecord = result.record.seasonalIncident;
-          runtime.persistedNarrative = { record: result.record, status: result.status };
-          Log("committed Phantom Visitor " + nextIncident.checkpoint);
-        } else runtime.phantomRecord = nextIncident;
-      }
-      // Committing the payoff must not cut off the remaining visual exit.
-      if (currentPhantom.elapsed >= PHANTOM_VISITOR_TOTAL_SECONDS) runtime.phantomPlayback = null;
-    }
   }
-  const remembrancePlayback = IS_PREVIEW ? runtime.remembrancePreview : runtime.remembrancePlayback;
+  const remembrancePlayback = IS_PREVIEW ? runtime.remembrancePreview : null;
   if (remembrancePlayback) {
     if (remembrancePlayback.playing && active) {
       remembrancePlayback.elapsed = Math.min(REMEMBRANCE_TOTAL_SECONDS, remembrancePlayback.elapsed + stepSeconds);
@@ -281,20 +208,8 @@ function RunFrame(currentTime) {
       if (IS_PREVIEW) runtime.remembrancePreview = nextPlayback;
       else runtime.remembrancePlayback = nextPlayback;
     }
-    const currentRemembrance = IS_PREVIEW ? runtime.remembrancePreview : runtime.remembrancePlayback;
+    const currentRemembrance = IS_PREVIEW ? runtime.remembrancePreview : null;
     ApplyRemembrance(eventState, currentRemembrance);
-    if (!IS_PREVIEW && runtime.remembranceRecord) {
-      const nextIncident = AdvanceRemembranceIncident(runtime.remembranceRecord, currentRemembrance.beatId, currentRemembrance.progress);
-      if (nextIncident.milestone > runtime.remembranceRecord.milestone) {
-        const result = store.commitSeasonalIncident(CONFIG.worldSeed, nextIncident);
-        if (result.ok) {
-          runtime.remembranceRecord = result.record.seasonalIncident;
-          runtime.persistedNarrative = { record: result.record, status: result.status };
-          Log("committed Lights of Remembrance " + nextIncident.checkpoint);
-        } else runtime.remembranceRecord = nextIncident;
-      }
-      if (runtime.remembranceRecord.milestone >= REMEMBRANCE_MILESTONES["observance-complete"]) runtime.remembrancePlayback = null;
-    }
   }
   ApplyThanksgiving(eventState);
   const adventBlocked=Boolean(thanksgivingActive||eventState.storyIncident||eventState.phantomVisitor||eventState.remembrance||
@@ -309,17 +224,16 @@ function RunFrame(currentTime) {
       if(p.playing){p.elapsed=Math.min(ADVENT_ACTIVITY_SECONDS,p.elapsed+stepSeconds);if(p.elapsed>=ADVENT_ACTIVITY_SECONDS)p.playing=false;}
       ApplyAdventActivity(eventState,{...p,...AdventActivityTimeline(p.elapsed)});
     }
-  } else if(!IS_PREVIEW)ApplyAdventActivity(eventState,adventDirector.update(eventState,clock.worldTimeMs,adventBlocked||director.isForcedScenario()));
+  }
   if(IS_PREVIEW&&runtime.wreathPreview) {
     if(adventBlocked||runtime.adventPreview||runtime.pipOverride||runtime.restPreview||eventState.phase!=='quiet'||eventState.shipVisible||eventState.visitId||runtime.seasonalPreview!=='natural')runtime.wreathPreview=null;
     else ApplyWreathCeremony(eventState,{...runtime.wreathPreview,...WreathTimeline(runtime.wreathPreview.elapsed)});
-  } else if(!IS_PREVIEW)ApplyWreathCeremony(eventState,wreathDirector.update(eventState,clock.worldTimeMs,adventBlocked||director.isForcedScenario()));
-  const recharge = ResolvePipRecharge(CONFIG.worldSeed, clock.worldTimeMs, CONFIG.pipRhythm);
-  const incompleteIncident = thanksgivingActive || runtime.incidentPlayback || runtime.phantomPlayback || runtime.remembrancePlayback ||
-    (runtime.incidentRecord && runtime.incidentRecord.milestone < STUBBORN_ANTENNA_MILESTONES["repair-presented"]) ||
-    (runtime.phantomRecord && runtime.phantomRecord.type === PHANTOM_VISITOR_TYPE && runtime.phantomRecord.milestone < PHANTOM_VISITOR_MILESTONES["story-complete"]) ||
-    (runtime.remembranceRecord && runtime.remembranceRecord.type === REMEMBRANCE_TYPE && runtime.remembranceRecord.milestone < REMEMBRANCE_MILESTONES["observance-complete"]);
-  const canRecharge = CanStartPipRecharge(recharge, eventState, { presentationSeconds: clock.presentationSeconds, incidentActive: incompleteIncident });
+  }
+  const recharge = ResolvePipRecharge(CONFIG.worldSeed, clock.worldTimeMs, runtime.schedulerPreview ? { enabled: false } : CONFIG.pipRhythm);
+  const incompleteIncident = thanksgivingActive || eventState.storyIncident || eventState.phantomVisitor || eventState.remembrance || eventState.adventActivity || eventState.wreathCeremony;
+  const canRecharge = CanStartPipRecharge(recharge, eventState, { presentationSeconds: clock.presentationSeconds, incidentActive: incompleteIncident }) &&
+    (!scheduler || !eventState.specialReservation || runtime.rechargeActive);
+  runtime.rechargeActive = Boolean(canRecharge);
   if (IS_PREVIEW && runtime.restPreview) {
     const previewRecharge = { ...recharge, active: true, progress: runtime.restPreview === "settle" ? 0.08 : 0.6, cycle: 0 };
     if (runtime.restPreview === "dream" && runtime.dreamPreview && runtime.dreamPreview.playing) {
@@ -344,6 +258,7 @@ function RunFrame(currentTime) {
   const environmentState = environment.update(clock.worldTimeMs);
   stationScene.update(stepSeconds, eventState, environmentState, wallStep);
   stationScene.render();
+  scheduler?.afterRender(clock.worldTimeMs);
   runtime.frames += 1;
   runtime.fps = runtime.fps ? runtime.fps * 0.9 + (wallStep ? 1 / wallStep : 0) * 0.1 : (wallStep ? 1 / wallStep : 0);
   const payoffEntered = runtime.previousVisitId === eventState.visitId &&
@@ -385,28 +300,17 @@ function Init() {
     runtime.remembranceRecord = runtime.persistedNarrative.record && runtime.persistedNarrative.record.seasonalIncident && runtime.persistedNarrative.record.seasonalIncident.type === REMEMBRANCE_TYPE
       ? runtime.persistedNarrative.record.seasonalIncident
       : null;
-    if (!IS_PREVIEW && runtime.incidentRecord && runtime.incidentRecord.milestone < STUBBORN_ANTENNA_MILESTONES["repair-presented"]) {
-      runtime.incidentPlayback = CreateStubbornAntennaResume(runtime.incidentRecord);
-    }
-    if (!IS_PREVIEW && runtime.phantomRecord && runtime.phantomRecord.milestone < PHANTOM_VISITOR_MILESTONES["story-complete"]) {
-      runtime.phantomPlayback = CreatePhantomVisitorResume(runtime.phantomRecord);
-    }
-    if (!IS_PREVIEW && runtime.remembranceRecord && runtime.remembranceRecord.milestone < REMEMBRANCE_MILESTONES["observance-complete"]) {
-      runtime.remembrancePlayback = CreateRemembranceResume(runtime.remembranceRecord);
-    }
     runtime.clock = clock;
     runtime.store = store;
     holidayRuntime = new HolidayRuntime({ preview:IS_PREVIEW, seed:CONFIG.worldSeed, store, runtime });
     environment = new EnvironmentSystem(CONFIG.worldSeed, CONFIG.environment);
-    storyDirector = new IncidentDirector(CONFIG, { onTransition: ({ state }) => Log("antenna story " + state) });
-    phantomDirector = new PhantomVisitorDirector(CONFIG);
-    remembranceDirector = new RemembranceDirector(CONFIG);
     runtime.environment = environment;
     runtime.snapshot = Snapshot;
     runtime.seed = CONFIG.worldSeed;
+    runtime.config = CONFIG;
     director = new EventDirector(CONFIG, { onTransition: ({ state }) => Log("checkpoint " + state.checkpoint + " / " + state.lifecycle) });
-    adventDirector = new AdventActivityDirector(CONFIG,director.scheduler);
-    wreathDirector = new AdventWreathDirector(CONFIG,director.scheduler,adventDirector);
+    scheduledEvents = new ScheduledEvents({ config: CONFIG, runtime, traffic: director.scheduler, store, preview: IS_PREVIEW });
+    runtime.scheduledEvents = scheduledEvents;
     stationScene = new LittleSpaceStationScene(canvas, CONFIG, identity, { preview: IS_PREVIEW });
     if (CONFIG.debug || IS_PREVIEW) console.info("[Little Space Station] identity", identity);
     LoadPreviewTools();

@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../vendor/three.module.js';
@@ -16,16 +17,20 @@ function pose(s,spec,seconds){const activity={...spec,...AdventActivityTimeline(
  UpdatePip(s,state);s.holiday.update(state);s.station.updateMatrixWorld(true);return state;}
 function snapshot(s){const a=[s.robot,s.robotHead,s.robotEye,...s.robotArms.flatMap(a=>[a.shoulder,a.elbow]),s.robotTool,s.holiday.decorating.lid,
  s.holiday.christmasTree.star,...s.holiday.christmasTree.gifts,...s.holiday.christmasTree.garlands];return a.map(o=>[o.visible,o.matrixWorld.toArray()]);}
+const includingTending = () => AdventActivityCatalog().flatMap(spec => ['ornament','star','present'].includes(spec.kind) ? [spec,{...spec,tending:true}] : [spec]);
 test('all activities preserve position, orientation and contact through every beat and route waypoint',()=>{
  const s=fixture();
- for(const spec of AdventActivityCatalog())for(const t of [4,9,14,18,24,28,30,31,33,38,48,50,52,56,58,60,64,68,73,77,82]) {
+ for(const spec of includingTending())for(const t of [4,9,14,18,24,28,30,31,33,38,48,50,52,56,58,60,64,68,73,77,82]) {
   pose(s,spec,t-1e-6);const a=snapshot(s);pose(s,spec,t+1e-6);const b=snapshot(s);
   a.forEach((o,i)=>o[1].forEach((v,j)=>assert.ok(Math.abs(v-b[i][1][j])<1e-4,spec.id+' '+t+' object '+i+' element '+j)));
  }
 });
 test('wrist clamp reaches the actual selected decoration without changing arm lengths',()=>{
  const s=fixture();
- for(const spec of AdventActivityCatalog().filter(s=>s.kind!=='inspection'))for(const t of [23.99,...Array.from({length:128},(_,i)=>24+i*.25),55.99]) {
+ for(const spec of includingTending().filter(s=>s.kind!=='inspection'))for(const t of [23.99,...Array.from({length:128},(_,i)=>24+i*.25),55.99]) {
+  if(spec.tending&&t<40)continue;
+  if(spec.tending&&spec.kind==='present')continue; // Admiration, not another pickup.
+  if(spec.tending&&spec.kind==='star'&&t<48)continue;
   if(['preparation','garland'].includes(spec.kind)&&t<40)continue;
   pose(s,spec,t);const a=s.holiday.decorating.actors;
   const error=s.robotToolGlow.getWorldPosition(new THREE.Vector3()).distanceTo(new THREE.Vector3(...a.contact));
@@ -82,15 +87,15 @@ test('the carried mesh follows its contact anchor and calendar ownership switche
    for(let i=0;i<26;i++){const m=new THREE.Matrix4();v.ornaments.getMatrixAt(i,m);assert.ok(new THREE.Vector3().setFromMatrixPosition(m).distanceTo(new THREE.Vector3(...TreeOrnamentPosition(i)))<1e-6);}
   }
  }
- for(const time of [Date.UTC(2026,11,24),Date.UTC(2026,11,25),Date.UTC(2027,0,5)]) {
+ for(const time of [LocalDate(2026,11,24),LocalDate(2026,11,25),LocalDate(2027,0,5)]) {
   s.holiday.update({holiday:HolidayCalendar(time),seasonal:{serviceDeck:{ready:true}}});
   assert.equal(v.ornaments.count,26);assert.equal(v.gifts.filter(g=>g.visible).length,5);assert.ok(v.gifts.every(g=>g.userData.wrapped));
  }
- for(const ready of [true,false]){s.holiday.update({holiday:HolidayCalendar(Date.UTC(2027,0,6)),seasonal:{serviceDeck:{ready}}});assert.equal(v.root.visible,false);assert.equal(s.holiday.decorating.root.visible,false);}
+ for(const ready of [true,false]){s.holiday.update({holiday:HolidayCalendar(LocalDate(2027,0,6)),seasonal:{serviceDeck:{ready}}});assert.equal(v.root.visible,false);assert.equal(s.holiday.decorating.root.visible,false);}
 });
 test('Pip keeps his body clear of the cabin, wreath table, foliage and wrapped presents',()=>{
  const s=fixture();
- for(const spec of AdventActivityCatalog())for(let t=0;t<=ADVENT_ACTIVITY_SECONDS;t+=.5) {
+ for(const spec of includingTending())for(let t=0;t<=ADVENT_ACTIVITY_SECONDS;t+=.5) {
   pose(s,spec,t);
   const meshes=s.robot.children.filter(o=>o.isMesh);s.robotHead.traverse(o=>{if(o.isMesh)meshes.push(o);});
   for(const arm of s.robotArms)arm.shoulder.traverse(o=>{if(o.isMesh&&o!==s.robotToolGlow)meshes.push(o);});
@@ -118,7 +123,7 @@ test('Pip keeps his body clear of the cabin, wreath table, foliage and wrapped p
 test('one absolute opportunity per action reconstructs after restart, expires when missed, and yields to stories and traffic',()=>{
  const config={worldSeed:'advent-windows',maintenance:{activeChance:0},pipRhythm:{enabled:false},traffic:{quietGapMinutes:[2000,2000],longGapChance:0}};
  const d=new AdventActivityDirector(config,new TrafficScheduler(config.worldSeed,config.traffic));
- assert.equal(d.at(Date.UTC(2026,10,1)),null);assert.equal(d.windows,null,'no out-of-season schedule work');
+ assert.equal(d.at(LocalDate(2026,10,1)),null);assert.equal(d.windows,null,'no out-of-season schedule work');
  const windows=d.plan();assert.equal(new Set(windows.map(w=>w.id)).size,AdventActivityCatalog().length);
  for(const w of windows){assert.ok(AdventWindowSafe(config,d.scheduler,w.start,w.end));
   if(['ornament','star','present'].includes(w.kind))assert.equal(w.start+48000,w.date,'attach meets unchanged calendar date');
@@ -130,5 +135,5 @@ test('one absolute opportunity per action reconstructs after restart, expires wh
   assert.equal(d.update(safe(),w.start+3000),null,'interrupted window does not restart');
  }
  const busy={At:()=>({current:{visitId:'ship'}})};assert.equal(AdventWindowSafe(config,busy,0,82000),false);
- assert.equal(d.at(Date.UTC(2026,11,24)),null);assert.equal(d.at(Date.UTC(2027,0,6)),null);
+ assert.equal(d.at(LocalDate(2026,11,24)),null);assert.equal(d.at(LocalDate(2027,0,6)),null);
 });

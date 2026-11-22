@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -54,9 +55,9 @@ test("Phantom presentation owns only Pip and its temporary visual descriptor", (
 });
 
 test("Phantom eligibility is Halloween-only, quiet, deterministic, and once per story year", () => {
-  const start = Date.UTC(2026, 9, 29, 12);
+  const start = LocalDate(2026, 9, 29, 12);
   assert.equal(IsPhantomVisitorWindow(start), true);
-  assert.equal(IsPhantomVisitorWindow(Date.UTC(2026, 10, 1)), false);
+  assert.equal(IsPhantomVisitorWindow(LocalDate(2026, 10, 1)), false);
   const quiet = { phase: "quiet", visitId: "", shipVisible: false, worldTimeMs: start, nextArrivalMs: start + 120_000, pipTaskId: "standby" };
   assert.equal(IsPhantomVisitorWindowSafe(quiet), true);
   assert.equal(IsPhantomVisitorWindowSafe({ ...quiet, pipTaskId: "seasonal-install" }), false);

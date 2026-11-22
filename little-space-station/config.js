@@ -7,8 +7,8 @@ export default Object.freeze({
   // Multiplies presentation and animation time. Try 2 or 4 while testing sequences.
   simulationSpeed: 1,
 
-  // Slow calendar-based installation from Sep 22 00:00 UTC, and dismantling
-  // ending Jan 7 00:00 UTC. Each process takes this many hours (1–48).
+  // Slow calendar-based installation from Sep 22 local midnight, and dismantling
+  // ending Jan 7 local midnight. Each process takes this many hours (1–48).
   serviceDeck: Object.freeze({ transitionHours: 24 }),
 
   // "low", "medium", or "high". Controls geometry detail and star density.
@@ -76,16 +76,17 @@ export default Object.freeze({
     minimumPresentationSeconds: 8,
   }),
 
-  // The first story is intentionally uncommon. It begins only in a quiet,
-  // conflict-free window and is recorded before it can take over Pip and dish.
+  // Shared scheduler: significant events remain pending until a safe opportunity.
+  // Every completed event leaves a 90-second ambient/routine break.
   story: Object.freeze({
     enabled: true,
     minimumSessionSeconds: 12,
+    // Legacy director settings retained for older test tools. Production no
+    // longer uses random chance or disposable quiet-window sampling.
     minimumQuietWindowSeconds: 70,
     opportunityWindowMinutes: 30,
     opportunityChance: 0.18,
-    // Halloween-only Phantom Visitor opportunity sampling. The story still
-    // waits for enough clear time before the next scheduled ship.
+    // Legacy Phantom opportunity sampling (not production arbitration).
     phantomOpportunityWindowMinutes: 18,
     phantomOpportunityChance: 0.58,
   }),

@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../vendor/three.module.js';
@@ -9,7 +10,7 @@ import { ResolveServiceDeck } from '../service-deck-lifecycle.js';
 import { CreateSeasonalManifest, ResolveAutumn2026, ApplyAutumn2026State } from '../autumn-2026.js';
 import { SERVICE_DECK_LAYOUT, SeasonalServiceDeckVisual } from '../seasonal-service-deck.js';
 
-const date = (month, day, year = 2026) => Date.UTC(year, month - 1, day);
+const date = (month, day, year = 2026) => LocalDate(year, month - 1, day);
 const tree = time => HolidayCalendar(time).tree;
 function fixture() { const parent = new THREE.Group(); return new ChristmasTreeVisual(parent); }
 function render(visual, time, full = false) {

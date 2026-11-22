@@ -158,7 +158,8 @@ function MigrateV2(value, worldSeed) {
   return NormalizeRecord({ ...EmptyRecord(worldSeed), ...value, version: VERSION }, worldSeed);
 }
 
-export function CreateNarrativeStore({ onEvent = () => {}, storage = globalThis.localStorage } = {}) {
+export function CreateNarrativeStore({ onEvent = () => {}, storage } = {}) {
+  try { storage ??= globalThis.localStorage; } catch { /* Some hosts deny even the getter. */ }
   let available = false;
   let simulatedUnavailable = false;
   let lastStatus = "unchecked";
@@ -250,7 +251,7 @@ export function CreateNarrativeStore({ onEvent = () => {}, storage = globalThis.
     }
   }
 
-  function commitSeasonalIncident(worldSeed, requested) {
+  function commitSeasonalIncident(worldSeed, requested, { scheduled = false } = {}) {
     if (!usable()) return { ok: false, status: simulatedUnavailable ? "simulated unavailable" : lastStatus };
     const next = NormalizeSeasonalIncident(requested);
     if (!next) return { ok: false, status: "invalid seasonal incident" };
@@ -259,12 +260,14 @@ export function CreateNarrativeStore({ onEvent = () => {}, storage = globalThis.
       const current = previous.seasonalIncident;
       const currentDefinition = current && SEASONAL_TYPES[current.type];
       const currentIncomplete = current && current.lifecycle !== 'expired' && currentDefinition && current.milestone < currentDefinition.checkpoints.length - 1;
-      if (currentIncomplete && current.instanceId !== next.instanceId) return { ok: false, status: "incomplete seasonal incident" };
+      if (currentIncomplete && current.instanceId !== next.instanceId && !scheduled) return { ok: false, status: "incomplete seasonal incident" };
       const sameInstance = current && current.type === next.type && current.instanceId === next.instanceId;
       const seasonalIncident = sameInstance && current.milestone > next.milestone ? current : next;
       const working = {
         ...previous,
-        seasonalIncident,
+        // The scheduler has its own occurrence checkpoints. Preserve an older
+        // unfinished legacy slot instead of reusing it as a global queue.
+        seasonalIncident: scheduled && currentIncomplete && !sameInstance ? current : seasonalIncident,
         completedStories: [...previous.completedStories],
         consequences: { ...previous.consequences },
       };
@@ -323,7 +326,9 @@ export function CreateNarrativeStore({ onEvent = () => {}, storage = globalThis.
 
   probe();
   return {
-    key: KEY, load, commit, commitVisit: commit, commitIncident, commitSeasonalIncident, clearIncident, clearSeasonalIncident, clear, corruptForTest, probe,
+    key: KEY, load, commit, commitVisit: commit, commitIncident, commitSeasonalIncident,
+    commitScheduledSeasonal: (seed, incident) => commitSeasonalIncident(seed, incident, { scheduled: true }),
+    clearIncident, clearSeasonalIncident, clear, corruptForTest, probe,
     setSimulatedUnavailable(value) { simulatedUnavailable = Boolean(value); report(simulatedUnavailable ? "simulated unavailable" : "simulation restored"); },
     status() { return { available: usable(), nativeAvailable: available, simulatedUnavailable, lastStatus }; },
   };

@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -13,7 +14,7 @@ import { TrafficScheduler } from "../simulation-world.js";
 const SEED = "autumn-regression-station";
 
 test('ordinary freight uses two racks and unloads both without seasonal decoration', () => {
-  const time=Date.UTC(2026,7,20), seasonal=ResolveAutumn2026(SEED,time);
+  const time=LocalDate(2026,7,20), seasonal=ResolveAutumn2026(SEED,time);
   const sample=progress=>ApplyAutumn2026State({eventId:'cargo-run',visitId:'ordinary-pair',visitStartMs:time,worldTimeMs:time,phase:'service',progress,pipTaskOverallProgress:progress,cargoState:'ship'},seasonal,SEED);
   const first=sample(.2), second=sample(.65), done=sample(.95);
   for(const state of [first,second,done]){
@@ -27,18 +28,18 @@ test('ordinary freight uses two racks and unloads both without seasonal decorati
   assert.equal(done.cargoState,'stored');
 });
 
-test("Autumn 2026 calendar boundaries are UTC-derived and deterministic", () => {
+test("Autumn 2026 calendar boundaries are local-calendar-derived and deterministic", () => {
   const samples = [
-    [Date.UTC(2026, 8, 21, 23, 59), "ordinary"],
-    [Date.UTC(2026, 8, 22), "autumn-arrival"],
-    [Date.UTC(2026, 9, 1), "autumn"],
-    [Date.UTC(2026, 9, 23), "halloween-preparation"],
-    [Date.UTC(2026, 9, 28), "halloween-final-preparation"],
-    [Date.UTC(2026, 9, 31), "halloween"],
-    [Date.UTC(2026, 10, 1), "all-saints"],
-    [Date.UTC(2026, 10, 2), "halloween-cleanup"],
-    [Date.UTC(2026, 10, 4), "autumn-return"],
-    [Date.UTC(2026, 11, 21), "ordinary"],
+    [LocalDate(2026, 8, 21, 23, 59), "ordinary"],
+    [LocalDate(2026, 8, 22), "autumn-arrival"],
+    [LocalDate(2026, 9, 1), "autumn"],
+    [LocalDate(2026, 9, 23), "halloween-preparation"],
+    [LocalDate(2026, 9, 28), "halloween-final-preparation"],
+    [LocalDate(2026, 9, 31), "halloween"],
+    [LocalDate(2026, 10, 1), "all-saints"],
+    [LocalDate(2026, 10, 2), "halloween-cleanup"],
+    [LocalDate(2026, 10, 4), "autumn-return"],
+    [LocalDate(2026, 11, 21), "ordinary"],
   ];
   for (const [time, phase] of samples) {
     assert.equal(ResolveAutumn2026(SEED, time).phase, phase);
@@ -49,7 +50,7 @@ test("Autumn 2026 calendar boundaries are UTC-derived and deterministic", () => 
 test("date jumps reconstruct fall decorations without replaying deliveries", () => {
   const before = ResolveAutumn2026(SEED, AUTUMN_2026_DATES.autumnBegins - 1);
   const opening = ResolveAutumn2026(SEED, AUTUMN_2026_DATES.autumnBegins);
-  const caughtUp = ResolveAutumn2026(SEED, Date.UTC(2026, 9, 12, 12));
+  const caughtUp = ResolveAutumn2026(SEED, LocalDate(2026, 9, 12, 12));
   const ended = ResolveAutumn2026(SEED, AUTUMN_2026_DATES.autumnEnds);
   assert.equal(before.installedDecorations.length, 0);
   assert.ok(opening.fallDecorLevel > 0 && opening.fallDecorLevel < 1);
@@ -86,7 +87,7 @@ test("seasonal manifests are stable, themed, and contain two to four visible pac
   const visit = {
     eventId: "cargo-run",
     visitId: "visit-autumn-cargo-1",
-    approachStartMs: Date.UTC(2026, 8, 24, 16),
+    approachStartMs: LocalDate(2026, 8, 24, 16),
   };
   const first = CreateSeasonalManifest(SEED, visit, { forceTheme: "fall" });
   const second = CreateSeasonalManifest(SEED, visit, { forceTheme: "fall" });
@@ -99,12 +100,12 @@ test("seasonal manifests are stable, themed, and contain two to four visible pac
 });
 
 test("multi-package unloading advances one coherent package at a time", () => {
-  const seasonal = ResolveAutumn2026(SEED, Date.UTC(2026, 9, 10), { previewMode: "fall-cargo" });
+  const seasonal = ResolveAutumn2026(SEED, LocalDate(2026, 9, 10), { previewMode: "fall-cargo" });
   const makeState = (progress) => ({
     eventId: "cargo-run",
     visitId: "forced-cargo-run",
-    visitStartMs: Date.UTC(2026, 9, 10),
-    worldTimeMs: Date.UTC(2026, 9, 10),
+    visitStartMs: LocalDate(2026, 9, 10),
+    worldTimeMs: LocalDate(2026, 9, 10),
     phase: "service",
     progress,
     pipTaskOverallProgress: progress,
@@ -124,7 +125,7 @@ test("multi-package unloading advances one coherent package at a time", () => {
 });
 
 test("fall installation only replaces a quiet routine task", () => {
-  const seasonal = ResolveAutumn2026(SEED, Date.UTC(2026, 9, 10), { previewMode: "fall-install" });
+  const seasonal = ResolveAutumn2026(SEED, LocalDate(2026, 9, 10), { previewMode: "fall-install" });
   const quiet = ApplyAutumn2026State({ phase: "quiet", eventId: "", cargoState: "none" }, seasonal, SEED);
   assert.equal(quiet.pipTaskId, "seasonal-install");
   assert.equal(quiet.seasonal.installation.forced, true);
@@ -135,7 +136,7 @@ test("fall installation only replaces a quiet routine task", () => {
 
 test("adding seasonal metadata does not change or overlap the traffic schedule", () => {
   const scheduler = new TrafficScheduler(SEED);
-  const day = Math.floor(Date.UTC(2026, 9, 10) / 86_400_000);
+  const day = Math.floor(LocalDate(2026, 9, 10) / 86_400_000);
   const before = scheduler.GenerateDay(day).map((visit) => [visit.visitId, visit.approachStartMs, visit.resolvedMs]);
   for (const visit of scheduler.GenerateDay(day)) CreateSeasonalManifest(SEED, visit);
   const after = scheduler.GenerateDay(day).map((visit) => [visit.visitId, visit.approachStartMs, visit.resolvedMs]);
@@ -145,7 +146,7 @@ test("adding seasonal metadata does not change or overlap the traffic schedule",
 
 test("upcoming seasonal shipment inspection is deterministic and read-only", () => {
   const scheduler = new TrafficScheduler(SEED);
-  const time = Date.UTC(2026, 9, 23);
+  const time = LocalDate(2026, 9, 23);
   const before = scheduler.At(time).next.visitId;
   const first = GetUpcomingSeasonalShipments(SEED, scheduler, time);
   const second = GetUpcomingSeasonalShipments(SEED, scheduler, time);
@@ -156,12 +157,12 @@ test("upcoming seasonal shipment inspection is deterministic and read-only", () 
 });
 
 test("Halloween decorations build in stages and are gone by November 4", () => {
-  const before = ResolveAutumn2026(SEED, Date.UTC(2026, 9, 22, 23, 59));
-  const early = ResolveAutumn2026(SEED, Date.UTC(2026, 9, 24, 12));
-  const halloween = ResolveAutumn2026(SEED, Date.UTC(2026, 9, 31, 12));
-  const allSaints = ResolveAutumn2026(SEED, Date.UTC(2026, 10, 1, 12));
-  const cleanup = ResolveAutumn2026(SEED, Date.UTC(2026, 10, 3));
-  const complete = ResolveAutumn2026(SEED, Date.UTC(2026, 10, 4));
+  const before = ResolveAutumn2026(SEED, LocalDate(2026, 9, 22, 23, 59));
+  const early = ResolveAutumn2026(SEED, LocalDate(2026, 9, 24, 12));
+  const halloween = ResolveAutumn2026(SEED, LocalDate(2026, 9, 31, 12));
+  const allSaints = ResolveAutumn2026(SEED, LocalDate(2026, 10, 1, 12));
+  const cleanup = ResolveAutumn2026(SEED, LocalDate(2026, 10, 3));
+  const complete = ResolveAutumn2026(SEED, LocalDate(2026, 10, 4));
   assert.equal(before.halloweenDecorations.length, 0);
   assert.ok(early.halloweenDecorations.length >= 1 && early.halloweenDecorations.length < 5);
   assert.deepEqual(halloween.halloweenDecorations, ["marked-seasonal-crate", "jack-o-lantern", "halloween-lights", "ghost-pennant", "pip-halloween-cap"]);
@@ -176,7 +177,7 @@ test("Halloween decorations build in stages and are gone by November 4", () => {
 });
 
 test("Halloween package manifests use their own stable palette and markings", () => {
-  const visit = { eventId: "cargo-run", visitId: "halloween-cargo", approachStartMs: Date.UTC(2026, 9, 26) };
+  const visit = { eventId: "cargo-run", visitId: "halloween-cargo", approachStartMs: LocalDate(2026, 9, 26) };
   const manifest = CreateSeasonalManifest(SEED, visit, { forceTheme: "halloween" });
   assert.equal(manifest.theme, "halloween");
   assert.ok(manifest.packages.every((item) => ["gourd", "moon", "ghost"].includes(item.symbol)));
@@ -191,7 +192,7 @@ test("remembrance supplies arrive shortly before November 1 in a distinct blue-a
   assert.equal(before.remembranceFixtureAvailable, false);
   assert.equal(ready.remembranceFixtureAvailable, true);
   assert.equal(afterCleanup.remembranceFixtureAvailable, false);
-  const visit = { eventId: "cargo-run", visitId: "remembrance-cargo", approachStartMs: Date.UTC(2026, 9, 31, 8) };
+  const visit = { eventId: "cargo-run", visitId: "remembrance-cargo", approachStartMs: LocalDate(2026, 9, 31, 8) };
   const manifest = CreateSeasonalManifest(SEED, visit, { forceTheme: "remembrance" });
   assert.equal(manifest.theme, "remembrance");
   assert.ok(manifest.packageCount >= 2 && manifest.packageCount <= 4);
@@ -201,7 +202,7 @@ test("remembrance supplies arrive shortly before November 1 in a distinct blue-a
 });
 
 test("Halloween installation, oddities, and cleanup preview states never require persistence", () => {
-  const baseTime = Date.UTC(2026, 9, 25, 12);
+  const baseTime = LocalDate(2026, 9, 25, 12);
   const install = ResolveAutumn2026(SEED, baseTime, { previewMode: "halloween-install" });
   assert.equal(install.installation.action, "install");
   const installedState = ApplyAutumn2026State({ phase: "quiet", eventId: "", cargoState: "none" }, install, SEED);
@@ -222,7 +223,7 @@ test("Halloween installation, oddities, and cleanup preview states never require
   assert.equal(flickerState.pipTaskId, "seasonal-oddity");
   assert.equal(flickerState.equipmentLightState, "flickering");
 
-  const cleanup = ResolveAutumn2026(SEED, Date.UTC(2026, 10, 3), { previewMode: "halloween-cleanup" });
+  const cleanup = ResolveAutumn2026(SEED, LocalDate(2026, 10, 3), { previewMode: "halloween-cleanup" });
   const cleanupState = ApplyAutumn2026State({ phase: "quiet", eventId: "", cargoState: "none" }, cleanup, SEED);
   assert.equal(cleanup.installation.action, "remove");
   assert.equal(cleanupState.pipTaskId, "seasonal-cleanup");

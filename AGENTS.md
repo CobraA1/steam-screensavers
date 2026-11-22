@@ -14,13 +14,20 @@ These supplement the original story briefs. Changes spanning live stories and th
 Use the additional bottom, back, and other-side orthographic views when an object or action is obscured from the default inspection angles.
 
 The [Thanksgiving and Advent implementation guide](little-space-station/docs/thanksgiving-advent.md)
-documents the reusable UTC holiday rules, 2026-only gathering, shared drone
+documents the reusable local-calendar holiday rules, 2026-only gathering, shared drone
 builders, checkpoint expiry, and preview controls. Preserve the distinction
 between calendar scenery and a genuinely completed story; Thanksgiving has no
 dream adaptation. Do not overwrite unfinished older seasonal incidents.
 The [Phase 2B wreath guide](little-space-station/docs/advent-wreath-phase2b.md)
-documents the four optional midnight ceremonies, pre-Advent wreath preparation,
-calendar-owned flames, and priority for existing Phase 2A decorating windows.
+documents the four weekly ceremonies, pre-Advent wreath preparation, and
+calendar-owned flames, including late observances of already-lit candles.
+Read the [shared scheduler contract](little-space-station/docs/event-scheduling.md)
+before adding or changing an event. Register significant activities with the
+shared arbiter; do not add disposable safe windows or a second scheduling queue.
+Use `local-calendar.js` for human-facing dates and calendar-day arithmetic.
+Preserve admitted spacecraft and work; reserve future routine opportunities
+explicitly. Scheduler records are separate from narrative v5 memories and the
+legacy seasonal checkpoint slot. Preview scenarios must remain read-only.
 
 ## Required structure
 

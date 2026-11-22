@@ -1,4 +1,5 @@
 const HOUR_MS = 60 * 60 * 1000;
+import { AddLocalDays } from './local-calendar.js';
 
 export const WORLD_TIME_UNITS = Object.freeze({
   hour: HOUR_MS,
@@ -39,7 +40,8 @@ export class SimulationClock {
     const duration = WORLD_TIME_UNITS[unit];
     const multiplier = Number(amount);
     if (!duration || !Number.isFinite(multiplier)) return false;
-    this.worldTimeMs += duration * multiplier;
+    this.worldTimeMs = (unit === 'day' || unit === 'week') && Number.isInteger(multiplier)
+      ? AddLocalDays(this.worldTimeMs, multiplier * (unit === 'week' ? 7 : 1)) : this.worldTimeMs + duration * multiplier;
     this.worldMode = "simulated";
     return true;
   }

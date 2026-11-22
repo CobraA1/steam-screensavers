@@ -1,3 +1,4 @@
+import { LocalDate } from '../local-calendar.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../vendor/three.module.js';
@@ -11,7 +12,7 @@ function fixture(){const s=Object.create(LittleSpaceStationScene.prototype);
   s.config={worldSeed:'holiday-geometry'};s.identity=CreateWorldIdentity(s.config.worldSeed);
   s.station=new THREE.Group();s.scene=new THREE.Scene();s.scene.add(s.station);
   s.materials=s.CreateMaterials();s.elapsed=0;s.BuildRobot();s.holiday=new HolidayVisual(s);return s;}
-function pose(s,t){const state={holiday:HolidayCalendar(Date.UTC(2026,10,26)),thanksgiving:ThanksgivingTimeline(t),
+function pose(s,t){const state={holiday:HolidayCalendar(LocalDate(2026,10,26)),thanksgiving:ThanksgivingTimeline(t),
   seasonal:{serviceDeck:{ready:true}},pipTaskId:'thanksgiving',pipTaskStage:'gathering',pipTaskProgress:0};
   UpdatePip(s,state);s.holiday.update(state);s.station.updateMatrixWorld(true);}
 test('working hands reach the lantern and third tray; actual transforms reconstruct after reverse seeking',()=>{
@@ -54,11 +55,11 @@ test('evergreen wreath has three blue, one rose and a taller central white candl
   assert.equal(s.holiday.lamps[4].visible,false);
   assert.equal(s.holiday.lamps[2].visible,week>=3);
  }
- s.holiday.update({holiday:HolidayCalendar(Date.UTC(2026,11,25)),seasonal:{serviceDeck:{ready:true}}});
+ s.holiday.update({holiday:HolidayCalendar(LocalDate(2026,11,25)),seasonal:{serviceDeck:{ready:true}}});
  assert.equal(s.holiday.lamps.filter(x=>x.visible).length,5);
- s.holiday.update({holiday:HolidayCalendar(Date.UTC(2026,11,24)),seasonal:{serviceDeck:{ready:true}}});
+ s.holiday.update({holiday:HolidayCalendar(LocalDate(2026,11,24)),seasonal:{serviceDeck:{ready:true}}});
  assert.equal(s.holiday.lamps.filter(x=>x.visible).length,5);
- s.holiday.update({holiday:HolidayCalendar(Date.UTC(2026,11,23,23,59,59,999)),seasonal:{serviceDeck:{ready:true}}});
+ s.holiday.update({holiday:HolidayCalendar(LocalDate(2026,11,23,23,59,59,999)),seasonal:{serviceDeck:{ready:true}}});
  assert.equal(s.holiday.lamps.filter(x=>x.visible).length,4);
  s.holiday.update({holiday:{christmasHandoff:true},seasonal:{serviceDeck:{ready:false}}});assert.equal(s.holiday.root.visible,false);
 });

@@ -1,4 +1,5 @@
 import { DeriveSeed } from './random.js';
+import { LocalDate } from './local-calendar.js';
 import { MaintenanceState } from './simulation-world.js';
 import { ResolvePipRecharge } from './pip-rhythm.js';
 import { CHRISTMAS_TREE_POSITION as TREE, CHRISTMAS_PRESENTS, TreeOrnamentPosition, TreeGarlandPoint } from './christmas-tree.js';
@@ -26,7 +27,7 @@ export function AdventActivityTimeline(seconds) {
 export function AdventActivitySpec(kind, index=0) {
   const dates={preparation:[10,29],garland:[11,6+2*Math.min(2,index)],ornament:[11,index?17:15],star:[11,22],present:[[10,30],[11,7],[11,13],[11,20],[11,23]][index]||[10,30],inspection:[11,23]};
   const [month,day]=dates[kind]||dates.preparation;
-  return {kind,index,id:'2026:advent:'+kind+':'+index,date:Date.UTC(2026,month,day),
+  return {kind,index,id:'2026:advent:'+kind+':'+index,date:LocalDate(2026,month,day),
     label:ADVENT_KINDS.find(k=>k.id===kind)?.label||kind,
     ornamentIndex:kind==='ornament'?(index?16:8):null};
 }
@@ -59,7 +60,7 @@ export class AdventActivityDirector {
     }
     return this.windows;
   }
-  at(time){if(time<Date.UTC(2026,10,29)||time>=Date.UTC(2026,11,24))return null;
+  at(time){if(time<LocalDate(2026,10,29)||time>=LocalDate(2026,11,24))return null;
     const w=this.plan().find(w=>time>=w.start&&time<w.end);return w?{...w,...AdventActivityTimeline((time-w.start)/SECOND)}:null;}
   update(state,time,blocked=false) {
     const activity=this.at(time);
@@ -84,7 +85,13 @@ function world(local){return add(TREE,local);}
 // The tool acts as Pip's existing magnetic maintenance clamp. No limb scaling.
 export function AdventActors(activity,home=[-.2,1.16,.72]) {
   const {kind,index=0,elapsed:t}=activity;
-  const moving=['ornament','star','present'].includes(kind);
+  if(activity.tending&&kind==='present') {
+    // A parcel already on the deck is admired, not collected a second time.
+    const inspection=AdventActors({...activity,kind:'inspection',tending:false},home);
+    inspection.prop=[...(CHRISTMAS_PRESENTS[index]||CHRISTMAS_PRESENTS[0]).position];
+    return inspection;
+  }
+  const moving=!activity.tending&&['ornament','star','present'].includes(kind);
   const gift=CHRISTMAS_PRESENTS[index]||CHRISTMAS_PRESENTS[0];
   const final=kind==='present'?[...gift.position]:kind==='star'?world([0,1.43,0]):kind==='ornament'?world(TreeOrnamentPosition(activity.ornamentIndex??8))
     :kind==='garland'?world(TreeGarlandPoint(index)) :world([.22,.38,.32]);
@@ -95,6 +102,9 @@ export function AdventActors(activity,home=[-.2,1.16,.72]) {
   const crooked=Smooth((t-48)/2)*(1-Smooth((t-52)/4));
   const roll=(kind==='ornament'?.22:kind==='star'?.12:0)*crooked;
   const contact=add(prop,[pointOffset[0]*Math.cos(roll)-pointOffset[1]*Math.sin(roll),pointOffset[0]*Math.sin(roll)+pointOffset[1]*Math.cos(roll),pointOffset[2]]);
+  // For an installed topper, extend the clamp above the foliage first, then
+  // lower it to inspect the fitting. The star itself stays on its mount.
+  if(activity.tending&&kind==='star')contact[1]+=.3*(1-Smooth((t-38)/10));
   if(kind==='garland') {
     const p=TreeGarlandPoint(index),angle=.1*crooked;
     // Slide the crooked loop around the bough, never through its foliage.
@@ -107,16 +117,17 @@ export function AdventActors(activity,home=[-.2,1.16,.72]) {
   const yaw=mix(sourceYaw,workYaw,(t-28)/10);
   function body(point,heading,atSource=false) {
     const f=[Math.sin(heading),0,Math.cos(heading)],r=[Math.cos(heading),0,-Math.sin(heading)];
-    const offset=kind==='present'?(index===2?.39:index===0?.48-.06*Smooth((t-33)/5):.48):.52,outward=kind==='present'?.15:.4;
+    const offset=kind==='present'?(index===2?.39:index===0?.48-.06*(activity.tending?1:Smooth((t-33)/5)):.48):.52,outward=kind==='present'?.15:.4;
     const p=[point[0]+r[0]*offset-f[0]*outward,Math.max(-.136,point[1]-.0956-(kind==='star'?.25*Smooth((t-24)/14):0)),point[2]+r[2]*offset-f[2]*outward];
     if(atSource)p[1]=Math.max(kind==='present'?gift.size[1]+.25:.36,p[1]);
     if(kind==='star'&&!atSource)p[1]=Math.max(.55,p[1]);
     return p;
   }
-  const sourceBody=body(add(source,pointOffset),sourceYaw,true);
+  const sourceBody=activity.tending?body(contact,workYaw):body(add(source,pointOffset),sourceYaw,true);
   let pip=t<=24?sourceBody:body(contact,yaw,t<30);
   if(!moving&&t>24)pip=track(t,[[24,...sourceBody],[31,-5.8,1.3,1.35],[38,...body(contact,workYaw)],[82,...body(contact,workYaw)]]);
-  const workBody=moving?body(add(final,pointOffset),workYaw):body(final,workYaw);
+  if(activity.tending&&t>=18&&t<60)pip=body(contact,workYaw);
+  const workBody=moving||activity.tending?body(add(final,pointOffset),workYaw):body(final,workYaw);
   if(kind==='present') {
     // Rise clear of the parcel before stowing the long wrist clamp.
     workBody[1]+=.2;
@@ -127,7 +138,7 @@ export function AdventActors(activity,home=[-.2,1.16,.72]) {
   if(t<18)pip=track(t,[[0,...home],[4,...home],[9,-3,1.75,1.7],[14,sourceBody[0],1.5,sourceBody[2]],[18,...sourceBody]]);
   else if(t>=60)pip=track(t,[[60,...workBody],[64,workBody[0],1.4,workBody[2]],[68,...view],[73,-5.3,1.6,1.65],[77,-2.9,1.75,1.85],[82,...home]]);
   const returnYaw=kind==='present'&&index===0?Math.PI*2-.16:-.16;
-  let bodyYaw=t<18?mix(-.16,sourceYaw,t/18):t>=68?mix(workYaw,returnYaw,(t-68)/14):yaw;
+  let bodyYaw=t<18?mix(-.16,activity.tending?workYaw:sourceYaw,t/18):t>=68?mix(workYaw,returnYaw,(t-68)/14):activity.tending?workYaw:yaw;
   if(t>=60&&t<68)bodyYaw=workYaw;
   if(kind==='inspection') {
     // Admiration needs no supplies: approach a clear viewing spot directly.
@@ -148,7 +159,7 @@ export function AdventActors(activity,home=[-.2,1.16,.72]) {
   const reach=!moving?Smooth((t-36)/4)*release
     :t<18?0:t<24?Smooth((t-18)/6):release;
   return {pip,yaw:bodyYaw,prop,contact,reach,roll,crooked,
-    lid:kind==='inspection'?0:Smooth((t-17)/2)*(1-Smooth((t-38)/4)),
+    lid:kind==='inspection'||activity.tending?0:Smooth((t-17)/2)*(1-Smooth((t-38)/4)),
     headPitch:t>=60&&t<68?.1+.08*Math.sin((t-60)/8*Math.PI):.04,
     satisfaction:Smooth((t-63)/2)*(1-Smooth((t-67)/2)),tool:kind!=='inspection'&&t>=18&&t<60};
 }

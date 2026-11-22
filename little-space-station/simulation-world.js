@@ -254,8 +254,8 @@ export class EventDirector {
     return { event, visit: null, phase: "quiet", progress: 0, phaseTime: 0 };
   }
 
-  update(stepSeconds, worldTimeMs = Date.now()) {
-    const schedule = this.scheduler.At(worldTimeMs);
+  update(stepSeconds, worldTimeMs = Date.now(), admission = null) {
+    const schedule = admission?.schedule || this.scheduler.At(worldTimeMs);
     let event;
     let visit;
     let phaseState;
@@ -267,16 +267,22 @@ export class EventDirector {
       event = visit;
       phaseState = NaturalVisitState(visit, worldTimeMs);
     }
-    return this.SetState({ event, visit, schedule, worldTimeMs, ...phaseState });
+    return this.SetState({ event, visit, schedule, worldTimeMs, reserve: Boolean(admission?.reserve), ...phaseState });
   }
 
-  SetState({ event, visit, schedule, worldTimeMs, phase, progress, phaseTime }) {
+  SetState({ event, visit, schedule, worldTimeMs, phase, progress, phaseTime, reserve = false }) {
     const state = this.state;
     const fallbackEvent = event || EVENT_CATALOG[0];
     const visitId = visit ? visit.visitId : "";
     const checkpoint = CheckpointFor(fallbackEvent, phase, progress);
     const service = event && phase === "service" ? ServiceTask(event, progress) : null;
     const maintenance = service || MaintenanceState(this.worldSeed, worldTimeMs, this.config.maintenance);
+    const maintenanceId = ['repair-light', 'adjust-antenna'].includes(maintenance.pipTaskId)
+      ? Math.floor(worldTimeMs / ((this.config.maintenance?.slotMinutes || 15) * 60000)) + ':' + maintenance.pipTaskId : null;
+    if (!service && reserve && maintenanceId !== this.admittedMaintenance) {
+      Object.assign(maintenance, { pipTaskId: 'standby', pipTaskLabel: 'Await reserved activity', pipTaskStage: 'standby',
+        pipTaskProgress: 0, pipTaskOverallProgress: 0, equipmentLightState: 'normal', antennaState: 'tracking' });
+    } else if (!service) this.admittedMaintenance = maintenanceId;
     if (event && phase !== "service" && (phase === "approach" || phase === "dock")) {
       maintenance.pipTaskId = "watch-arrival";
       maintenance.pipTaskLabel = "Monitor arriving vessel";
@@ -295,6 +301,8 @@ export class EventDirector {
       visitPurpose: event ? event.purpose : "Station operations",
       visitId,
       visitStartMs: visit ? visit.approachStartMs : null,
+      originalVisitStartMs: visit ? visit.originalApproachStartMs ?? visit.approachStartMs : null,
+      specialReservation: reserve,
       visitorType: event ? event.visitorType : "none",
       serviceTask: event ? event.serviceTask : "",
       checkpoint: checkpoint.id,

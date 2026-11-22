@@ -46,7 +46,7 @@ export class IncidentDirector {
     this.quietPresentationSeconds = safe ? this.quietPresentationSeconds + Math.max(0, stepSeconds) : 0;
     if (!safe || presentationSeconds < this.settings.minimumSessionSeconds || this.quietPresentationSeconds < this.settings.minimumSessionSeconds) return null;
 
-    const year = new Date(worldTimeMs).getUTCFullYear();
+    const year = new Date(worldTimeMs).getFullYear();
     const windowMs = Math.max(1, this.settings.opportunityWindowMinutes) * 60_000;
     const window = Math.floor(worldTimeMs / windowMs);
     const score = (DeriveSeed(this.worldSeed, "stubborn-antenna-opportunity-v1:" + year + ":" + window) >>> 0) / 0x100000000;
