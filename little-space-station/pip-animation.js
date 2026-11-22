@@ -101,8 +101,6 @@ function TaskYaw(taskId) {
   if (taskId === "adjust-antenna" || taskId === "survey-sync") return 2.8;
   if (taskId === "stubborn-antenna") return 2.8;
   if (taskId === "cargo-transfer" || taskId === "dispatch-exchange" || taskId === "seasonal-cargo") return -2.8;
-  if (taskId === "seasonal-install") return 2.55;
-  if (taskId === "seasonal-cleanup") return 2.55;
   if (taskId === "seasonal-oddity") return 2.32;
   // The commons fixture is to Pip's +X/+Z; approach and return ease into this heading.
   if (taskId === "lights-of-remembrance") return 1.23;
@@ -208,72 +206,6 @@ function SetRobotPosition(scene, taskId, stage, progress, state) {
       const stride = Math.sin(progress * Math.PI * 3);
       scene.robot.position.y += Math.abs(stride) * 0.025;
       scene.robot.rotation.z = stride * 0.025;
-    } else scene.robot.rotation.z = 0;
-    return motion;
-  }
-  if (taskId === "seasonal-install") {
-    const supply = scene.robotCargoDrop;
-    const install = scene.robotSeasonalInstall;
-    let motion = false;
-    if (stage === "travel-to-supplies") {
-      scene.robot.position.lerpVectors(scene.robotHome, supply, Smooth(progress));
-      scene.robot.rotation.y = Mix(-0.16, 0.3, Smooth(progress));
-      motion = true;
-    } else if (stage === "carry-decoration") {
-      scene.robot.position.lerpVectors(supply, install, Smooth(progress));
-      scene.robot.rotation.y = Mix(0.3, TaskYaw(taskId), Smooth(progress));
-      motion = true;
-    } else if (stage === "return") {
-      scene.robot.position.lerpVectors(install, scene.robotHome, Smooth(progress));
-      scene.robot.rotation.y = Mix(TaskYaw(taskId), -0.16, Smooth(progress));
-      motion = true;
-    } else if (stage === "notice-decor") {
-      scene.robot.position.copy(scene.robotHome);
-      scene.robot.rotation.y = Mix(-0.16, 0.3, Smooth(progress));
-    } else if (stage === "collect-decoration") {
-      scene.robot.position.copy(supply);
-      scene.robot.rotation.y = 0.3;
-    } else {
-      scene.robot.position.copy(install);
-      scene.robot.rotation.y = TaskYaw(taskId);
-    }
-    if (motion) {
-      const stride = Math.sin(progress * Math.PI * 4);
-      scene.robot.position.y += Math.abs(stride) * 0.045;
-      scene.robot.rotation.z = stride * 0.045;
-    } else scene.robot.rotation.z = 0;
-    return motion;
-  }
-  if (taskId === "seasonal-cleanup") {
-    const install = scene.robotSeasonalInstall;
-    const storage = scene.robotCargoDrop;
-    let motion = false;
-    if (stage === "travel-to-decoration") {
-      scene.robot.position.lerpVectors(scene.robotHome, install, Smooth(progress));
-      scene.robot.rotation.y = Mix(-0.16, TaskYaw(taskId), Smooth(progress));
-      motion = true;
-    } else if (stage === "carry-away") {
-      scene.robot.position.lerpVectors(install, storage, Smooth(progress));
-      scene.robot.rotation.y = Mix(TaskYaw(taskId), 0.3, Smooth(progress));
-      motion = true;
-    } else if (stage === "stow-decoration") {
-      scene.robot.position.copy(storage);
-      scene.robot.rotation.y = 0.3;
-    } else if (stage === "return") {
-      scene.robot.position.lerpVectors(storage, scene.robotHome, Smooth(progress));
-      scene.robot.rotation.y = Mix(0.3, -0.16, Smooth(progress));
-      motion = true;
-    } else if (stage === "notice-decor") {
-      scene.robot.position.copy(scene.robotHome);
-      scene.robot.rotation.y = Mix(-0.16, TaskYaw(taskId), Smooth(progress));
-    } else {
-      scene.robot.position.copy(install);
-      scene.robot.rotation.y = TaskYaw(taskId);
-    }
-    if (motion) {
-      const stride = Math.sin(progress * Math.PI * 4);
-      scene.robot.position.y += Math.abs(stride) * 0.045;
-      scene.robot.rotation.z = stride * 0.045;
     } else scene.robot.rotation.z = 0;
     return motion;
   }

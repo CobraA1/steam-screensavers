@@ -1,4 +1,5 @@
-// Small, read-only scenery calendar. No inventory, story progress or storage.
+// Base calendar eligibility. ResolveHolidayEffects removes unapplied authored
+// installations before rendering. No inventory, story progress or storage here.
 import { AddLocalDays as days } from './local-calendar.js';
 export const CHRISTMAS_TREE_POSITION = Object.freeze([-6.6, -0.43, 0.65]);
 export const TREE_LAYERS = Object.freeze([

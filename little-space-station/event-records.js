@@ -6,8 +6,10 @@ export function CreateEventRecords({ storage, readOnly = false, worldSeed } = {}
   let status = 'memory only', records = [];
   try {
     const value = JSON.parse(storage?.getItem(EVENT_RECORD_KEY) || 'null');
-    if (value?.version === 1 && value.worldSeed === worldSeed && Array.isArray(value.events))
+    if ([1, 2].includes(value?.version) && value.worldSeed === worldSeed && Array.isArray(value.events))
       records = value.events.filter(r => typeof r.id === 'string' && r.id.length < 180 && statuses.has(r.status) && Number.isFinite(r.due)).slice(-128);
+    records = records.map(r => ({ ...r, effect: ['pip', 'fallback'].includes(r.effect?.source) && Number.isFinite(r.effect.appliedAt) ? r.effect : undefined,
+      legacyCalendar: value.version === 1 && r.status === 'completed' }));
     status = readOnly ? 'read-only preview' : 'loaded';
   } catch { status = 'storage unavailable or invalid'; }
   return { records, status: () => status, clear({ explicit = false } = {}) {
@@ -21,7 +23,7 @@ export function CreateEventRecords({ storage, readOnly = false, worldSeed } = {}
     records = events.slice(-128);
     if (readOnly) return;
     try {
-      const text = JSON.stringify({ version: 1, worldSeed, events: records });
+      const text = JSON.stringify({ version: 2, worldSeed, events: records });
       storage.setItem(EVENT_RECORD_KEY, text);
       if (storage.getItem(EVENT_RECORD_KEY) !== text) throw new Error('read-back failed');
       status = 'saved';

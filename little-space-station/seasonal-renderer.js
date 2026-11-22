@@ -29,8 +29,6 @@ export class Autumn2026Visual {
   constructor(scene) {
     this.scene = scene;
     this.station = scene.station;
-    this.scratchWorld = new THREE.Vector3();
-    this.scratchLocal = new THREE.Vector3();
     this.targetPositions = Object.freeze({
       ...Object.fromEntries(Object.entries(SERVICE_DECK_ANCHORS.decorations)
         .map(([id, position]) => [id, new THREE.Vector3(...position)])),
@@ -196,55 +194,12 @@ export class Autumn2026Visual {
     this.crossingShadow.visible = false;
     this.station.add(this.crossingShadow);
 
-    this.carriedDecoration = new THREE.Group();
-    const carriedBody = new THREE.Mesh(new THREE.SphereGeometry(0.18, 7, 5), orange.clone());
-    carriedBody.scale.set(0.72, 1, 0.3);
-    this.carriedDecoration.add(carriedBody);
-    this.carriedBodyMaterial = carriedBody.material;
-    const carriedStem = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.02, 0.1, 5), green);
-    carriedStem.position.y = 0.18;
-    carriedStem.rotation.z = 0.38;
-    this.carriedDecoration.add(carriedStem);
-    this.carriedDecoration.visible = false;
-    this.station.add(this.carriedDecoration);
   }
 
   Update(state) {
     const seasonal = state.seasonal;
     const installed = new Set(seasonal && seasonal.installedDecorations || []);
-    const installation = seasonal && seasonal.installation;
-    for (const [id, object] of this.items) {
-      let visible = installed.has(id);
-      if (installation && installation.targetId === id) {
-        visible = installation.action === "remove"
-          ? visible && installation.overallProgress < 0.48
-          : visible && installation.overallProgress >= 0.76;
-      }
-      object.visible = visible;
-    }
-
-    this.carriedDecoration.visible = false;
-    const carryingInstall = installation && ["collect-decoration", "carry-decoration", "install-decoration"].includes(state.pipTaskStage);
-    const carryingCleanup = installation && ["remove-decoration", "carry-away", "stow-decoration"].includes(state.pipTaskStage);
-    if (carryingInstall || carryingCleanup) {
-      this.carriedDecoration.visible = true;
-      this.carriedBodyMaterial.color.setHex(installation.targetId.includes("halloween") || installation.targetId.includes("ghost") || installation.targetId.includes("jack") ? 0x6d3d82 : 0xd56f32);
-      this.scene.robotCargoGrip.getWorldPosition(this.scratchWorld);
-      this.scratchLocal.copy(this.scratchWorld);
-      this.station.worldToLocal(this.scratchLocal);
-      const target = this.targetPositions[installation.targetId] || this.targetPositions["warm-garland"];
-      if (state.pipTaskStage === "install-decoration") {
-        this.carriedDecoration.position.lerpVectors(this.scratchLocal, target, Math.min(1, state.pipTaskProgress * 1.25));
-        this.carriedDecoration.scale.setScalar(1 - Math.min(0.42, state.pipTaskProgress * 0.42));
-      } else if (state.pipTaskStage === "remove-decoration") {
-        this.carriedDecoration.position.lerpVectors(target, this.scratchLocal, Math.min(1, state.pipTaskProgress * 1.35));
-        this.carriedDecoration.scale.setScalar(0.8);
-      } else {
-        this.carriedDecoration.position.copy(this.scratchLocal);
-        this.carriedDecoration.scale.setScalar(1);
-      }
-      this.carriedDecoration.rotation.z = Math.sin(this.scene.elapsed * 2.2) * 0.06;
-    }
+    for (const [id, object] of this.items) object.visible = installed.has(id);
 
     const oddity = seasonal && seasonal.ambientOddity;
     this.distantOddity.visible = Boolean(oddity && oddity.id === "distant-light");

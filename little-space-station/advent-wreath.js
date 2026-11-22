@@ -1,6 +1,6 @@
-import { Advent, DAY } from './holiday-calendar.js';
-import { AddLocalDays, LocalDate } from './local-calendar.js';
-import { AdventWindowSafe, Smooth } from './advent-activities.js';
+import { Advent } from './holiday-calendar.js';
+import { AddLocalDays } from './local-calendar.js';
+import { Smooth } from './advent-activities.js';
 
 export const WREATH_TABLE = Object.freeze([-5.35, 0, 2.02]);
 export const WREATH_CANDLES = Object.freeze(Array.from({ length: 5 }, (_, index) => {
@@ -36,40 +36,10 @@ export function WreathTimeline(seconds) {
 export function WreathCeremonySpec(week = 0) {
   const index = Math.max(0, Math.min(3, Math.floor(Number(week) || 0)));
   const date = AddLocalDays(Advent(2026), index * 7);
-  const start = date - WREATH_CONTACT_SECONDS * 1000;
   return { id: `2026:advent-wreath:${index + 1}`, week: index, candleId: WREATH_CANDLES[index].id,
-    label: `Advent ${index + 1} · ${index === 2 ? 'rose' : 'blue'} candle`, date, start,
-    end: start + WREATH_SECONDS * 1000 };
+    label: `Advent ${index + 1} · ${index === 2 ? 'rose' : 'blue'} candle`, date };
 }
 
-export class AdventWreathDirector {
-  constructor(config, scheduler, decorating) {
-    Object.assign(this, { config, scheduler, decorating });
-    this.windows = null;
-    this.blocked = new Set(); // At most four inaugural-season IDs; no storage.
-  }
-  plan() {
-    if (this.windows) return this.windows;
-    const other = this.decorating.plan();
-    this.windows = Array.from({ length: 4 }, (_, i) => WreathCeremonySpec(i)).filter(spec =>
-      !other.some(window => spec.start < window.end && spec.end > window.start) &&
-      AdventWindowSafe(this.config, this.scheduler, spec.start, spec.end));
-    return this.windows;
-  }
-  at(time) {
-    if (time < Advent(2026) - WREATH_CONTACT_SECONDS * 1000 || time >= LocalDate(2026, 11, 21)) return null;
-    const window = this.plan().find(spec => time >= spec.start && time < spec.end);
-    return window ? { ...window, ...WreathTimeline((time - window.start) / 1000) } : null;
-  }
-  update(state, time, blocked = false) {
-    const ceremony = this.at(time);
-    if (!ceremony) return null;
-    const safe = !blocked && !state.adventActivity && state.phase === 'quiet' && !state.shipVisible && !state.visitId &&
-      !state.dream && state.seasonal?.serviceDeck?.ready && ['standby', 'look-around'].includes(state.pipTaskId);
-    if (!safe) this.blocked.add(ceremony.id);
-    return safe && !this.blocked.has(ceremony.id) ? ceremony : null;
-  }
-}
 export function ApplyWreathCeremony(state, ceremony) {
   state.wreathCeremony = ceremony;
   if (!ceremony) return;
@@ -80,10 +50,10 @@ export function ApplyWreathCeremony(state, ceremony) {
   state.pipTaskLabel = state.ambientJobLabel = ceremony.label;
   state.cargoState = 'none'; state.dream = null;
 }
-// Calendar alone owns visibility: a missed/aborted ceremony cannot hold a
-// flame back, extinguish it, or change the white Christmas Eve candle.
+// The shared scheduler projects action/fallback effects into holiday.candles.
+// The white Christmas Eve candle intentionally remains calendar scenery.
 export function WreathLampState(holiday, index, ceremony) {
-  const lit = index === 4 ? Boolean(holiday.christCandleLit) : Boolean(index < holiday.adventWeek || holiday.christmasHandoff);
+  const lit = index === 4 ? Boolean(holiday.christCandleLit) : Boolean(holiday.candles?.[index]);
   const t = ceremony?.elapsed || 0;
   const response = lit && ceremony?.week === index ? Smooth((t - 18) / .6) * (1 - Smooth((t - 19) / 2)) : 0;
   return { lit, intensity: lit ? 1.1 + .32 * response : 0, height: .045 * (1 + .12 * response) };

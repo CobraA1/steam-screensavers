@@ -11,6 +11,8 @@ export function Advent(year) {
   return AddLocalDays(christmas, -((new Date(christmas).getDay() || 7) + 21));
 }
 export function HolidayCalendar(time) {
+  // Base eligibility/background stages only. Authored physical installations
+  // must pass through ResolveHolidayEffects before rendering.
   const year = new Date(time).getFullYear();
   const thanksgiving = Thanksgiving(year), advent = Advent(year);
   const christmas = LocalDate(year, 11, 25);

@@ -49,17 +49,17 @@ test('evergreen wreath has three blue, one rose and a taller central white candl
  assert.equal(s.holiday.candles[4].material.color.getHex(),0xf3ead6);
  assert.ok(s.holiday.candles[4].position.y>s.holiday.candles[0].position.y);
  for(let week=1;week<=4;week++){
-  s.holiday.update({holiday:{adventWeek:week,transition:1},seasonal:{serviceDeck:{ready:true}}});
+  s.holiday.update({holiday:{adventWeek:week,transition:1,candles:Array.from({length:4},(_,i)=>i<week)},seasonal:{serviceDeck:{ready:true}}});
   assert.equal(s.holiday.lamps.filter(x=>x.material.emissiveIntensity>0).length,week);
   assert.equal(s.holiday.harvest.visible,false);assert.equal(s.holiday.inspection.visible,false);
   assert.equal(s.holiday.lamps[4].visible,false);
   assert.equal(s.holiday.lamps[2].visible,week>=3);
  }
- s.holiday.update({holiday:HolidayCalendar(LocalDate(2026,11,25)),seasonal:{serviceDeck:{ready:true}}});
+ s.holiday.update({holiday:{...HolidayCalendar(LocalDate(2026,11,25)),candles:[true,true,true,true]},seasonal:{serviceDeck:{ready:true}}});
  assert.equal(s.holiday.lamps.filter(x=>x.visible).length,5);
- s.holiday.update({holiday:HolidayCalendar(LocalDate(2026,11,24)),seasonal:{serviceDeck:{ready:true}}});
+ s.holiday.update({holiday:{...HolidayCalendar(LocalDate(2026,11,24)),candles:[true,true,true,true]},seasonal:{serviceDeck:{ready:true}}});
  assert.equal(s.holiday.lamps.filter(x=>x.visible).length,5);
- s.holiday.update({holiday:HolidayCalendar(LocalDate(2026,11,23,23,59,59,999)),seasonal:{serviceDeck:{ready:true}}});
+ s.holiday.update({holiday:{...HolidayCalendar(LocalDate(2026,11,23,23,59,59,999)),candles:[true,true,true,true]},seasonal:{serviceDeck:{ready:true}}});
  assert.equal(s.holiday.lamps.filter(x=>x.visible).length,4);
  s.holiday.update({holiday:{christmasHandoff:true},seasonal:{serviceDeck:{ready:false}}});assert.equal(s.holiday.root.visible,false);
 });

@@ -29,9 +29,9 @@ The current live sequence is 68 seconds. Its dream is a shortened memory of the 
 
 ## Scheduling and persistence
 
-- Keep calendar-derived scenery separate from presented stories. A date jump may reconstruct decorations immediately; it must not manufacture a completed incident.
+- Keep background calendar scenery separate from presented stories. Authored physical actions follow the [effect contract](../action-driven-effects.md): a due date does not apply the effect. Contact or an explicit deadline does. Fallback retires obsolete animation without manufacturing a completed incident.
 - Significant incidents register with the [shared scheduler](../event-scheduling.md). Respect admitted docking, loaded cargo, critical work and running incidents. Reserve future routine arrivals rather than discarding an important event because a future ship conflicts.
-- Due events remain pending through absences and conflicts, with spaced catch-up. Explicit resource-based retirement is not completion. Calendar scenery follows the device's local calendar independently of presentation records.
+- Due events remain pending through absences and conflicts, with spaced catch-up until an explicit deadline. Resource-based retirement is not completion. Background scenery uses the local calendar; authored installations additionally require an effect checkpoint or fallback.
 - Use stable instance IDs, original story year, and seeded variants. Do not restart a once-per-year story merely because the screensaver reopened.
 - Save meaningful milestones only after their payoffs are presented. Completion is not equivalent to selection or start, and presentation does not prove a human saw it.
 - Resume interrupted stories at coherent chapter boundaries that preserve the opportunity to see the important payoff. Never roll a saved milestone backward.

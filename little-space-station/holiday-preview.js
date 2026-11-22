@@ -43,7 +43,7 @@ export function HolidayPreview(panel,runtime,director) {
     ['Tree · first light string',11,6], ['Tree · garland in progress',11,8],
     ['Tree · all light strings',11,10], ['Tree · first ornaments',11,13],
     ['Tree · ornaments in progress',11,15], ['Tree · final decorations',11,20],
-    ['Tree · gold star installed',11,22], ['Tree · complete, five gifts',11,23],
+    ['Tree · star due (pending)',11,22], ['Tree · final work due',11,23],
     ['Tree · Christmas Eve ready',11,24],
   ]) button(label,()=>date(LocalDate(2026,month,day,12)));
   button('Tree · completed, full warm lights',()=>{date(LocalDate(2026,11,24,18));runtime.treeFullIllumination=true;});
@@ -54,9 +54,6 @@ export function HolidayPreview(panel,runtime,director) {
   const activityHeading=document.createElement('p');activityHeading.textContent='Pip’s Advent decorating';section.append(activityHeading);
   const activitySelect=make('select','Advent activity');
   for(const k of ADVENT_KINDS){const o=document.createElement('option');o.value=k.id;o.textContent=k.label;activitySelect.append(o);}
-  const presentationSelect=make('select','Advent activity presentation');
-  for(const [id,label] of [['installation','Scheduled installation'],['tending','Catch-up · tend / inspect installed prop']]){
-    const o=document.createElement('option');o.value=id;o.textContent=label;presentationSelect.append(o);}
   const giftSelect=make('select','Advent gift');
   for(const [i,label] of ['Blue long parcel','Ivory square box','Copper tall box','Muted red parcel','Gold small box'].entries()){
     const o=document.createElement('option');o.value=i;o.textContent=label;giftSelect.append(o);}
@@ -72,12 +69,10 @@ export function HolidayPreview(panel,runtime,director) {
     giftSelect.disabled=kind!=='present';variationSelect.disabled=!['garland','ornament'].includes(kind);
     const index=kind==='present'?Number(giftSelect.value):kind==='garland'?Number(variationSelect.value):kind==='ornament'?Math.min(1,Number(variationSelect.value)):0;
     const spec=AdventActivitySpec(kind,index);
-    spec.tending=presentationSelect.value==='tending'&&['star','ornament','present'].includes(kind);
     date(spec.date+12*3600000);runtime.adventPreview={...spec,elapsed:seconds,playing};runtime.paused=!playing;
   }
   activitySelect.addEventListener('change',()=>showActivity());giftSelect.addEventListener('change',()=>showActivity());
   variationSelect.addEventListener('change',()=>showActivity());
-  presentationSelect.addEventListener('change',()=>showActivity());
   activityBeat.addEventListener('change',()=>showActivity(AdventBeatStart(activityBeat.value)));
   activityScrub.addEventListener('input',()=>showActivity(Number(activityScrub.value)));
   button('Play Advent activity',()=>showActivity(0,true));
@@ -86,7 +81,7 @@ export function HolidayPreview(panel,runtime,director) {
   button('Natural calendar',()=>{clear();runtime.clock.useActualTime();director.forceEvent('auto');runtime.paused=false;});
   section.append(document.createTextNode('Temporary previews; no narrative writes. Future-year buttons temporarily assemble the inaugural deck to inspect reusable date rules.'));
   panel.append(section);
-  return ()=>{const a=runtime.adventPreview;if(a){const t=AdventActivityTimeline(a.elapsed);if(document.activeElement!==activityScrub)activityScrub.value=a.elapsed;if(document.activeElement!==activityBeat)activityBeat.value=t.beat;activityReadout.textContent=(a.tending?'Tend installed · ':'')+a.label+' · '+t.beat+' · '+a.elapsed.toFixed(1)+' / '+ADVENT_ACTIVITY_SECONDS+' s';}
+  return ()=>{const a=runtime.adventPreview;if(a){const t=AdventActivityTimeline(a.elapsed);if(document.activeElement!==activityScrub)activityScrub.value=a.elapsed;if(document.activeElement!==activityBeat)activityBeat.value=t.beat;activityReadout.textContent=a.label+' · '+t.beat+' · '+a.elapsed.toFixed(1)+' / '+ADVENT_ACTIVITY_SECONDS+' s';}
     else activityReadout.textContent='No decorating preview · temporary, no history writes';
     const p=runtime.thanksgivingPreview;if(p){const t=ThanksgivingTimeline(p.elapsed);if(document.activeElement!==scrub)scrub.value=p.elapsed;if(document.activeElement!==beat)beat.value=t.beatId;readout.textContent=t.beatId+' · '+p.elapsed.toFixed(1)+' / '+THANKSGIVING_SECONDS+' s';}
     else readout.textContent=LocalInputValue(runtime.clock.worldTimeMs).slice(0,10);};

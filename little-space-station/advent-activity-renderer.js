@@ -62,7 +62,7 @@ export class AdventActivityVisual {
     s.robotHead.rotation.x=THREE.MathUtils.clamp(-Math.atan2(this.look.y,Math.hypot(this.look.x,this.look.z)),-.6,.6)*looking;
     if(d.kind==='inspection')s.robotHead.rotation.x+=.08*a.satisfaction;
     // Parcels hang from their bow; keep the elbow above the grip while carrying.
-    const pickupArc=d.tending?d.kind==='present'?Math.PI:0:d.kind==='present'?Math.PI:['star','ornament'].includes(d.kind)?Math.PI*(1-Smooth((d.elapsed-24)/14)):0;
+    const pickupArc=d.kind==='present'?Math.PI:['star','ornament'].includes(d.kind)?Math.PI*(1-Smooth((d.elapsed-24)/14)):0;
     reach(s,s.robotArms[0],a.contact,d.kind==='inspection'?0:a.reach,true,pickupArc);
     s.pipPoseName='advent-'+d.kind;s.pipReactionName=d.elapsed>=60&&d.elapsed<68?'quietly-satisfied':'careful';
   }

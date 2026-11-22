@@ -9,7 +9,6 @@ import { LocalDate, AddLocalDays, LocalDayNumber, LocalInputValue } from '../loc
 import { Advent, HolidayCalendar } from '../holiday-calendar.js';
 import { ResolveAutumn2026, ApplyAutumn2026State } from '../autumn-2026.js';
 import { WreathCeremonySpec, WreathLampState } from '../advent-wreath.js';
-import { AdventActivitySpec, AdventActors } from '../advent-activities.js';
 import { CreateSchedulerPreview } from '../scheduler-preview.js';
 import { SimulationClock } from '../simulation-clock.js';
 
@@ -27,7 +26,8 @@ function fixture({ storage = memory(), config = {}, records, preview = false, ti
     ApplyAutumn2026State(state,ResolveAutumn2026(config.worldSeed,time),config.worldSeed);
     state.holiday = HolidayCalendar(time);
     const active = events.update(state,time,step);
-    const result = { state: structuredClone(state), active: active && { id: active.event.id, elapsed: active.elapsed, tending: active.tending } };
+    state.holiday=events.worldState(time,state.holiday);
+    const result = { state: structuredClone(state), active: active && { id: active.event.id, elapsed: active.elapsed } };
     events.afterRender(time); return result;
   } };
 }
@@ -83,22 +83,6 @@ test('a missed event is offered next session, interrupted presentation resumes, 
   f=fixture({storage,time:time+120000,config});f.events.events=f.events.events.filter(e=>e.id===id);
   for(let i=120;i<180;i++)assert.equal(f.frame(time+i*1000).active,null);
 });
-test('late observance never extinguishes calendar candles; installation catch-up leaves the actual prop installed', () => {
-  const time=LocalDate(2026,11,23,12),f=fixture({time});
-  f.events.events=f.events.events.filter(e=>e.id===WreathCeremonySpec(3).id);
-  for(let i=0;i<60;i++) {
-    const {state}=f.frame(time+i*1000);
-    for(let wick=0;wick<4;wick++)assert.equal(WreathLampState(state.holiday,wick,state.wreathCeremony).lit,true);
-    if(state.wreathCeremony)assert.equal(state.wreathCeremony.observance,true);
-  }
-  const spec=AdventActivitySpec('star');
-  const initial=AdventActors({...spec,elapsed:0,tending:true}).prop;
-  for(let seconds=0;seconds<=82;seconds+=.25)assert.deepEqual(AdventActors({...spec,elapsed:seconds,tending:true}).prop,initial);
-  for(let i=0;i<5;i++) {
-    const gift=AdventActivitySpec('present',i),pos=AdventActors({...gift,elapsed:0,tending:true}).prop;
-    for(let t=0;t<=82;t++)assert.deepEqual(AdventActors({...gift,elapsed:t,tending:true}).prop,pos);
-  }
-});
 test('v2–v5 narrative migration retains memories, unfinished checkpoints and explicit expiry without reinterpreting history', () => {
   for(const version of [2,3,4,5]) {
     const storage=memory(),seed='little-station-001';
@@ -132,7 +116,8 @@ test('storage failures keep simulation running; read-only previews and reverse c
 test('January retirement is explicit, preserves pending checkpoint identity and never manufactures completion', () => {
   const f=fixture(),time=LocalDate(2027,0,6,12);f.frame(time);
   for(const spec of f.events.events.filter(e=>e.id.includes(':advent'))) {
-    const r=f.events.scheduler.records.get(spec.id);assert.equal(r.status,'expired');assert.ok(r.reason.includes('January'));
+    const r=f.events.scheduler.records.get(spec.id);assert.equal(r.status,spec.effect?'superseded':'expired');
+    assert.ok(r.reason.includes(spec.effect?'fallback':'January'));
   }
   assert.equal(HolidayCalendar(time).tree.active,false);
   assert.equal(ResolveAutumn2026(f.config.worldSeed,LocalDate(2027,0,7)).serviceDeck.active,false);
@@ -186,18 +171,8 @@ test('migration reconciles crash-window ledger entries with real payoffs and exp
   assert.equal(f.events.scheduler.records.get(id).status,'completed');
   assert.equal(f.store.load(seed).record.completedStories.length,1);
 });
-test('on-time ceremony reaches local ignition; late approaches wait and checkpoint writes follow rendering', () => {
+test('narrative checkpoint writes follow rendering and do not truncate exits', () => {
   const date=WreathCeremonySpec(0).date,config={maintenance:{activeChance:0},traffic:{quietGapMinutes:[2000,2000],longGapChance:0}};
-  const f=fixture({config,time:date-30000});f.events.events=f.events.events.filter(e=>e.id===WreathCeremonySpec(0).id);
-  let atBoundary;
-  for(let i=-300;i<=10;i++) { const result=f.frame(date+i*100,.1);if(i===0)atBoundary=result; }
-  assert.ok(Math.abs(atBoundary.state.wreathCeremony.elapsed-18)<.25);
-  assert.equal(atBoundary.state.holiday.adventWeek,1);
-  const late=fixture({config,time:date-10000});late.events.events=late.events.events.filter(e=>e.id===WreathCeremonySpec(0).id);
-  for(let i=-10;i<0;i++)assert.equal(late.frame(date+i*1000).active,null);
-  for(let i=0;i<20;i++)late.frame(date+i*1000);
-  assert.equal(late.events.scheduler.active.event.id,WreathCeremonySpec(0).id);
-  assert.equal(late.director.state.wreathCeremony.observance,true);
   const story=fixture({config,time:date});story.events.events=story.events.events.filter(e=>e.type==='stubborn-antenna');
   for(let i=0;i<15;i++)story.frame(date+i*1000);
   const active=story.events.scheduler.active;active.elapsed=53;

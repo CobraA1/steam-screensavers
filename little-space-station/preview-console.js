@@ -4,7 +4,6 @@ import { STUBBORN_ANTENNA_BEATS, STUBBORN_ANTENNA_TOTAL_SECONDS, ResolveStubborn
 import { PHANTOM_VISITOR_BEATS, PHANTOM_VISITOR_TOTAL_SECONDS, ResolvePhantomVisitorTimeline, CreatePhantomVisitorPreview } from './phantom-visitor.js';
 import { REMEMBRANCE_BEATS, REMEMBRANCE_TOTAL_SECONDS, ResolveRemembranceTimeline, CreateRemembrancePreview } from './lights-of-remembrance.js';
 import { WREATH_BEATS, WREATH_SECONDS, WreathCeremonySpec, WreathTimeline, WreathBeatStart, WreathLampState } from './advent-wreath.js';
-import { HolidayCalendar } from './holiday-calendar.js';
 import { CreateSchedulerPreview, SCHEDULER_SCENARIOS } from './scheduler-preview.js';
 
 const element = (tag, className, text) => {
@@ -39,7 +38,6 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
   const hScrub = holidayInput('Thanksgiving seconds');
   const hReadout = holidayInput('Thanksgiving state');
   const aKind = holidayInput('Advent activity');
-  const aPresentation = holidayInput('Advent activity presentation');
   const aGift = holidayInput('Advent gift');
   const aVariation = holidayInput('Advent decoration variation');
   const aBeat = holidayInput('Advent activity beat');
@@ -217,7 +215,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
       c.pipTaskSelect.value = value; change(c.pipTaskSelect); runtime.paused = true;
     }, { static: true });
   }
-  const activityPane = wrapper(field('Activity', aKind), field('Presentation', aPresentation), field('Present', aGift), field('Decoration variation', aVariation), field('Beat', aBeat), field('Timeline (seconds)', aScrub), aReadout);
+  const activityPane = wrapper(field('Activity', aKind), field('Present', aGift), field('Decoration variation', aVariation), field('Beat', aBeat), field('Timeline (seconds)', aScrub), aReadout);
   const activity = register('Pip Activities', 'advent', 'Advent decorating', activityPane, click(holidayButton('Play Advent activity')), {
     playback: () => runtime.adventPreview,
     step: () => { if (runtime.adventPreview) { aScrub.value = String(Number(runtime.adventPreview.elapsed) + 1); aScrub.dispatchEvent(new Event('input')); } },
@@ -229,7 +227,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
       holidayButton('Play Advent activity').click();
     }, { playback: activity.playback, step: activity.step });
   }
-  for (const control of [aKind, aPresentation, aGift, aVariation]) control.addEventListener('change', () => {
+  for (const control of [aKind, aGift, aVariation]) control.addEventListener('change', () => {
     if (controller.selected?.id === 'advent' || controller.selected?.id.startsWith('advent-')) {
       const next = controller.selected.id === 'advent' ? activity : adapters.find(item => item.id === `advent-${aKind.value}`);
       controller.select(next); selectDisplay(next);
@@ -250,17 +248,17 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
   wreathScrub.setAttribute('aria-label','Wreath ceremony seconds');
   const wreathReadout=element('output','preview-tools__hint');wreathReadout.setAttribute('aria-label','Wreath ceremony state');
   const wreathPane=wrapper(field('Advent Sunday',wreathWeek),field('Beat',wreathBeat),field('Timeline (seconds)',wreathScrub),wreathReadout,
-    element('p','preview-tools__hint','Tool contact at 18 seconds meets local Sunday midnight. Delayed launches observe the already-lit candle.'));
+    element('p','preview-tools__hint','The candle stays unlit until Pip touches its wick at 18 seconds. Missed ceremonies remain pending until their fallback deadline.'));
   function seekWreath(seconds) {
     const p=runtime.wreathPreview;
     if(!p)return;
-    p.elapsed=WreathTimeline(seconds).elapsed;runtime.clock.setWorldTime(p.start+p.elapsed*1000);controller.pause();
+    p.elapsed=WreathTimeline(seconds).elapsed;runtime.clock.setWorldTime(p.date+p.elapsed*1000);controller.pause();
   }
   const wreathAdapters=[];
   for(let i=0;i<4;i++) {
     const spec=WreathCeremonySpec(i);
     wreathAdapters.push(register('Pip Activities',`wreath-${i+1}`,`Wreath: ${spec.label}`,wreathPane,()=>{
-      wreathWeek.value=String(i);runtime.wreathPreview={...spec,elapsed:0,playing:true};runtime.clock.setWorldTime(spec.start);
+      wreathWeek.value=String(i);runtime.wreathPreview={...spec,elapsed:0,playing:true};runtime.clock.setWorldTime(spec.date);
     },{
       playback:()=>runtime.wreathPreview,
       step:()=>seekWreath((runtime.wreathPreview?.elapsed||0)+1),
@@ -269,7 +267,7 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
         const timeline=WreathTimeline(p.elapsed);
         if(document.activeElement!==wreathScrub)wreathScrub.value=String(p.elapsed);
         if(document.activeElement!==wreathBeat)wreathBeat.value=timeline.beat;
-        const lit=WreathLampState(HolidayCalendar(runtime.clock.worldTimeMs),p.week,p).lit;
+        const lit=WreathLampState(director.state.holiday || {},p.week,p).lit;
         wreathReadout.textContent=`${p.label} · ${timeline.beat} · ${p.elapsed.toFixed(2)} / ${WREATH_SECONDS} s · candle ${lit?'lit':'unlit'} · temporary`;
       },
     }));
@@ -466,8 +464,9 @@ export function BuildPreviewConsole({ panel, runtime, director, scene, controls:
           `Waiting: ${d.waiting || 'ready'}`,
           `Earliest opportunity: ${d.nextOpportunity ? new Date(d.nextOpportunity).toLocaleString() : '—'} (estimate; admitted work may finish later)`,
           `Zone: ${d.zone} · records: ${d.storage}`,
-          'Pending:', ...(d.pending || []).map(e => `  P${e.priority} ${e.id}${e.deferred ? ' · deferred' : ''}\n    ${e.waiting || 'ready'}`),
+          'Pending:', ...(d.pending || []).map(e => `  P${e.priority} ${e.id}${e.deferred ? ' · deferred' : ''}\n    Due: ${new Date(e.due).toLocaleString()}\n    ${e.waiting || 'ready'}`),
           'Completed / retired:', ...(d.records || []).filter(e => ['completed','expired','superseded'].includes(e.status)).map(e => `  ${e.id}: ${e.status}${e.reason ? ' · '+e.reason : ''}`),
+          'Physical effects:', ...(d.records || []).filter(e => e.fallback).map(e => `  ${e.id}: ${e.effectState}; presentation ${e.status}\n    Fallback: ${new Date(e.fallback).toLocaleString()} · ${e.fallback}`),
           'Traffic admission:', ...(d.traffic || []).map(e => `  ${e.id}: ${e.action}`),
           `Absolute: ${state.worldTimeMs} · ${new Date(state.worldTimeMs).toISOString()}`,
         ].join('\n');

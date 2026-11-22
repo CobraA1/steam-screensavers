@@ -534,7 +534,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
       director.jumpToPhase("service");
       eventSelect.value = "cargo-run";
       phaseSelect.value = "service";
-    } else if (seasonalMode.value === "fall-install" || seasonalMode.value === "halloween-install" || seasonalMode.value === "halloween-cleanup" || seasonalMode.value === "halloween-oddity-flicker") {
+    } else if (seasonalMode.value === "halloween-oddity-flicker") {
       director.forceEvent("ambient");
       eventSelect.value = "ambient";
     }
@@ -896,9 +896,7 @@ export function CreatePreviewTools({ director, runtime, scene }) {
         ? seasonal.ambientOddity.id + " · " + Math.round(seasonal.ambientOddity.progress * 100) + "%"
         : "none";
       seasonalValues.cleanup.textContent = Math.round((seasonal.cleanupProgress || 0) * 100) + "%";
-      seasonalValues.activity.textContent = seasonal.installation
-        ? seasonal.installation.targetLabel + " · " + seasonal.installation.stage
-        : "none";
+      seasonalValues.activity.textContent = seasonal.ambientOddity?.id === 'pip-flicker' ? 'Investigating light flicker' : 'none';
       const narrativeRecord = snapshot.runtime && snapshot.runtime.persistedNarrative && snapshot.runtime.persistedNarrative.record;
       const pendingSeasonal = narrativeRecord && narrativeRecord.seasonalIncident;
       const completedSeasonal = narrativeRecord && narrativeRecord.completedStories || [];

@@ -25,10 +25,8 @@ export const AUTUMN_2026_DATES = Object.freeze({
 export const AUTUMN_PREVIEW_MODES = Object.freeze([
   Object.freeze({ id: "natural", label: "Follow 2026 calendar" }),
   Object.freeze({ id: "fall-decor", label: "General fall decorations" }),
-  Object.freeze({ id: "fall-install", label: "Pip installs fall decor" }),
   Object.freeze({ id: "fall-cargo", label: "Fall delivery · 2–4 packages" }),
   Object.freeze({ id: "halloween-early", label: "Halloween · early preparations" }),
-  Object.freeze({ id: "halloween-install", label: "Pip installs Halloween decor" }),
   Object.freeze({ id: "halloween-full", label: "Halloween · fully decorated" }),
   Object.freeze({ id: "halloween-cargo", label: "Halloween delivery · 2–4 packages" }),
   Object.freeze({ id: "remembrance-cargo", label: "Remembrance delivery · blue and gold" }),
@@ -129,81 +127,6 @@ function NaturalHalloweenDecorLevel(time) {
   return Clamp01(0.62 * (1 - (time - dates.cleanupBegins) / (dates.cleanupComplete - dates.cleanupBegins)));
 }
 
-function ResolveInstallation(worldSeed, time, decorLevel, previewMode) {
-  const forced = previewMode === "fall-install";
-  const insideInstallWindow = time >= AUTUMN_2026_DATES.autumnBegins && time < AUTUMN_2026_DATES.fallDecorComplete;
-  const slotMs = 35 * MINUTE_MS;
-  const slot = Math.floor(time / slotMs);
-  const slotProgress = ((time % slotMs) + slotMs) % slotMs / slotMs;
-  const random = CreateRandom(DeriveSeed(worldSeed, "autumn-install-v1-" + slot));
-  const start = 0.15 + random() * 0.42;
-  const duration = 100 * SECOND_MS / slotMs;
-  const naturallyActive = insideInstallWindow && random() < 0.36 && slotProgress >= start && slotProgress < start + duration;
-  if (!forced && !naturallyActive) return null;
-
-  const progress = forced ? 0.63 : Clamp01((slotProgress - start) / duration);
-  const decorationIndex = forced
-    ? 2
-    : Math.min(FALL_DECORATIONS.length - 1, Math.max(0, Math.floor(decorLevel * FALL_DECORATIONS.length)));
-  const stage = Stage(progress, [
-    ["notice-decor", 0.1],
-    ["travel-to-supplies", 0.25],
-    ["collect-decoration", 0.36],
-    ["carry-decoration", 0.58],
-    ["install-decoration", 0.76],
-    ["verify-decoration", 0.87],
-    ["react-success", 0.93],
-    ["return", 1],
-  ]);
-  return Object.freeze({
-    active: true,
-    forced,
-    targetId: FALL_DECORATIONS[decorationIndex].id,
-    targetLabel: FALL_DECORATIONS[decorationIndex].label,
-    overallProgress: progress,
-    stage: stage.id,
-    stageProgress: stage.progress,
-    variant: DeriveSeed(worldSeed, "autumn-install-gesture-v1-" + slot) % 3,
-  });
-}
-
-function ResolveHalloweenActivity(worldSeed, time, decorLevel, previewMode) {
-  const forcedInstall = previewMode === "halloween-install";
-  const forcedCleanup = previewMode === "halloween-cleanup";
-  const installing = time >= AUTUMN_2026_DATES.halloweenPreparations && time < AUTUMN_2026_DATES.halloween;
-  const cleaning = time >= AUTUMN_2026_DATES.cleanupBegins && time < AUTUMN_2026_DATES.cleanupComplete;
-  const slotMs = 31 * MINUTE_MS;
-  const slot = Math.floor(time / slotMs);
-  const slotProgress = ((time % slotMs) + slotMs) % slotMs / slotMs;
-  const random = CreateRandom(DeriveSeed(worldSeed, "halloween-activity-v1-" + slot));
-  const start = 0.1 + random() * 0.5;
-  const duration = 105 * SECOND_MS / slotMs;
-  const naturallyActive = (installing || cleaning) && random() < 0.4 && slotProgress >= start && slotProgress < start + duration;
-  if (!forcedInstall && !forcedCleanup && !naturallyActive) return null;
-  const action = forcedCleanup || cleaning ? "remove" : "install";
-  const progress = forcedInstall ? 0.67 : forcedCleanup ? 0.52 : Clamp01((slotProgress - start) / duration);
-  const visibleCount = Math.max(1, Math.ceil(decorLevel * HALLOWEEN_DECORATIONS.length));
-  const index = action === "remove"
-    ? Math.min(HALLOWEEN_DECORATIONS.length - 1, visibleCount - 1)
-    : Math.min(HALLOWEEN_DECORATIONS.length - 1, Math.max(0, visibleCount - 1));
-  const decoration = HALLOWEEN_DECORATIONS[index];
-  const stages = action === "remove"
-    ? [["notice-decor", 0.1], ["travel-to-decoration", 0.26], ["remove-decoration", 0.48], ["carry-away", 0.7], ["stow-decoration", 0.84], ["verify-decoration", 0.93], ["return", 1]]
-    : [["notice-decor", 0.1], ["travel-to-supplies", 0.25], ["collect-decoration", 0.36], ["carry-decoration", 0.58], ["install-decoration", 0.76], ["verify-decoration", 0.87], ["react-success", 0.93], ["return", 1]];
-  const stage = Stage(progress, stages);
-  return Object.freeze({
-    active: true,
-    forced: forcedInstall || forcedCleanup,
-    action,
-    targetId: decoration.id,
-    targetLabel: decoration.label,
-    overallProgress: progress,
-    stage: stage.id,
-    stageProgress: stage.progress,
-    variant: DeriveSeed(worldSeed, "halloween-activity-gesture-v1-" + slot) % 3,
-  });
-}
-
 function ResolveHalloweenOddity(worldSeed, time, previewMode) {
   const forcedMap = {
     "halloween-oddity-light": "distant-light",
@@ -248,8 +171,6 @@ export function ResolveAutumn2026(worldSeed, worldTimeMs, { previewMode = "natur
   const halloweenDecorations = HALLOWEEN_DECORATIONS
     .filter((decoration) => halloweenDecorLevel >= decoration.threshold)
     .map((decoration) => decoration.id);
-  const installation = serviceDeck.ready ? (ResolveInstallation(worldSeed, time, fallDecorLevel, previewMode) ||
-    ResolveHalloweenActivity(worldSeed, time, halloweenDecorLevel, previewMode)) : null;
   const ambientOddity = ResolveHalloweenOddity(worldSeed, time, previewMode);
   return Object.freeze({
     storyYear: 2026,
@@ -261,7 +182,7 @@ export function ResolveAutumn2026(worldSeed, worldTimeMs, { previewMode = "natur
     fallDecorations: Object.freeze(fallDecorations),
     halloweenDecorations: Object.freeze(halloweenDecorations),
     installedDecorations: Object.freeze(serviceDeck.ready ? [...fallDecorations, ...halloweenDecorations] : []),
-    installation,
+
     ambientOddity,
     serviceDeck,
     serviceDeckActive: serviceDeck.active,
@@ -396,28 +317,8 @@ function ApplySeasonalCargo(state, manifest) {
   });
 }
 
-function ApplyInstallation(state, installation) {
-  if (!installation || state.phase !== "quiet") return;
-  const removing = installation.action === "remove";
-  Object.assign(state, {
-    pipTaskId: removing ? "seasonal-cleanup" : "seasonal-install",
-    pipTaskLabel: (removing ? "Remove " : "Install ") + installation.targetLabel,
-    pipTaskStage: installation.stage,
-    pipTaskProgress: installation.stageProgress,
-    pipTaskOverallProgress: installation.overallProgress,
-    pipGestureVariant: installation.variant,
-    robotActivity: removing ? "seasonal-cleanup" : "seasonal-install",
-    ambientJob: removing ? "seasonal-cleanup" : "seasonal-install",
-    ambientJobLabel: (removing ? "Remove " : "Install ") + installation.targetLabel,
-    cargoState: "none",
-    equipmentLightState: "normal",
-    antennaState: "tracking",
-    lastSignificantActivity: (removing ? "Halloween cleanup — " : "Seasonal decorating — ") + installation.stage.replaceAll("-", " "),
-  });
-}
-
-function ApplyOddity(state, oddity, installation) {
-  if (!oddity || oddity.id !== "pip-flicker" || installation || state.phase !== "quiet") return;
+function ApplyOddity(state, oddity) {
+  if (!oddity || oddity.id !== "pip-flicker" || state.phase !== "quiet") return;
   const stage = Stage(oddity.progress, [["notice-oddity", 0.24], ["inspect-oddity", 0.72], ["puzzled-oddity", 0.88], ["return", 1]]);
   Object.assign(state, {
     pipTaskId: "seasonal-oddity",
@@ -466,8 +367,7 @@ export function ApplyAutumn2026State(state, seasonal, worldSeed) {
     }
   }
   if (!state.specialReservation || state.allowReservedBackground) {
-    ApplyInstallation(state, seasonal.installation);
-    ApplyOddity(state, seasonal.ambientOddity, seasonal.installation);
+    ApplyOddity(state, seasonal.ambientOddity);
   }
   return state;
 }

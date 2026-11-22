@@ -22,6 +22,16 @@ export class EventScheduler {
         record = { id: event.id, status: 'pending', due: event.due, deferred: false };
         this.set(record);
       }
+      if (record && event.effect && !record.effect && time >= event.effect.deadline && this.active?.event.id !== event.id) {
+        // Offscreen work is NOT a successfully presented animation.
+        record = { ...record, effect: { source: 'fallback', appliedAt: event.effect.deadline },
+          status: record.status === 'completed' ? 'completed' : 'superseded', reason: 'physical effect applied offscreen at fallback deadline', endedAt: record.endedAt ?? event.effect.deadline };
+        this.set(record);
+      }
+      if (record?.effect && !terminal(record) && this.active?.event.id !== event.id) {
+        record = { ...record, status: 'superseded', reason: 'effect retained; interrupted post-effect exit retired', endedAt: time };
+        this.set(record);
+      }
       // Expiry is explicit, resource-based and reported; it never creates a memory.
       if (record && !terminal(record) && this.active?.event.id !== event.id && time >= event.expires) {
         this.set({ ...record, status: 'expired', reason: event.expiryReason, endedAt: time });
@@ -54,12 +64,13 @@ export class EventScheduler {
       state?.visitId || state?.shipVisible ? 'admitted spacecraft must finish' : recharge ? 'recharge must finish' :
       !['standby', 'look-around'].includes(state?.pipTaskId) ? 'admitted maintenance must finish' :
       !event ? pending.length ? 'required scenery or earlier incident unavailable' : 'no due event' :
-      event.expires - time < event.duration * 1000 ? 'insufficient time before scenery removal' : '';
+      event.expires - time < event.duration * 1000 ? 'insufficient time before scenery removal' :
+      event.effect && event.effect.deadline - time <= event.effect.at * 1000 ? 'insufficient time to reach effect before fallback' : '';
     this.quiet = !this.waiting && !jumped ? this.quiet + step : 0;
     if (!this.waiting && this.quiet >= this.quietSeconds && this.session >= this.quietSeconds) {
       const record = this.records.get(event.id);
       const elapsed = event.resume?.(record) || 0;
-      this.active = { event, elapsed, startedAt: time, tending: Boolean(event.tending?.(time)) };
+      this.active = { event, elapsed, startedAt: time };
       this.set({ ...record, status: 'presenting', startedAt: time, attempts: (record.attempts || 0) + 1 });
       event.onStart?.(this.active);
       this.quiet = 0; this.flush();
@@ -73,9 +84,16 @@ export class EventScheduler {
   finish(time) {
     if (!this.active || this.active.elapsed < this.active.event.duration) return false;
     const { event } = this.active;
+    if (event.effect && !this.records.get(event.id)?.effect) return false;
     this.set({ ...this.records.get(event.id), status: 'completed', endedAt: time });
     this.active = null; this.rest = this.spacingSeconds; this.quiet = 0; this.flush();
     return true;
+  }
+  commitEffect(time) {
+    const a = this.active;
+    if (!a?.event.effect || a.elapsed < a.event.effect.at || this.records.get(a.event.id)?.effect) return;
+    this.set({ ...this.records.get(a.event.id), effect: { source: 'pip', appliedAt: time } });
+    this.flush();
   }
   interrupt(reason = 'presentation interrupted') {
     if (!this.active) return;
@@ -89,7 +107,9 @@ export class EventScheduler {
         time + (this.rest + Math.max(0, this.quietSeconds - this.quiet)) * 1000,
       pending: this.pending(time).map(e => ({ id: e.id, priority: e.priority, due: e.due, deferred: this.records.get(e.id)?.deferred,
         waiting: e.available && !e.available() ? e.unavailableReason || 'prerequisite unavailable' : this.waiting })),
-      records: [...this.records.values()].map(r => ({ ...r })) };
+      records: [...this.records.values()].map(r => ({ ...r,
+        effectState: r.effect ? 'applied-by-' + r.effect.source : 'unapplied',
+        fallback: this.events.find(e => e.id === r.id)?.effect?.deadline })) };
   }
 }
 

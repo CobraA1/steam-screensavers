@@ -14,10 +14,14 @@ Related references:
 - Phase 1 extends the Commons Deck's aft edge by 0.6 units to **4.6 × 3.1 world units** so the cabin does not hide the tree. The original Thanksgiving implementation did not enlarge it; its table and character anchors remain unchanged.
 - The calendar calculates Advent Sundays. Thanksgiving scenery changes into an unlit evergreen wreath during the six hours before the first Advent midnight, without Pip performing an installation action. This earlier preparation was approved in Phase 2B so the first wick is ready for midnight lighting.
 - The wreath has four outer candles (three blue and the third rose) and a taller central white Christ candle.
-- The four outer lights accumulate on the Sundays of Advent. The Christ candle currently lights at **00:00 local time on December 24**, remaining with the other four through January 5; the display clears for the January 6–7 deck dismantling.
+- The four outer candle ceremonies become due on the Sundays of Advent; actual
+contact lights them, or explicit fallback handles missed work. The Christ candle currently lights at **00:00 local time on December 24**, remaining with the other four through January 5; the display clears for the January 6–7 deck dismantling.
 - The three-section evergreen and five wrapped gifts now reconstruct through gradual Advent stages, finish December 23, and clear January 6. They remain wrapped on Christmas Day pending the later story.
-- Phase 2A adds optional section checks, strand adjustments, two ornament installations, star placement using Pip's hover and wrist clamp, five parcel-placement opportunities, and a final inspection. The shared scheduler retains pending work and reserves spaced catch-up; late activities tend installed props without delaying scenery or inventing memories.
-- Phase 2B adds one shared 32-second candle ceremony with four weekly variations. Tool contact meets each original Sunday midnight; missed or unsafe activities never delay the calendar flame. A shared persistent occurrence queue defers conflicts and offers late observances of already-lit candles.
+- Phase 2A adds optional section checks, strand adjustments, two ornament installations, star placement using Pip's hover and wrist clamp, five parcel-placement opportunities, and a final inspection. The shared scheduler retains pending work and reserves spaced catch-up; physical contact applies authored effects; deadlines quietly finish missed work
+and retire obsolete installations without inventing memories.
+- Phase 2B adds one shared 32-second candle ceremony with four weekly variations. Tool contact actually ignites each due candle. The shared queue retains missed
+lighting until the next Sunday (Christmas Eve for the fourth); fallback retires
+the old ceremony rather than replacing it with redundant observation.
 - There is no Christmas Eve candle/tree choreography, multi-week narrative, Christmas arrival, or gift-opening gathering yet. Brighter tree illumination is preview-only.
 
 **Do not conflate these implemented features with the proposals below.** In particular, a future Christmas Eve evening tree-lighting presentation does not currently change the wreath's existing local candle schedule.
@@ -114,7 +118,8 @@ The character choice, its origin, whether the signal is mysterious or simply une
 - **Background foreshadowing:** The distant light or signal appears sparingly rather than running as a continuous spectacle. It may provoke a subtle pause or glance from Pip.
 - **Christmas celebration:** Completion and illumination of the decorated tree, then a meaningful arrival/homecoming beat (if that story direction is selected).
 
-Avoid a separate persisted major incident for every candle lighting. Prefer deterministic calendar scenery and small optional observational actions. The main Christmas story, if selected, should use the existing safe-window, milestone, persistence, and interruption-recovery conventions.
+Avoid a separate persisted major incident for every candle lighting. Use shared action/effect records for authored physical changes and deterministic
+calendar reconstruction for unanimated background scenery. The main Christmas story, if selected, should use the existing safe-window, milestone, persistence, and interruption-recovery conventions.
 
 A viewer should be able to miss individual Sundays and still understand the scene. Never require all earlier episodes to have been witnessed before showing the Christmas outcome. Date jumps should derive the correct decoration state without inventing completed story records.
 

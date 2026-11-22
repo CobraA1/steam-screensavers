@@ -15,6 +15,7 @@ import { CreateRemembranceIncident, CreateRemembranceResume, CreateRemembrancePr
 import { ThanksgivingIncident, ThanksgivingCheckpoint, ThanksgivingTimeline, THANKSGIVING_TYPE, THANKSGIVING_SECONDS } from './thanksgiving.js';
 import { ApplyThanksgiving } from './holiday-runtime.js';
 import { DeckDurationMs } from './service-deck-lifecycle.js';
+import { DecorationEffect, ResolveHolidayEffects } from './holiday-effects.js';
 
 // Adapters declare calendar/physical requirements, never arbitrate each other.
 export class ScheduledEvents {
@@ -33,6 +34,8 @@ export class ScheduledEvents {
       const memory = narrative?.completedStories?.find(r => r.instanceId === event.id || event.type && r.type === event.type && r.storyYear === event.year);
       const existing = this.scheduler.records.get(event.id);
       if (existing) {
+        if (existing.legacyCalendar && event.effect && !existing.effect) this.scheduler.set({ ...existing,
+          effect: { source: 'fallback', appliedAt: event.date }, reason: 'legacy calendar-owned scenery retained (not a witnessed installation)' });
         // A crash between a witnessed narrative payoff and its final exit must
         // not cause that completed historical story to run from the beginning.
         if (memory && existing.status !== 'completed') this.scheduler.set({ ...existing, status: 'completed', reason: 'saved narrative payoff retained after restart' });
@@ -109,24 +112,32 @@ export class ScheduledEvents {
     all.push(thanksgiving);
     const removal = Math.min(LocalDate(2027, 0, 6), LocalDate(2027, 0, 7) - DeckDurationMs(this.config.serviceDeck));
     for (const spec of AdventActivityCatalog()) {
-      const installation = ['ornament', 'star', 'present'].includes(spec.kind);
       // Seeded preferred daytime without rejecting a date because traffic exists.
-      const preferred = installation ? spec.date - 60000 : spec.date + (6 * 60 + DeriveSeed(seed, spec.id) % 40 * 15) * 60000;
+      const effect = DecorationEffect(spec);
+      const preferred = effect ? spec.date : spec.date + (6 * 60 + DeriveSeed(seed, spec.id) % 40 * 15) * 60000;
       const d = event({ ...spec, due: preferred, label: spec.label }, EVENT_PRIORITY.ceremony, ADVENT_ACTIVITY_SECONDS, removal,
         'Christmas decorations packed away for January dismantling');
-      d.available = () => sceneReady() && (!installation || this.context.time <= spec.date - 48000 + 250 || this.context.time >= spec.date);
-      d.unavailableReason = 'Waiting for installed calendar prop after missing the synchronized approach';
-      d.tending = time => installation && time >= spec.date;
-      d.apply = active => ApplyAdventActivity(this.context.state, { ...spec, tending: active.tending, ...AdventActivityTimeline(active.elapsed) });
+      d.effect = effect;
+      d.available = () => {
+        if (!sceneReady()) return false;
+        const tree = this.worldState(this.context.time).tree;
+        return tree.active && tree.sections === 3 &&
+          (spec.kind !== 'garland' || tree.garlandBands > spec.index) &&
+          (spec.kind !== 'ornament' || tree.garlandBands === 3) &&
+          (spec.kind !== 'inspection' || tree.complete);
+      };
+      d.unavailableReason = 'Commons Deck/tree prerequisites not ready';
+      d.apply = active => ApplyAdventActivity(this.context.state, { ...spec, ...AdventActivityTimeline(active.elapsed) });
       all.push(d);
     }
     for (let week = 0; week < 4; week++) {
       const spec = WreathCeremonySpec(week);
-      const d = event({ ...spec, due: spec.start - 12000 }, EVENT_PRIORITY.ceremony, WREATH_SECONDS, removal,
+      const d = event({ ...spec, due: spec.date }, EVENT_PRIORITY.ceremony, WREATH_SECONDS, removal,
         'Advent wreath removed for January dismantling');
-      d.available = () => sceneReady() && (this.context.time <= spec.start + 250 || this.context.time >= spec.date);
-      d.unavailableReason = 'Waiting for local midnight after missing the synchronized approach';
-      d.apply = active => ApplyWreathCeremony(this.context.state, { ...spec, observance: active.startedAt >= spec.date,
+      d.effect = DecorationEffect(spec);
+      d.available = () => sceneReady();
+      d.unavailableReason = 'Commons Deck not ready';
+      d.apply = active => ApplyWreathCeremony(this.context.state, { ...spec,
         ...WreathTimeline(active.elapsed) });
       all.push(d);
     }
@@ -140,6 +151,10 @@ export class ScheduledEvents {
     if (result.ok) this.runtime.persistedNarrative = { record: result.record, status: result.status };
   }
   prepare(time, { forced = false, seasonal } = {}) {
+    const active = this.scheduler.active;
+    if (active && (time >= active.event.expires || active.event.effect && time >= active.event.effect.deadline &&
+        this.context.time !== undefined && Math.abs(time - this.context.time) > 2000))
+      this.scheduler.interrupt('calendar jump or seasonal scenery removal');
     if (!this.zoneCheckedAt || Math.abs(time - this.zoneCheckedAt) >= 60000) {
       const zone = LocalZone();
       if (zone !== this.zone && !this.scheduler.active) {
@@ -160,7 +175,11 @@ export class ScheduledEvents {
   }
   afterRender(time) {
     if (this.afterFrame) { this.checkpoint(this.afterFrame.event, this.afterFrame.incident); this.afterFrame = null; }
+    this.scheduler.commitEffect(time);
     this.scheduler.finish(time);
+  }
+  worldState(time, holiday = HolidayCalendar(time)) {
+    return ResolveHolidayEffects(holiday, time, this.events, this.scheduler.records, this.scheduler.active, { respectEffectTime: this.preview });
   }
   diagnostics(time) { return { ...this.scheduler.diagnostics(time), zone: this.zone, storage: this.storage.status(), traffic: this.traffic.decisions.slice(-8) }; }
 }

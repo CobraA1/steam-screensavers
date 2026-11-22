@@ -44,7 +44,7 @@ During the six hours before Advent's first midnight the harvest tray retracts an
 for an evergreen Advent wreath with gold candle holders. This is a six-hour,
 calendar-reconstructed scenery transition, **not a second persisted story**.
 Pip does not perform a separate Advent installation task in this version.
-Fall details diminish over the first week. Lights increase on each calculated
+Fall details diminish over the first week. Outer-candle lighting becomes due on each calculated
 Sunday: November 29, December 6, 13, and 20 in 2026. Three outer candles are
 blue; the third Sunday's candle is rose. A taller central white Christ candle
 lights on Christmas Eve. All five remain lit through January 5, the twelfth day of Christmas; they
@@ -57,13 +57,15 @@ We use the Christmas Eve lighting convention, starting at December 24 local
 midnight. This affects only the candle; the Christmas seasonal handoff remains
 December 25.
 The [Phase 2B weekly ceremonies](advent-wreath-phase2b.md) now bring Pip to each
-outer wick at its Sunday midnight, when safe. Preparing the wreath before the
-first boundary lets all four witnessed ignitions agree with the calendar.
+outer wick after its Sunday becomes due, when safe. The flame appears only at
+contact or its explicit [fallback deadline](action-driven-effects.md); no redundant
+ceremony plays after fallback. Preparing the wreath early keeps unlit candles ready.
 No Christmas Eve Christ-candle choreography, Christmas visit/story or dream is implemented.
 
 The [Phase 1 tree and wrapped presents](advent-tree-phase1.md) now occupy the
-outer aft deck. Their calendar derives independently of story checkpoints;
-decorations finish by December 23 and gifts stay wrapped through January 5.
+outer aft deck. Unanimated scenery remains calendar-derived; authored placements use
+[action effects](action-driven-effects.md). Decorations finish by the end of
+December 23 and gifts stay wrapped through January 5.
 This also adds tree-stage, gift-count, illumination and January cleanup previews.
 
 ## Scheduling, persistence, and compatibility

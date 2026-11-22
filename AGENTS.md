@@ -20,7 +20,12 @@ between calendar scenery and a genuinely completed story; Thanksgiving has no
 dream adaptation. Do not overwrite unfinished older seasonal incidents.
 The [Phase 2B wreath guide](little-space-station/docs/advent-wreath-phase2b.md)
 documents the four weekly ceremonies, pre-Advent wreath preparation, and
-calendar-owned flames, including late observances of already-lit candles.
+action-owned outer flames and deadline retirement. Read the
+[action/effect contract](little-space-station/docs/action-driven-effects.md)
+before changing physical seasonal outcomes. Due is not done: checkpoint a
+visible effect after contact/rendering, independently of the full exit. Fallback
+may apply offscreen work, but must retire its obsolete animation, not mark it
+successfully presented or substitute a redundant inspection.
 Read the [shared scheduler contract](little-space-station/docs/event-scheduling.md)
 before adding or changing an event. Register significant activities with the
 shared arbiter; do not add disposable safe windows or a second scheduling queue.

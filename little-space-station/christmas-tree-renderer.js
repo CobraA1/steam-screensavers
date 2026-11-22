@@ -11,6 +11,7 @@ function cylinder(root, top, bottom, height, y, material, segments = 8) {
   mesh.position.y = y; root.add(mesh); return mesh;
 }
 const LAYERS = TREE_LAYERS;
+const HIDDEN_INSTANCE = new THREE.Matrix4().makeScale(0,0,0);
 function radiusAt(y) {
   let radius = 0;
   for (const layer of LAYERS) {
@@ -132,6 +133,7 @@ export class ChristmasTreeVisual {
   }
 
   update(calendar, ready, storyActive, fullLight = false) {
+    const resetInstances = this.activityDirty;
     if(this.activityDirty) {
       this.ornamentMatrices.forEach((m,i)=>this.ornaments.setMatrixAt(i,m));
       this.capMatrices.forEach((m,i)=>this.ornamentCaps.setMatrixAt(i,m));
@@ -148,8 +150,17 @@ export class ChristmasTreeVisual {
     this.sections.forEach((section, i) => { section.visible = active && i < calendar.sections; });
     this.garlands.forEach((string, i) => { string.visible = active && i < calendar.garlandBands; });
     this.ornaments.count = this.ornamentCaps.count = active ? calendar.ornamentCount : 0;
+    const ornamentMask = active && calendar.ornaments ? calendar.ornaments.reduce((mask,visible,i)=>mask | (visible ? 1 << i : 0),0) : null;
+    if (ornamentMask !== null && (resetInstances || ornamentMask !== this.ornamentMask)) {
+      for (let i=0;i<26;i++) {
+        this.ornaments.setMatrixAt(i, calendar.ornaments[i] ? this.ornamentMatrices[i] : HIDDEN_INSTANCE);
+        this.ornamentCaps.setMatrixAt(i, calendar.ornaments[i] ? this.capMatrices[i] : HIDDEN_INSTANCE);
+      }
+      this.ornaments.instanceMatrix.needsUpdate=this.ornamentCaps.instanceMatrix.needsUpdate=true;
+    }
+    this.ornamentMask = ornamentMask;
     this.star.visible = active && calendar.star;
-    this.gifts.forEach((gift, i) => { gift.visible = active && i < calendar.presentCount; });
+    this.gifts.forEach((gift, i) => { gift.visible = active && (calendar.presents ? calendar.presents[i] : i < calendar.presentCount); });
     this.bulbMaterial.emissiveIntensity = fullLight ? 2.4 : .4;
     this.glow.intensity = active && calendar.garlandBands ? (fullLight ? .7 : .1) : 0;
   }

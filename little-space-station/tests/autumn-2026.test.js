@@ -124,15 +124,6 @@ test("multi-package unloading advances one coherent package at a time", () => {
   assert.equal(checkpoints.at(-1).cargoState, "stored");
 });
 
-test("fall installation only replaces a quiet routine task", () => {
-  const seasonal = ResolveAutumn2026(SEED, LocalDate(2026, 9, 10), { previewMode: "fall-install" });
-  const quiet = ApplyAutumn2026State({ phase: "quiet", eventId: "", cargoState: "none" }, seasonal, SEED);
-  assert.equal(quiet.pipTaskId, "seasonal-install");
-  assert.equal(quiet.seasonal.installation.forced, true);
-
-  const busy = ApplyAutumn2026State({ phase: "service", eventId: "survey-call", cargoState: "none", pipTaskId: "survey-sync" }, seasonal, SEED);
-  assert.equal(busy.pipTaskId, "survey-sync");
-});
 
 test("adding seasonal metadata does not change or overlap the traffic schedule", () => {
   const scheduler = new TrafficScheduler(SEED);
@@ -201,12 +192,8 @@ test("remembrance supplies arrive shortly before November 1 in a distinct blue-a
   assert.deepEqual(manifest, CreateSeasonalManifest(SEED, visit, { forceTheme: "remembrance" }));
 });
 
-test("Halloween installation, oddities, and cleanup preview states never require persistence", () => {
+test("Halloween scenery, oddities, and cleanup preview states never require persistence", () => {
   const baseTime = LocalDate(2026, 9, 25, 12);
-  const install = ResolveAutumn2026(SEED, baseTime, { previewMode: "halloween-install" });
-  assert.equal(install.installation.action, "install");
-  const installedState = ApplyAutumn2026State({ phase: "quiet", eventId: "", cargoState: "none" }, install, SEED);
-  assert.equal(installedState.pipTaskId, "seasonal-install");
 
   for (const [mode, oddityId] of [
     ["halloween-oddity-light", "distant-light"],
@@ -225,6 +212,6 @@ test("Halloween installation, oddities, and cleanup preview states never require
 
   const cleanup = ResolveAutumn2026(SEED, LocalDate(2026, 10, 3), { previewMode: "halloween-cleanup" });
   const cleanupState = ApplyAutumn2026State({ phase: "quiet", eventId: "", cargoState: "none" }, cleanup, SEED);
-  assert.equal(cleanup.installation.action, "remove");
-  assert.equal(cleanupState.pipTaskId, "seasonal-cleanup");
+  assert.equal(cleanup.installation, undefined);
+  assert.notEqual(cleanupState.pipTaskId, "seasonal-cleanup");
 });

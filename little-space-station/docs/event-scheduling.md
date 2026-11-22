@@ -66,23 +66,19 @@ new admission, while their already-running presentations finish. No lighting,
 planet rotation, fictional seasons, traffic generation or simulation clock
 periods are converted to calendar days.
 
-## Catch-up and calendar authority
+## Catch-up and physical effects
 
-All four wreath observances stay pending if a ship or decorating activity
-conflicts, including the default seed's third/fourth Sundays. If quiet is
-available in advance, the unchanged 32-second ceremony starts near 18 seconds
-before **local** midnight and reaches the actual ignition boundary. Otherwise
-it waits and observes the already-lit candle. It never extinguishes or relights
-a calendar flame, and never affects the Christ candle.
+Calendar dates make work due, not done. See [action-driven effects](action-driven-effects.md)
+for exact local deadlines, contact checkpoints, migration and extension guidance.
+Outer wreath flames, the star, two authored ornaments and all five parcels
+remain unapplied until contact or fallback. Physical effects are saved after
+rendering, independently of full animation completion. Fallback retires obsolete
+actions without manufacturing a successfully presented animation.
 
-Installations have their existing 82-second choreography and preferred
-pre-midnight attachment. A missed synchronized approach waits for its scenery
-boundary rather than carrying a supposedly installed object out of the tree.
-Late ornaments are adjusted in place; an installed star is approached from
-above for a fitting check. Already placed gifts use the existing quiet
-inspection route, without collecting or duplicating them. Locker/prop ownership
-and the five gift identities remain unchanged. Calendar decorations reconstruct
-immediately even if no activity ever completes.
+Section fitting and strand straightening remain independent maintenance of
+background calendar assemblies. Other ornaments, Christ-candle scenery,
+harvest/wreath repurposing and multi-worker deck construction remain calendar
+reconstruction. The original live story choreography is unchanged.
 
 Retirement is explicit and inspectable, not a successful completion:
 
@@ -91,7 +87,7 @@ Retirement is explicit and inspectable, not a successful completion:
 - Thanksgiving: six hours before the first Advent Sunday, when its harvest
   table begins being repurposed for the wreath. The original gathering is not
   replayed over an already-installed wreath.
-- Advent actions/observances: January 6 scenery removal, or earlier if a longer
+- Independent Advent maintenance: January 6 scenery removal, or earlier if a longer
   configured dismantling makes the deck unavailable. No new event starts
   without enough time for its whole exit before removal.
 - Antenna: no calendar expiry; its station equipment remains available.
@@ -119,13 +115,14 @@ only visible frame steps do. Reverse preview seeks never write history.
 
 ## Persistence and compatibility
 
-`little-space-station:event-schedule:v1` is a small, separately namespaced,
+`little-space-station:event-schedule:v1` (payload v2, reads v1) is a small, separately namespaced,
 seed-tagged companion record, bounded to 128 occurrences. It contains pending
 and terminal states plus occurrence-specific narrative checkpoints, not an
 inventory or a replacement memory system. Writes occur only on transitions
 and milestones, never continuously per frame. A saved presenting occurrence
-loads as interrupted; stories use their existing chapter resume, brief
-calendar actions restart coherently as tending/inspection where needed.
+loads as interrupted; stories use their existing chapter resume. Brief
+pre-contact actions retry; saved effects retain their result and retire the
+remaining exit. Effect source/timestamp is independent of completed presentation.
 
 Narrative v5 is deliberately unchanged. Its existing v2–v4 readers still
 migrate memories, outcomes and checkpoints. The companion imports saved
@@ -146,11 +143,11 @@ storage cannot guarantee once-only behavior across launches.
 **Inspect → Shared event scheduler** shows active/pending IDs, priorities,
 waiting reasons, estimated opportunity, completed/retired records, storage and
 traffic decisions. The estimate is a lower bound, not a promise that a docked
-ship has finished. Read-only scenarios demonstrate delayed Advent III,
-docked-ship conflict, four-Sunday backlog, interrupted installed-star tending
-and January retirement. **Simulate scheduler restart** retains only the
-experiment's in-memory records. Any scene selection, Stop or Return to live
-clears the experiment. No scenario modifies actual narrative or queue storage.
+ship has finished. Read-only scenarios demonstrate unlit pending candles, fallback retirement,
+star/gift handoffs, interrupted effects, late-season scenery and January cleanup.
+**Simulate scheduler restart** retains only isolated experiment records. Any
+scene selection, Stop or Return to live clears the experiment. No scenario
+modifies actual narrative or queue storage.
 Normal preview is calendar/scene inspection rather than unattended production
 scheduling; run a scenario to exercise the arbiter. Advanced saved-data controls
 include a separately confirmation-gated scheduler-record reset. This does not
@@ -175,40 +172,13 @@ TZ=Pacific/Auckland npm test
 The scheduler tests include northern/southern DST, missed dates, deferred
 routine traffic, all four default-seed observances, bounded spacing,
 v2–v5 migration, storage failure, January retirement and read-only previews.
-Existing dense geometry tests also exercise installed-prop tending variants.
+Dense geometry tests cover the remaining authored installations and maintenance.
 Desktop Chrome playback does not establish Steam Gaming Mode verification.
 
-## Verification of this implementation
+## Verification
 
-- Full suite: **186/186 passing in each of UTC, America/Chicago and
-  Pacific/Auckland**. Coverage includes the default seed's four observances,
-  north/south DST day lengths and preview jumps, narrative v2–v5 migration,
-  crash-window reconciliation, explicit retirement versus real completion,
-  storage failures, traffic identity/admission, interruption and quiet spacing.
-- Dedicated Chrome Flatpak at **1280×800**: all four complete wreath ceremonies
-  played at **1×**; a complete delayed rose-candle observance also played at 1×
-  with all three existing flames staying lit. An installed-star tending action
-  completed at 3× after an isolated checkpoint restart.
-- Complete Thanksgiving, Phantom Visitor, remembrance and ornament-installation
-  playback at 4× used the actual renderer and controls, without page errors or
-  failed application resources. An admitted survey visit completed service,
-  departure and afterglow before the pending observance started in the conflict
-  scenario (accelerated calendar playback). Preview storage stayed unchanged.
-- Star, ornament and placed-parcel catch-up were inspected in production
-  perspective, top/front/side orthographic and Back where Front hid the action.
-  Captured approach, contact/adjustment, release/inspection and home return;
-  dense geometry assertions check intermediate paths and every gift identity.
-  Actual rendered matrix comparisons matched after reverse scrubbing.
-- An isolated **unmarked production URL** played a complete natural late
-  first-Sunday ceremony at 1×, saved its completion and retained it on reload.
-  No preview controls, application input listeners or page errors were found.
-  January cleanup/retirement and January 7 calendar removal were also exercised
-  in preview. Screenshots and review scripts are under `/tmp/scheduler-*` and
-  `/tmp/review-scheduler*.mjs`.
-
-No production geometry or original installation/story choreography was
-redesigned. Catch-up variants required a safe above-foliage star reach and
-already-placed parcel inspection rather than duplicate handling. The local
-preview server and dedicated test browser remain running; test tabs were
-closed. Steam Gaming Mode dismissal, storage origin and performance still
-require device-host checks.
+Run the full suite and actual preview playback. Effect tests cover due/contact/
+deadline, source persistence, interruption, legacy migration, prerequisites,
+read-only reverse seeks and January removal. Paths/contact require production
+perspective plus top/front/side inspection. Desktop Chrome does not establish
+Steam Gaming Mode verification.

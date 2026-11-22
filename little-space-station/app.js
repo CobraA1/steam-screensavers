@@ -10,6 +10,9 @@ import { CreateNarrativeStore } from "./persistence.js";
 import { EnvironmentSystem } from "./environment.js";
 import { ScheduledEvents } from './scheduled-events.js';
 import { HolidayCalendar } from './holiday-calendar.js';
+import { ResolveHolidayEffects, DecorationEffect } from './holiday-effects.js';
+import { AdventActivityCatalog } from './advent-activities.js';
+import { WreathCeremonySpec } from './advent-wreath.js';
 import { ApplyPipPreviewOverride } from "./pip-behavior.js";
 import { AdvanceDream, ApplyPipRechargeState, CanStartPipRecharge, CreateStoryDream, ResolvePipRecharge, SelectDreamMemory } from "./pip-rhythm.js";
 import { ApplyStubbornAntennaConsequence, ApplyStubbornAntennaPreview, CreateStubbornAntennaPreview, ResolveStubbornAntennaTimeline, STUBBORN_ANTENNA_MILESTONES, STUBBORN_ANTENNA_TOTAL_SECONDS } from "./stubborn-antenna.js";
@@ -111,12 +114,12 @@ function RunFrame(currentTime) {
   }
 
   clock.advance(wallStep, stepSeconds, stepSeconds);
-  // In a forced ceremony, seeking moves the actual preview calendar as well
-  // as Pip. Before/after ignition therefore uses the production candle rules.
+  // Forced seeking reconstructs Pip and the environment together. Physical
+  // ignition is projected from the contact pose below, not this calendar time.
   if(IS_PREVIEW&&runtime.wreathPreview) {
     const p=runtime.wreathPreview;
     if(p.playing){p.elapsed=Math.min(WREATH_SECONDS,p.elapsed+stepSeconds);if(p.elapsed>=WREATH_SECONDS)p.playing=false;}
-    clock.setWorldTime(p.start+p.elapsed*1000);
+    clock.setWorldTime(p.date+p.elapsed*1000);
   }
   // Reserve resources before committing any lower-priority work to presentation.
   const scheduler = IS_PREVIEW ? runtime.schedulerPreview?.events : scheduledEvents;
@@ -138,7 +141,7 @@ function RunFrame(currentTime) {
     deckConfig: CONFIG.serviceDeck,
     deckPreview: IS_PREVIEW ? runtime.deckPreview : null,
   });
-  const background = seasonalState.installation || seasonalState.ambientOddity?.id === 'pip-flicker';
+  const background = seasonalState.ambientOddity?.id === 'pip-flicker';
   runtime.backgroundActive = Boolean(background && (!admission?.reserve || runtime.backgroundActive));
   eventState.allowReservedBackground = runtime.backgroundActive;
   ApplyAutumn2026State(eventState, seasonalState, CONFIG.worldSeed);
@@ -228,6 +231,22 @@ function RunFrame(currentTime) {
   if(IS_PREVIEW&&runtime.wreathPreview) {
     if(adventBlocked||runtime.adventPreview||runtime.pipOverride||runtime.restPreview||eventState.phase!=='quiet'||eventState.shipVisible||eventState.visitId||runtime.seasonalPreview!=='natural')runtime.wreathPreview=null;
     else ApplyWreathCeremony(eventState,{...runtime.wreathPreview,...WreathTimeline(runtime.wreathPreview.elapsed)});
+  }
+  // Projection happens after the active pose is known, before rendering. Only
+  // the post-render checkpoint below writes the physical result to history.
+  if (scheduler) eventState.holiday = scheduler.worldState(clock.worldTimeMs, eventState.holiday);
+  else if (IS_PREVIEW) {
+    const specs = [...AdventActivityCatalog(), ...Array.from({length:4},(_,i)=>WreathCeremonySpec(i))]
+      .map(spec=>({...spec,effect:DecorationEffect(spec)}));
+    const pose = eventState.adventActivity || eventState.wreathCeremony;
+    const event = pose && specs.find(s=>s.id===pose.id);
+    // Forced action previews establish completed prerequisites only; the target
+    // itself stays uninstalled until contact. Calendar inspection uses deadlines.
+    const records = new Map();
+    if (event) for (const e of specs) if(e.effect && e.id!==event.id && e.date<=clock.worldTimeMs)
+      records.set(e.id,{effect:{source:'fallback',appliedAt:e.date}});
+    eventState.holiday = ResolveHolidayEffects(eventState.holiday, clock.worldTimeMs, specs, records,
+      event ? {event,elapsed:pose.elapsed} : null);
   }
   const recharge = ResolvePipRecharge(CONFIG.worldSeed, clock.worldTimeMs, runtime.schedulerPreview ? { enabled: false } : CONFIG.pipRhythm);
   const incompleteIncident = thanksgivingActive || eventState.storyIncident || eventState.phantomVisitor || eventState.remembrance || eventState.adventActivity || eventState.wreathCeremony;

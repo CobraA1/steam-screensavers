@@ -1,12 +1,14 @@
 # Advent tree and wrapped presents — Phase 1
 
-Implemented October 31, 2026. This is calendar scenery, independent of stories,
-deliveries witnessed, saved checkpoints, or storage availability. It does not
+Implemented October 31, 2026. Background assembly and unanimated ornaments are
+calendar scenery. The later [effect contract](action-driven-effects.md) overrides
+visibility for the two authored ornaments, star and gifts: due is not installed. It does not
 itself present a decorating activity, light candles through Pip, open gifts, or create
 a Christmas visitor or gathering.
 
 [Phase 2A](advent-decorating-phase2a.md) subsequently adds optional decorating
-and wrapped-present activities without changing this calendar or arrangement.
+and wrapped-present activities. The arrangement is unchanged; listed action
+dates now mean due, with installation at contact or explicit deadline fallback.
 
 ## Design and location
 
@@ -73,7 +75,8 @@ Some existing freight visits during Advent can carry provision cartons: mounting
 fittings/evergreen sections, then garland/light strings, then ornaments/wrapped
 parcels. These use the existing seeded shipment selection, crate models,
 single-height racks and transfer animation. No extra ship visits or inventory
-records are created. Installed scenery does not depend on those cartons.
+records are created. Installed scenery does not depend on those cartons. Authored installations do
+depend on their saved effect or fallback, not the base calendar count.
 
 ## Preview and verification
 

@@ -33,7 +33,7 @@ test("preview endpoints, duration limits, and decoration safety", () => {
   for (const action of ["install", "remove"]) {
     const partial = ResolveAutumn2026("deck-test", time, { deckPreview: { action, progress: 0.6 } });
     assert.deepEqual(partial.installedDecorations, []);
-    assert.equal(partial.installation, null);
+    assert.equal(partial.installation, undefined);
     assert.equal(partial.serviceDeck.ready, false);
   }
   assert.equal(ResolveServiceDeck(time, {}, { action: "remove", progress: 1 }).active, false);

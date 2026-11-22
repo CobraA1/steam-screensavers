@@ -15,13 +15,14 @@ controls. [Phase 2A](docs/advent-decorating-phase2a.md) adds Pip's section check
 strand adjustments, ornament and star placement, wrapped-present carrying, and
 quiet final inspection. Preview every activity with playback, beat selection
 and scrubbing under **Scenes → Pip Activities → Advent decorating**.
-Its **Presentation** selector compares the scheduled installation with catch-up
-tending/inspection of a prop already installed by the calendar.
+Installations remain pending until actual attachment or an explicit offscreen
+fallback. Obsolete installations no longer replay as inspections.
 [Phase 2B](docs/advent-wreath-phase2b.md) adds four peaceful weekly wreath
 ceremonies. The unlit wreath is prepared before the first Sunday, and Pip's
-tool can meet each wick at local midnight. Missed ceremonies stay pending and
-later observe the already-lit candle; decorating and traffic defer them rather
-than discard them. See the [shared scheduler contract](docs/event-scheduling.md).
+tool lights each due wick at contact. Missed lighting stays pending until the
+next Sunday (Christmas Eve for the fourth candle). Fallback quietly lights it
+and retires the obsolete ceremony. See [action effects and deadlines](docs/action-driven-effects.md)
+and the [shared scheduler contract](docs/event-scheduling.md).
 Preview any Sunday under **Pip Activities → Wreath**.
 Christmas Eve's Christ-candle and tree-lighting ceremonies, a possible returning visitor, and the Christmas
 gift-opening gathering remain future work
@@ -44,7 +45,7 @@ A passive, low-poly Three.js screensaver for Steam Deck. It opens directly on a 
 - `camera-framing.js` owns the 140% production view and preview-only station-axis orthographic inspection from all six directions.
 - `expansion-preview.js` builds lightweight wireframe layout studies; it is reachable only through the dynamically loaded preview tools.
 - `pip-behavior.js`, `pip-animation.js`, and `station-details.js` map deterministic task stages to Pip's poses, equipment work, and physically attached cargo handling.
-- `autumn-2026.js` derives the 2026 calendar, seasonal cargo manifests, decorations, installations, oddities, and cleanup without persisting routine state.
+- `autumn-2026.js` derives the 2026 calendar, seasonal cargo manifests, background decorations, oddities, and cleanup without persisting routine state.
 - `seasonal-service-deck.js` builds the temporary aft commons/service platform, utility cabin, deck lights, attachment passage, and shared seasonal/Pip anchors. `seasonal-renderer.js` places fall and Halloween decorations on that deck. `phantom-visitor.js` / `phantom-renderer.js` (with a shared open-bottom cloth shell in `phantom-cover-geometry.js`) and `lights-of-remembrance.js` / `remembrance-renderer.js` own the two interruption-safe seasonal stories.
 - `dream-pip-visual.js` provides the consistent miniature robot for `dream-renderer.js` and `phantom-dream-renderer.js`, which render read-only memories while Pip charges.
 - `app.js` owns startup, frame timing, visibility handling, resolution changes, and persistence commits.
@@ -237,7 +238,7 @@ Manual browser checks to perform on the Deck:
 19. While paused, change framing, layout, and preview resolution. Confirm the camera still eases, the selected modes survive resolution changes, and simulation diagnostics do not advance.
 20. Launch the same URL without `?preview=1`; confirm the original drifting camera remains, no mockup objects or controls are created, and no production input listeners are registered.
 21. Force each autumn cargo theme and scrub its package sequence. Confirm there are 2–4 distinct attached packages, one coherent active package, and no changed traffic timing.
-22. Inspect fall installation, early/full Halloween, all four oddities, cleanup, and November 4. Confirm props originate from cargo/storage activity, do not clip through the station, and are absent after their derived window.
+22. Inspect calendar fall scenery, early/full Halloween, all four oddities, cleanup, and November 4. Generic pretend installation/removal has been removed; scenery clears at its calendar boundary.
 23. Scrub every Phantom Visitor beat at 1280×800 and 1920×1080, then play through at normal speed. Confirm the cover and drone stay distinct, Pip's investigation reads naturally, and interruption resumes at the reveal or trailing-cover boundary.
 24. Complete a Phantom preview only through the explicit checkpoint control, then show its dream after Halloween cleanup. Confirm the miniature remains recognizable and neither traffic, equipment, nor completion records change during playback.
 25. Force the Lights of Remembrance in sunlight and deep shadow at both target resolutions. Confirm the blue/gold fixture, five lamps, Pip's activation, prolonged stillness, and quiet return remain visible without Halloween lighting competing for attention.

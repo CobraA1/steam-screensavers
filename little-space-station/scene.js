@@ -848,7 +848,6 @@ export class LittleSpaceStationScene {
     this.robotDispatchPickup = new THREE.Vector3(3.23, -0.27, 0.95);
     this.robotDispatchDrop = new THREE.Vector3(0.98, 0.15, 1.65);
     this.robotAntennaSafe = new THREE.Vector3(-0.72, 1.18, 1.06);
-    this.robotSeasonalInstall = new THREE.Vector3(...SERVICE_DECK_ANCHORS.pipSeasonalWork);
     this.robotPhantomWork = new THREE.Vector3(-2.22, 1.58, 1.48);
     this.robotPhantomSearch = new THREE.Vector3(-1.0, 1.72, 1.38);
     this.robotRemembranceWork = new THREE.Vector3(...SERVICE_DECK_ANCHORS.pipRemembranceWork);
@@ -858,7 +857,6 @@ export class LittleSpaceStationScene {
       "adjust-antenna": new THREE.Vector3(0.51, 1.16, 0.73),
       "cargo-transfer": this.robotWork,
       "seasonal-cargo": this.robotWork,
-      "seasonal-install": this.robotSeasonalInstall,
       "phantom-visitor": this.robotPhantomWork,
       "lights-of-remembrance": this.robotRemembranceWork,
       "dispatch-exchange": this.robotDispatchPickup,

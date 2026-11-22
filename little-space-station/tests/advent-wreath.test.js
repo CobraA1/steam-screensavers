@@ -1,3 +1,4 @@
+import { ResolveHolidayEffects, DecorationEffect } from '../holiday-effects.js';
 import { LocalDate } from '../local-calendar.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ import { HolidayCalendar, Advent, DAY } from '../holiday-calendar.js';
 import { ResolvePipRecharge } from '../pip-rhythm.js';
 import { CHRISTMAS_PRESENTS, CHRISTMAS_TREE_POSITION as TREE, TreeRadiusAt } from '../christmas-tree.js';
 import { WREATH_CANDLES, WREATH_BEATS, WREATH_SECONDS, WreathCeremonySpec, WreathTimeline,
-  WreathBeatStart, WreathActors, WreathLampState, ApplyWreathCeremony, AdventWreathDirector } from '../advent-wreath.js';
+  WreathBeatStart, WreathActors, WreathLampState, ApplyWreathCeremony } from '../advent-wreath.js';
 
 function fixture() {
   const s=Object.create(LittleSpaceStationScene.prototype);s.config={worldSeed:'wreath-contact'};
@@ -18,43 +19,43 @@ function fixture() {
   s.materials=s.CreateMaterials();s.elapsed=0;s.BuildRobot();s.holiday=new HolidayVisual(s);return s;
 }
 function pose(s,week,elapsed) {
-  const spec=WreathCeremonySpec(week),time=spec.start+elapsed*1000;
-  const state={worldTimeMs:time,holiday:HolidayCalendar(time),phase:'quiet',seasonal:{serviceDeck:{ready:true}}};
+  const spec=WreathCeremonySpec(week),time=spec.date+elapsed*1000;
+  const state={worldTimeMs:time,holiday:ResolveHolidayEffects(HolidayCalendar(time),time,[{...spec,effect:DecorationEffect(spec)}],new Map(),{event:{...spec,effect:DecorationEffect(spec)},elapsed}),phase:'quiet',seasonal:{serviceDeck:{ready:true}}};
   ApplyWreathCeremony(state,{...spec,...WreathTimeline(elapsed)});
   UpdatePip(s,state);s.holiday.update(state);s.station.updateMatrixWorld(true);return state;
 }
 function snapshot(s){return [s.robot,s.robotHead,s.robotEye,s.robotTool,...s.robotArms.flatMap(a=>[a.shoulder,a.elbow]),
   ...s.holiday.lamps,...s.holiday.wreathSprigs].map(o=>[o.visible,o.matrixWorld.toArray()]);}
 
-test('all four correct Advent candles ignite at calendar midnight, accumulating blue/blue/rose/blue',()=>{
+test('all four correct Advent candles ignite at actual contact, accumulating blue/blue/rose/blue',()=>{
   const s=fixture();
   assert.deepEqual(WREATH_CANDLES.map(c=>c.color),[0x305674,0x305674,0xc5788c,0x305674,0xf3ead6]);
   assert.deepEqual(s.holiday.candles.map(c=>c.material.color.getHex()),WREATH_CANDLES.map(c=>c.color));
   for(let week=0;week<4;week++) {
-    const spec=WreathCeremonySpec(week);assert.equal(spec.start+18000,spec.date);
+    const spec=WreathCeremonySpec(week);assert.equal(new Date(spec.date).getHours(),0);
     for(const seconds of [0,17.99,18,18.01,20,32]) {
       const state=pose(s,week,seconds),expected=week+(seconds>=18?1:0);
       assert.deepEqual(s.holiday.lamps.map(l=>l.visible),[...Array.from({length:4},(_,i)=>i<expected),false]);
       assert.equal(s.holiday.candles[week].userData.candleId,spec.candleId);
-      assert.equal(state.holiday.adventWeek,expected);
+      assert.equal(state.holiday.adventWeek,week+1);
     }
   }
   // An activity cannot put out a flame or affect the central Christ candle.
-  const christmas=HolidayCalendar(LocalDate(2026,11,24));
+  const time=LocalDate(2026,11,24),christmas=ResolveHolidayEffects(HolidayCalendar(time),time,Array.from({length:4},(_,i)=>{const s=WreathCeremonySpec(i);return {...s,effect:DecorationEffect(s)};}));
   for(let week=0;week<4;week++)for(const elapsed of [0,18,32]) {
     const ceremony={...WreathCeremonySpec(week),elapsed};
     for(let i=0;i<5;i++)assert.equal(WreathLampState(christmas,i,ceremony).lit,true);
     assert.deepEqual(WreathLampState(christmas,4,ceremony),WreathLampState(christmas,4,null));
   }
 });
-test('the unlit wreath is prepared before the first midnight; missed ceremonies leave calendar scenery intact',()=>{
+test('the unlit wreath is prepared before the first midnight; calendar preparation does not ignite candles',()=>{
   const s=fixture(),date=Advent(2026);
   assert.equal(HolidayCalendar(date-6*3600000-1).wreathPreparing,false);
   assert.equal(HolidayCalendar(date-3*3600000).transition,.5);
   assert.equal(HolidayCalendar(date).transition,1);
   for(const time of [date-6*3600000,date-1000,date,...[1,2,3].map(i=>date+i*7*DAY),LocalDate(2026,11,24),LocalDate(2027,0,6)]) {
     const state={holiday:HolidayCalendar(time),seasonal:{serviceDeck:{ready:true}}};s.holiday.update(state);
-    assert.equal(s.holiday.lamps.filter(l=>l.visible).length,state.holiday.adventWeek+(state.holiday.christCandleLit?1:0));
+    assert.equal(s.holiday.lamps.filter(l=>l.visible).length,state.holiday.christCandleLit?1:0);
   }
   s.holiday.update({holiday:HolidayCalendar(date-2*DAY),seasonal:{serviceDeck:{ready:true}},thanksgiving:{elapsed:0}});
   assert.equal(s.holiday.harvest.visible,true);assert.equal(s.holiday.advent.visible,false);
@@ -126,28 +127,4 @@ test('body, head, arms and tool clear the table, cabin, floor, rails and candle 
       }
     }
   }
-});
-test('absolute ceremony windows yield to traffic, maintenance, recharge, decorating, stories and interruption',()=>{
-  const config={worldSeed:'wreath-safe',maintenance:{activeChance:0},pipRhythm:{enabled:false}};
-  const idle={At:()=>({current:null,next:null})},decorating={plan:()=>[]};
-  const create=()=>new AdventWreathDirector(config,idle,decorating);
-  const d=create();assert.equal(d.at(LocalDate(2026,9,1)),null);assert.equal(d.windows,null);
-  assert.equal(d.plan().length,4);
-  const state=()=>({phase:'quiet',visitId:'',shipVisible:false,pipTaskId:'standby',seasonal:{serviceDeck:{ready:true}}});
-  for(const spec of d.plan()) {
-    assert.deepEqual(d.at(spec.start+19000),create().at(spec.start+19000));
-    assert.equal(d.at(spec.end),null);
-    assert.ok(d.update(state(),spec.start+1000));
-    assert.equal(d.update(state(),spec.start+2000,true),null);
-    assert.equal(d.update(state(),spec.start+3000),null);
-    for(const change of [{phase:'approach'},{shipVisible:true},{visitId:'ship'},{pipTaskId:'repair-light'},{dream:{}},{adventActivity:{}},{seasonal:{serviceDeck:{ready:false}}}])
-      assert.equal(create().update({...state(),...change},spec.start+1000),null);
-  }
-  assert.equal(new AdventWreathDirector(config,{At:()=>({current:{}})},decorating).plan().length,0);
-  const sleepingSeed=Array.from({length:100},(_,i)=>`wreath-sleep-${i}`).find(seed=>ResolvePipRecharge(seed,WreathCeremonySpec(0).date).active);
-  const sleeping=new AdventWreathDirector({...config,worldSeed:sleepingSeed,pipRhythm:{enabled:true}},idle,decorating);
-  assert.ok(!sleeping.plan().some(w=>w.week===0),'recharge excludes the whole opportunity');
-  assert.equal(new AdventWreathDirector(config,idle,{plan:()=>d.plan()}).plan().length,0);
-  assert.equal(d.at(LocalDate(2026,11,24)),null);assert.equal(d.at(LocalDate(2027,0,6)),null);
-  assert.equal(WREATH_SECONDS,32);
 });

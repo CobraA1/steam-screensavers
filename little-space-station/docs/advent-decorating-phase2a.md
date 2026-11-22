@@ -4,9 +4,9 @@ Implemented November 3, 2026.
 
 Pip now tends the existing tree and carries the existing wrapped gifts. These
 are shared-scheduler activities, not a new Christmas incident or inventory.
-The [Phase 1 calendar](advent-tree-phase1.md) remains authoritative: missing
-every animation still leaves a finished tree and five wrapped gifts by December
-23. Neither calendar reconstruction nor these activities creates a completed
+The [action-driven effect contract](action-driven-effects.md) now owns animated
+installations. Calendar dates make work due; contact installs it. Explicit
+offscreen fallback finishes missed work by the end of December 23. Neither calendar reconstruction nor these activities creates a completed
 story or a dream.
 
 ## Actions and staging
@@ -18,7 +18,8 @@ story or a dream.
   corrects it and checks the result. Each of the three strings has an opportunity.
 - **Ornaments:** Two representative installations use existing ornaments 8 and
   16 (zero-based instance IDs). Pip collects, carries, attaches, straightens,
-  releases and admires each one. The full 26-ornament calendar remains unchanged.
+  releases and admires each one. The remaining 24 ornaments retain background
+  calendar progression; these two require contact or deadline fallback.
 - **Star:** Pip collects the actual gold topper, lifts above the deck using his
   established hovering movement, and guides it onto the tree with his wrist
   maintenance clamp. Arms remain their original length; there is no new flight
@@ -50,22 +51,19 @@ same seek markers but has its own direct viewing route and no prop collection.
 | --- | --- |
 | Section fitting check | November 29, one seeded safe daytime slot |
 | Strand adjustment | December 6, 8 and 10, one seeded safe daytime slot each |
-| Ornament placement | Existing December 15 and 17 scenery boundaries |
-| Gold star | Existing December 22 boundary |
-| Five wrapped parcels | Existing November 30, December 7, 13, 20 and 23 boundaries |
+| Ornament placement | Due December 15 and 17 |
+| Gold star | Due December 22 |
+| Five wrapped parcels | Due November 30, December 7, 13, 20 and 23 |
 | Completed-tree inspection | December 23, one seeded safe daytime slot |
 
-Preferred placements begin **48 seconds before local midnight**, with a shared
-quiet lead-in. Daytime adjustments prefer a seeded slot between 06:00 and 15:45
-local time. These are preferred times, not disposable windows.
-
-The [shared scheduler](event-scheduling.md) retains due activities through
-conflicts and absences, reserves future routine arrivals offscreen, and lets
-admitted visits, maintenance and recharge finish. Significant activities have
-a 90-second ambient/routine break. A missed synchronized approach waits for
-its calendar prop to be installed. Late ornaments are adjusted in place;
-the installed star is checked from above. Placed gifts use the quiet
-inspection route without another pickup. No installed prop is duplicated.
+Installations become due on their listed local date. Independent fitting and
+strand checks prefer seeded daytime slots. The shared scheduler preserves
+admitted traffic, retains pending work and spaces significant activities.
+The real prop reaches its fixture at second 48; that physical result is saved
+after rendering, independently of Pip's return. A pre-contact interruption
+can retry; after contact its exit is retired, never installing a second time.
+Deadline fallback retires obsolete work rather than replacing it with generic
+inspection. See the [deadline table](action-driven-effects.md).
 
 Occurrence status/checkpoints are saved separately from narrative memories.
 Preview stays read-only. January removal explicitly retires unpresented work
@@ -78,8 +76,7 @@ does not add annual deck construction or a recurring Christmas narrative.
 ## Preview
 
 Under **Scenes → Pip Activities → Advent decorating** select an activity,
-gift, or strand/ornament variation. **Presentation** switches between its
-scheduled installation and catch-up tending/inspection. Use the shared playback controls, beat
+gift, or strand/ornament variation. Use the shared playback controls, beat
 selector, and seconds slider. Starting or seeking
 reconstructs a temporary date and complete pose; preview never writes story
 history. Other forced stories/events cancel decorating. **Stop** restores calendar
